@@ -248,21 +248,21 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
   };
 
   // Helper to extract correct translation string based on current language
-  const getAyahTranslation = (ayah: any) => {
-    if (currentLanguage === 'en') return ayah.translationEn || ayah.translationBn;
-    if (currentLanguage === 'hi') return ayah.translationHi || ayah.translationBn;
-    if (currentLanguage === 'ur') return ayah.translationUr || ayah.translationBn;
-    if (currentLanguage === 'tr') return ayah.translationTr || ayah.translationBn;
-    return ayah.translationBn;
+  const getAyahTranslation = (ayah: any): string => {
+    if (currentLanguage === 'en') return ayah.translationEn || '';
+    if (currentLanguage === 'hi') return ayah.translationHi || '';
+    if (currentLanguage === 'ur') return ayah.translationUr || '';
+    if (currentLanguage === 'tr') return ayah.translationTr || '';
+    return ayah.translationBn || '';
   };
 
-  // Helper to extract word-by-word translation in selected language
+  // Never substitute another language's wording when a verified translation is absent.
   const getWordTranslation = (word: QuranWord): string => {
-    if (currentLanguage === 'en') return word.translationEn || word.translationBn;
-    if (currentLanguage === 'hi') return word.translationHi || word.translationEn || word.translationBn;
-    if (currentLanguage === 'ur') return word.translationUr || word.translationEn || word.translationBn;
-    if (currentLanguage === 'tr') return word.translationTr || word.translationEn || word.translationBn;
-    return word.translationBn || word.translationEn;
+    if (currentLanguage === 'en') return word.translationEn || '';
+    if (currentLanguage === 'hi') return word.translationHi || '';
+    if (currentLanguage === 'ur') return word.translationUr || '';
+    if (currentLanguage === 'tr') return word.translationTr || '';
+    return word.translationBn || '';
   };
 
   const langMeta = QURAN_LANGUAGES.find((l) => l.code === currentLanguage) || QURAN_LANGUAGES[0];
@@ -597,12 +597,11 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
                                 </span>
                               )}
 
-                              <span
-                                className="text-xs sm:text-sm font-medium text-emerald-800 dark:text-emerald-400 mt-1 leading-tight"
-                                dir={currentLanguage === 'ur' ? 'rtl' : 'ltr'}
-                              >
-                                {getWordTranslation(word)}
-                              </span>
+                              {getWordTranslation(word) && (
+                                <span className="mt-1 text-xs leading-tight font-medium text-emerald-800 dark:text-emerald-400" dir={currentLanguage === 'ur' ? 'rtl' : 'ltr'}>
+                                  {getWordTranslation(word)}
+                                </span>
+                              )}
                             </div>
                           );
                         })}
