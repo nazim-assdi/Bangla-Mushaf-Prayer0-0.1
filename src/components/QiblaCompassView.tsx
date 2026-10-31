@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Compass, MapPin, RefreshCw, CheckCircle2, AlertTriangle, Info, Smartphone } from 'lucide-react';
 import { BANGLADESH_DISTRICTS } from '../utils/prayerTimes';
 import { calculateQiblaDirection, calculateDistanceToKaaba, getHeadingDeviation } from '../utils/qibla';
-import { toBanglaNumber } from '../utils/banglaNumbers';
 import { UiLanguage, formatUiNumber, translateUi } from '../services/i18n';
 
 type Coordinates = { lat: number; lng: number; nameBn: string; accuracy?: number };
@@ -118,7 +117,7 @@ export const QiblaCompassView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangu
           <div className="min-w-0">
             <h2 className="font-bold text-stone-900 dark:text-white">{locationLabel} · {translateUi(uiLanguage, 'qiblaDirection')}</h2>
             <p className="text-xs text-stone-500 dark:text-stone-400">
-              উত্তর থেকে ঘড়ির কাঁটার দিকে {formatUiNumber(qiblaBearing, uiLanguage)}° · কাবা পর্যন্ত {toBanglaNumber(distanceKm.toLocaleString())} কিমি
+              উত্তর থেকে ঘড়ির কাঁটার দিকে {formatUiNumber(qiblaBearing, uiLanguage)}° · কাবা পর্যন্ত {formatUiNumber(Math.round(distanceKm), uiLanguage)} কিমি
             </p>
             {customCoords?.accuracy && <p className="text-[11px] text-stone-500">{translateUi(uiLanguage, 'gpsAccuracy')}: {Math.round(customCoords.accuracy)} মিটার</p>}
           </div>
@@ -148,9 +147,9 @@ export const QiblaCompassView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangu
 
       <div className="rounded-3xl border border-emerald-800/50 bg-gradient-to-b from-stone-950 via-emerald-950 to-stone-950 px-4 py-6 text-white shadow-xl sm:px-8">
         <div className="mb-5 flex flex-wrap items-center justify-center gap-2 text-xs">
-          <span className="rounded-full border border-emerald-700 bg-emerald-900/70 px-3 py-1.5 text-amber-200">কিবলা {toBanglaNumber(qiblaBearing)}°</span>
+          <span className="rounded-full border border-emerald-700 bg-emerald-900/70 px-3 py-1.5 text-amber-200">কিবলা {formatUiNumber(qiblaBearing)}°</span>
           <span className="rounded-full border border-emerald-700 bg-emerald-900/70 px-3 py-1.5 text-emerald-100">
-            {deviceHeading === null ? 'কম্পাস সেন্সর অপেক্ষমাণ' : `ফোনের দিক ${toBanglaNumber(Math.round(deviceHeading))}°`}
+            {deviceHeading === null ? 'কম্পাস সেন্সর অপেক্ষমাণ' : `ফোনের দিক ${formatUiNumber(Math.round(deviceHeading))}°`}
           </span>
         </div>
 
@@ -178,7 +177,7 @@ export const QiblaCompassView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangu
           ) : isAligned ? (
             <p className="flex items-center justify-center gap-2 font-bold text-emerald-300"><CheckCircle2 className="h-5 w-5" /> কিবলার দিকে প্রায় সোজা</p>
           ) : (
-            <p className="font-semibold text-amber-200">{deviation > 0 ? 'ডানে' : 'বামে'} আরও {toBanglaNumber(Math.abs(Math.round(deviation)))}° ঘোরান</p>
+            <p className="font-semibold text-amber-200">{deviation > 0 ? 'ডানে' : 'বামে'} আরও {formatUiNumber(Math.abs(Math.round(deviation)))}° ঘোরান</p>
           )}
           <p className="mt-2 text-xs text-emerald-100/70">ফোন সমতল রাখুন এবং ধাতব বস্তু, চুম্বক ও বৈদ্যুতিক যন্ত্র থেকে দূরে থাকুন।</p>
         </div>
