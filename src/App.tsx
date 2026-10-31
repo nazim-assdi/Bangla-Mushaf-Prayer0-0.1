@@ -261,8 +261,6 @@ function AppContent() {
         onOpenMenu={() => setIsSideMenuOpen(true)}
         currentSurahNameBn={currentSurah.nameBengali}
         currentSurahId={currentSurahId}
-        theme={theme}
-        setTheme={setTheme}
       />
 
       {/* Offline Status Banner */}
@@ -328,8 +326,6 @@ function AppContent() {
         onSearch={() => { setIsSideMenuOpen(false); setIsGlobalSearchOpen(true); }}
         onSettings={() => { setIsSideMenuOpen(false); setActiveTab('settings'); }}
         onPrayer={() => { setIsSideMenuOpen(false); setActiveTab('prayer'); }}
-        onQibla={() => { setIsSideMenuOpen(false); setActiveTab('qibla'); }}
-        onDhikr={() => { setIsSideMenuOpen(false); setActiveTab('dhikr'); }}
         onBookmarks={() => { setIsSideMenuOpen(false); setActiveTab('bookmarks'); }}
         onGoToAyah={() => { setIsSideMenuOpen(false); setIsSurahDrawerOpen(true); }}
       />
@@ -349,80 +345,18 @@ function AppContent() {
         onSelectSurahAndAyah={handleSelectSurah}
       />
 
-      {/* Mobile Bottom Navigation Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 dark:bg-stone-900/95 backdrop-blur-md border-t border-stone-200 dark:border-stone-800 sm:hidden flex items-center justify-around py-2 px-1 text-[11px] font-bangla shadow-lg">
-        <button
-          onClick={() => setActiveTab('mushaf')}
-          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-lg transition-colors ${
-            activeTab === 'mushaf'
-              ? 'text-emerald-700 dark:text-emerald-400 font-bold'
-              : 'text-stone-500 hover:text-stone-900 dark:hover:text-stone-100'
-          }`}
-        >
-          <span>📖</span>
-          <span>মুসহাফ</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('prayer')}
-          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-lg transition-colors ${
-            activeTab === 'prayer'
-              ? 'text-emerald-700 dark:text-emerald-400 font-bold'
-              : 'text-stone-500 hover:text-stone-900 dark:hover:text-stone-100'
-          }`}
-        >
-          <span>⏰</span>
-          <span>নামাজ</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('qibla')}
-          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-lg transition-colors ${
-            activeTab === 'qibla'
-              ? 'text-emerald-700 dark:text-emerald-400 font-bold'
-              : 'text-stone-500 hover:text-stone-900 dark:hover:text-stone-100'
-          }`}
-        >
-          <span>🕋</span>
-          <span>কিবলা</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('dhikr')}
-          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-lg transition-colors ${
-            activeTab === 'dhikr'
-              ? 'text-emerald-700 dark:text-emerald-400 font-bold'
-              : 'text-stone-500 hover:text-stone-900 dark:hover:text-stone-100'
-          }`}
-        >
-          <span>📿</span>
-          <span>যিকির</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('bookmarks')}
-          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-lg transition-colors ${
-            activeTab === 'bookmarks'
-              ? 'text-emerald-700 dark:text-emerald-400 font-bold'
-              : 'text-stone-500 hover:text-stone-900 dark:hover:text-stone-100'
-          }`}
-        >
-          <span>⭐</span>
-          <span>সংরক্ষিত</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('settings')}
-          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-lg transition-colors ${
-            activeTab === 'settings'
-              ? 'text-emerald-700 dark:text-emerald-400 font-bold'
-              : 'text-stone-500 hover:text-stone-900 dark:hover:text-stone-100'
-          }`}
-        >
-          <span>⚙️</span>
-          <span>সেটিংস</span>
-        </button>
-      </div>
+      {/* Primary mobile navigation: seven destinations */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-emerald-900/10 bg-white/95 px-1 py-2 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur-md dark:border-stone-700 dark:bg-stone-950/95 sm:hidden" aria-label="Main navigation">
+        <div className="mx-auto flex max-w-2xl items-center justify-between gap-1 overflow-x-auto">
+          <button onClick={() => setActiveTab('mushaf')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'mushaf' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">📖</span><span>Home</span></button>
+          <button onClick={() => setActiveTab('qibla')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'qibla' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">🕋</span><span>Qibla</span></button>
+          <button onClick={() => setActiveTab('prayer')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'prayer' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">🕌</span><span>Salat</span></button>
+          <button onClick={() => setActiveTab('dhikr')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'dhikr' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">📿</span><span>Adhkar</span></button>
+          <button onClick={() => window.dispatchEvent(new CustomEvent('mushaf:open-planner'))} className="flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] text-stone-500"><span className="text-lg">🗓️</span><span>Planner</span></button>
+          <button onClick={() => setIsGlobalSearchOpen(true)} className="flex min-w-[64px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] text-stone-500"><span className="text-lg">🔎</span><span>Topic Ayah</span></button>
+          <button onClick={() => setActiveTab('bookmarks')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'bookmarks' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">📚</span><span>Library</span></button>
+        </div>
+      </nav>
     </div>
   );
 }
