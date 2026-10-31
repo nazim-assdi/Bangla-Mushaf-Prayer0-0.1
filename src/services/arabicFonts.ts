@@ -1,10 +1,10 @@
 import '@fontsource/amiri/400.css';
 import '@fontsource/scheherazade-new/400.css';
-import '@fontsource/noto-naskh-arabic/400.css';
-import '@fontsource/noto-sans-arabic/400.css';
-import '@fontsource/noto-kufi-arabic/400.css';
-import '@fontsource/reem-kufi/400.css';
-import '@fontsource/cairo/400.css';
+import '@fontsource-variable/noto-naskh-arabic';
+import '@fontsource-variable/noto-sans-arabic';
+import '@fontsource-variable/noto-kufi-arabic';
+import '@fontsource-variable/reem-kufi';
+import '@fontsource-variable/cairo';
 import '@fontsource/tajawal/400.css';
 import '@fontsource/lateef/400.css';
 import '@fontsource/aref-ruqaa/400.css';
