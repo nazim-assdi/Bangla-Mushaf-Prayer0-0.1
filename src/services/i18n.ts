@@ -11,7 +11,10 @@ export const UI_LANGUAGES: { code: UiLanguage; name: string; nativeName: string;
 
 const messages: Record<UiLanguage, Record<string, string>> = {
   bn: {
-    readingPlannerTitle:'পাঠ পরিকল্পনা',
+    aboutApp:'অ্যাপ সম্পর্কে',
+    aboutDescription:'কুরআন পাঠ, নির্বাচিত অনুবাদ, তিলাওয়াত, কিবলা, সালাতের সময় এবং ব্যক্তিগত পাঠ-নোটের জন্য তৈরি। প্রথমবারের ডাউনলোডে ইন্টারনেট লাগতে পারে; সংরক্ষিত কনটেন্ট অফলাইনে ব্যবহার করা যায়।',
+    sourceNote:'কুরআন টেক্সট ও অনুবাদের উৎস প্রতিটি রিসোর্সের সঙ্গে দেখানো হবে।',
+        readingPlannerTitle:'পাঠ পরিকল্পনা',
     dailyQuranPlan:'দৈনিক কুরআন পরিকল্পনা',
     setGoal:'দৈনিক লক্ষ্য',
     ayahsPerDay:'প্রতিদিন আয়াত',
@@ -88,7 +91,10 @@ const messages: Record<UiLanguage, Record<string, string>> = {
     salatTimes:'সালাতের সময়', bookmarks:'সংরক্ষিত আয়াত', appMenu:'অ্যাপ মেনু'
   },
   en: {
-    readingPlannerTitle:'Reading Planner',
+    aboutApp:'About this app',
+    aboutDescription:'Built for Quran reading, selected translations, recitation, Qibla, prayer times and personal study notes. Initial downloads may require internet; saved content can be used offline.',
+    sourceNote:'Quran text and translation sources should be reviewed for each resource.',
+        readingPlannerTitle:'Reading Planner',
     dailyQuranPlan:'Daily Quran Plan',
     setGoal:'Daily goal',
     ayahsPerDay:'Ayahs per day',
@@ -165,7 +171,10 @@ const messages: Record<UiLanguage, Record<string, string>> = {
     salatTimes:'Prayer times', bookmarks:'Saved verses', appMenu:'App menu'
   },
   ar: {
-    readingPlannerTitle:'مخطط القراءة',
+    aboutApp:'حول التطبيق',
+    aboutDescription:'تطبيق لقراءة القرآن والترجمات المختارة والتلاوة والقبلة ومواقيت الصلاة وملاحظات الدراسة الشخصية. قد يتطلب التنزيل الأول اتصالًا بالإنترنت؛ ويمكن استخدام المحتوى المحفوظ دون اتصال.',
+    sourceNote:'يجب مراجعة مصدر نص القرآن والترجمة لكل مورد.',
+        readingPlannerTitle:'مخطط القراءة',
     dailyQuranPlan:'خطة القرآن اليومية',
     setGoal:'الهدف اليومي',
     ayahsPerDay:'آيات يوميًا',
@@ -242,7 +251,10 @@ const messages: Record<UiLanguage, Record<string, string>> = {
     salatTimes:'مواقيت الصلاة', bookmarks:'الآيات المحفوظة', appMenu:'قائمة التطبيق'
   },
   hi: {
-    readingPlannerTitle:'पठन योजना',
+    aboutApp:'इस ऐप के बारे में',
+    aboutDescription:'कुरआन पढ़ने, चुने हुए अनुवाद, तिलावत, क़िबला, नमाज़ के समय और व्यक्तिगत अध्ययन नोट्स के लिए बनाया गया। शुरुआती डाउनलोड के लिए इंटरनेट चाहिए; सहेजी गई सामग्री ऑफ़लाइन उपलब्ध है।',
+    sourceNote:'कुरआन पाठ और अनुवाद के स्रोत हर संसाधन के लिए जाँचे जाने चाहिए।',
+        readingPlannerTitle:'पठन योजना',
     dailyQuranPlan:'दैनिक कुरआन योजना',
     setGoal:'दैनिक लक्ष्य',
     ayahsPerDay:'प्रतिदिन आयतें',
@@ -319,7 +331,10 @@ const messages: Record<UiLanguage, Record<string, string>> = {
     salatTimes:'नमाज़ का समय', bookmarks:'सहेजी गई आयतें', appMenu:'ऐप मेनू'
   },
   ur: {
-    readingPlannerTitle:'مطالعے کا منصوبہ',
+    aboutApp:'ایپ کے بارے میں',
+    aboutDescription:'قرآن پڑھنے، منتخب تراجم، تلاوت، قبلہ، نماز کے اوقات اور ذاتی مطالعے کے نوٹس کے لیے تیار کردہ۔ پہلی بار ڈاؤن لوڈ کے لیے انٹرنیٹ درکار ہو سکتا ہے؛ محفوظ مواد آف لائن استعمال کیا جا سکتا ہے۔',
+    sourceNote:'قرآن کے متن اور ترجمے کا ماخذ ہر ریسورس کے لیے جانچنا چاہیے۔',
+        readingPlannerTitle:'مطالعے کا منصوبہ',
     dailyQuranPlan:'روزانہ قرآن منصوبہ',
     setGoal:'روزانہ ہدف',
     ayahsPerDay:'روزانہ آیات',
@@ -396,7 +411,10 @@ const messages: Record<UiLanguage, Record<string, string>> = {
     salatTimes:'نماز کے اوقات', bookmarks:'محفوظ آیات', appMenu:'ایپ مینو'
   },
   tr: {
-    readingPlannerTitle:'Okuma Planlayıcısı',
+    aboutApp:'Uygulama hakkında',
+    aboutDescription:'Kur’an okuma, seçili çeviriler, tilavet, kıble, namaz vakitleri ve kişisel çalışma notları için tasarlandı. İlk indirmeler internet gerektirebilir; kaydedilen içerik çevrimdışı kullanılabilir.',
+    sourceNote:'Kur’an metni ve çeviri kaynakları her kaynak için incelenmelidir.',
+        readingPlannerTitle:'Okuma Planlayıcısı',
     dailyQuranPlan:'Günlük Kur’an Planı',
     setGoal:'Günlük hedef',
     ayahsPerDay:'Günde ayet',
