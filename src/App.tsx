@@ -335,7 +335,7 @@ function AppContent() {
         onOpenMenu={() => setIsSideMenuOpen(true)}
         currentSurahNameBn={activeUiLanguage === 'bn' ? currentSurah.nameBengali : currentSurah.nameEnglish}
         currentSurahId={currentSurahId}
-        activeUiLanguage={activeUiLanguage}
+        uiLanguage={activeUiLanguage}
       />
 
       {/* Offline Status Banner */}
@@ -358,17 +358,17 @@ function AppContent() {
             onSelectReciter={setSelectedReciterId}
             currentLanguage={currentLanguage}
             onSelectLanguage={handleQuranLanguageChange}
-            activeUiLanguage={activeUiLanguage}
+            uiLanguage={activeUiLanguage}
           />
         )}
 
-        {activeTab === 'prayer' && <PrayerTimesView activeUiLanguage={activeUiLanguage} />}
+        {activeTab === 'prayer' && <PrayerTimesView uiLanguage={activeUiLanguage} />}
 
-        {activeTab === 'qibla' && <QiblaCompassView activeUiLanguage={activeUiLanguage} />}
+        {activeTab === 'qibla' && <QiblaCompassView uiLanguage={activeUiLanguage} />}
 
-        {activeTab === 'dhikr' && <DailyDhikrView activeUiLanguage={activeUiLanguage} />}
+        {activeTab === 'dhikr' && <DailyDhikrView uiLanguage={activeUiLanguage} />}
 
-        {activeTab === 'planner' && <ReadingPlanner activeUiLanguage={activeUiLanguage} />}
+        {activeTab === 'planner' && <ReadingPlanner uiLanguage={activeUiLanguage} />}
 
         {activeTab === 'bookmarks' && (
           <BookmarksView
@@ -376,7 +376,7 @@ function AppContent() {
             onRemoveBookmark={handleRemoveBookmark}
             onNavigateToAyah={handleSelectSurah}
             lastRead={lastRead}
-            activeUiLanguage={activeUiLanguage}
+            uiLanguage={activeUiLanguage}
           />
         )}
 
@@ -398,7 +398,7 @@ function AppContent() {
             setSelectedReciterId={setSelectedReciterId}
             theme={theme}
             setTheme={setTheme}
-            activeUiLanguage={activeUiLanguage}
+            uiLanguage={activeUiLanguage}
             onUiLanguageChange={handleUiLanguageChange}
           />
         )}
@@ -413,7 +413,7 @@ function AppContent() {
         onPrayer={() => { setIsSideMenuOpen(false); setActiveTab('prayer'); }}
         onBookmarks={() => { setIsSideMenuOpen(false); setActiveTab('bookmarks'); }}
         onGoToAyah={() => { setIsSideMenuOpen(false); setIsSurahDrawerOpen(true); }}
-        activeUiLanguage={activeUiLanguage}
+        uiLanguage={activeUiLanguage}
       />
 
       {/* Surah & Juz Selection Drawer Modal */}
