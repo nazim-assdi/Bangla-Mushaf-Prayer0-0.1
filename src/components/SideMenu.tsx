@@ -16,7 +16,7 @@ interface SideMenuProps {
 }
 
 export const SideMenu: React.FC<SideMenuProps> = ({
-  isOpen, onClose, onSearch, onSettings, onPrayer, onQibla,
+  isOpen, onClose, onSearch, onSettings, onPrayer,
   onBookmarks, onGoToAyah
 }) => {
   if (!isOpen) return null;
@@ -29,7 +29,7 @@ export const SideMenu: React.FC<SideMenuProps> = ({
     };
     try {
       if (navigator.share) await navigator.share(shareData);
-      else if (navigator.clipboard) await navigator.clipboard.writeText(shareData.url);
+      else window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareData.url)}`, '_blank', 'noopener,noreferrer');
     } catch (error) {
       console.warn('Share was cancelled or unavailable:', error);
     }
