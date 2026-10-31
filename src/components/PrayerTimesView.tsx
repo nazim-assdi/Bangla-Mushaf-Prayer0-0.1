@@ -25,8 +25,9 @@ import {
 } from '../utils/prayerTimes';
 import { toBanglaNumber, formatDurationToBangla } from '../utils/banglaNumbers';
 import { schedulePrayerAlerts, cancelPrayerAlerts, refreshPrayerAlertsIfPermitted } from '../services/prayerNotifications';
+import { UiLanguage, translateUi } from '../services/i18n';
 
-export const PrayerTimesView: React.FC = () => {
+export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLanguage }) => {
   const [selectedDistrictId, setSelectedDistrictId] = useState<string>('dhaka');
   const [customCoords, setCustomCoords] = useState<{ lat: number; lng: number; nameBn: string; accuracy?: number } | null>(null);
   const [geoError, setGeoError] = useState('');
@@ -80,7 +81,7 @@ export const PrayerTimesView: React.FC = () => {
 
   const activeLat = customCoords ? customCoords.lat : currentDistrict.lat;
   const activeLng = customCoords ? customCoords.lng : currentDistrict.lng;
-  const locationLabel = customCoords ? customCoords.nameBn : `${currentDistrict.nameBn} জেলা (${currentDistrict.divisionBn} বিভাগ)`;
+  const locationLabel = customCoords ? customCoords.nameBn : uiLanguage === 'bn' ? `${currentDistrict.nameBn} জেলা (${currentDistrict.divisionBn} বিভাগ)` : `${currentDistrict.nameEn} · ${translateUi(uiLanguage, 'districtFallback')}`;
 
   // Keep already-authorized background alerts in sync with saved preferences,
   // GPS changes and calculation settings. This never prompts unexpectedly.
@@ -135,7 +136,7 @@ export const PrayerTimesView: React.FC = () => {
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
           accuracy: pos.coords.accuracy,
-          nameBn: 'আমার বর্তমান GPS অবস্থান',
+          nameBn: 'Current GPS location',
         });
         setLastGpsUpdate(new Date(pos.timestamp));
         setGpsLive(true);
@@ -197,7 +198,7 @@ export const PrayerTimesView: React.FC = () => {
             value={customCoords ? '' : selectedDistrictId}
             onChange={(e) => handleSelectDistrict(e.target.value)}
             className="px-3 py-2 rounded-xl bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-800 dark:text-stone-200 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500"
-            aria-label="জেলা নির্বাচন করুন"
+            aria-label={translateUi(uiLanguage, 'districtFallback')}
           >
             {divisions.map((div) => (
               <optgroup key={div} label={`${div} বিভাগ`}>
@@ -215,10 +216,10 @@ export const PrayerTimesView: React.FC = () => {
             onClick={handleUseGPS}
             disabled={geoLoading}
             className="px-3 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-colors shrink-0 shadow-xs"
-            aria-label="আমার জিপিএস লোকেশন ব্যবহার করুন"
+            aria-label={translateUi(uiLanguage, 'useGps')}
           >
             <RefreshCw className={`w-3.5 h-3.5 ${geoLoading ? 'animate-spin' : ''}`} />
-            <span>{geoLoading ? 'খোঁজা হচ্ছে...' : gpsLive ? 'GPS Live চালু' : 'লাইভ GPS চালু করুন'}</span>
+            <span>{geoLoading ? '…' : gpsLive ? 'GPS Live' : translateUi(uiLanguage, 'useGps')}</span>
           </button>
         </div>
       </div>
@@ -230,7 +231,7 @@ export const PrayerTimesView: React.FC = () => {
       {/* Native background alarm controls */}
       <section className="rounded-2xl border border-emerald-200 bg-white p-4 shadow-sm dark:border-emerald-900 dark:bg-stone-900 space-y-3">
         <div>
-          <h3 className="font-bold text-stone-900 dark:text-white">অ্যালার্ম ও নোটিফিকেশন</h3>
+          <h3 className="font-bold text-stone-900 dark:text-white">{translateUi(uiLanguage, 'notifications')}</h3>
           <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">Android APK-তে অ্যাপ বন্ধ বা ফোন লক থাকলেও স্থানীয় অ্যালার্ম কাজ করার জন্য আগামী ৭ দিনের সময় সেট হবে।</p>
         </div>
         <label className="flex items-center justify-between gap-3 text-sm text-stone-800 dark:text-stone-200">
@@ -257,7 +258,7 @@ export const PrayerTimesView: React.FC = () => {
               <span>পরবর্তী ওয়াক্ত</span>
             </div>
 
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-amber-300 mb-1">
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-amber-300 mb-1">{translateUi(uiLanguage, 'prayerTimesTitle')} 
               {nextWaqt.nameBn} ({nextWaqt.nameAr})
             </h1>
             <p className="text-xl sm:text-2xl text-emerald-100 font-medium">
