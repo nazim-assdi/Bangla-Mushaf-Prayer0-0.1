@@ -27,7 +27,8 @@ import { toBanglaNumber, formatDurationToBangla } from '../utils/banglaNumbers';
 
 export const PrayerTimesView: React.FC = () => {
   const [selectedDistrictId, setSelectedDistrictId] = useState<string>('dhaka');
-  const [customCoords, setCustomCoords] = useState<{ lat: number; lng: number; nameBn: string } | null>(null);
+  const [customCoords, setCustomCoords] = useState<{ lat: number; lng: number; nameBn: string; accuracy?: number } | null>(null);
+  const [geoError, setGeoError] = useState('');
   const [geoLoading, setGeoLoading] = useState(false);
   const [asrJuristic, setAsrJuristic] = useState<'hanafi' | 'shafii'>('hanafi');
   const [calculationMethod, setCalculationMethod] = useState<string>('Karachi');
@@ -47,6 +48,9 @@ export const PrayerTimesView: React.FC = () => {
   const activeLng = customCoords ? customCoords.lng : currentDistrict.lng;
   const locationLabel = customCoords ? customCoords.nameBn : `${currentDistrict.nameBn} জেলা (${currentDistrict.divisionBn} বিভাগ)`;
 
+  const timezoneOffsetHours = -currentTime.getTimezoneOffset() / 60;
+  const timezoneLabel = 'UTC' + (timezoneOffsetHours >= 0 ? '+' : '') + timezoneOffsetHours;
+
   const config: PrayerTimeConfig = {
     fajrAngle: CALCULATION_METHODS[calculationMethod]?.fajrAngle || 18,
     ishaAngle: CALCULATION_METHODS[calculationMethod]?.ishaAngle || 18,
@@ -54,8 +58,8 @@ export const PrayerTimesView: React.FC = () => {
   };
 
   const prayerTimes = useMemo(() => {
-    return calculatePrayerTimes(currentTime, activeLat, activeLng, 6, config);
-  }, [currentTime, activeLat, activeLng, asrJuristic, calculationMethod]);
+    return calculatePrayerTimes(currentTime, activeLat, activeLng, timezoneOffsetHours, config);
+  }, [currentTime, activeLat, activeLng, timezoneOffsetHours, asrJuristic, calculationMethod]);
 
   const waqts = useMemo(() => {
     return getWaqtsStatus(prayerTimes, currentTime);
@@ -72,20 +76,23 @@ export const PrayerTimesView: React.FC = () => {
       return;
     }
     setGeoLoading(true);
+    setGeoError('');
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setCustomCoords({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          nameBn: 'আমার বর্তমান জিপিএস অবস্থান',
-        });
+        setCustomCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy, nameBn: 'আমার বর্তমান GPS অবস্থান' });
         setGeoLoading(false);
       },
       (err) => {
         console.warn('GPS error:', err);
+        const messages: Record<number, string> = {
+          1: 'Location permission বন্ধ আছে। ফোনের Settings থেকে অনুমতি দিন।',
+          2: 'GPS অবস্থান পাওয়া যায়নি। Location চালু করে আবার চেষ্টা করুন।',
+          3: 'GPS পেতে সময় শেষ হয়েছে। খোলা জায়গায় আবার চেষ্টা করুন।',
+        };
+        setGeoError(messages[err.code] || 'GPS অবস্থান পাওয়া যায়নি।');
         setGeoLoading(false);
       },
-      { timeout: 8000 }
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
     );
   };
 
@@ -93,7 +100,7 @@ export const PrayerTimesView: React.FC = () => {
   const divisions = ['ঢাকা', 'চট্টগ্রাম', 'সিলেট', 'রাজশাহী', 'খুলনা', 'বরিশাল', 'রংপুর', 'ময়মনসিংহ'];
 
   return (
-    <div className="max-w-4xl mx-auto px-3 sm:px-6 py-6 pb-28 font-bangla space-y-6">
+    <div className="mx-auto w-full max-w-6xl px-3 py-4 pb-28 font-bangla sm:px-5 sm:py-6 space-y-5">
       {/* Location Selector Bar */}
       <div className="bg-white dark:bg-stone-900 rounded-2xl p-4 sm:p-5 shadow-xs border border-stone-200 dark:border-stone-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -105,7 +112,7 @@ export const PrayerTimesView: React.FC = () => {
               {locationLabel}
             </h2>
             <p className="text-xs text-stone-500 dark:text-stone-400">
-              অক্ষাংশ: {toBanglaNumber(activeLat.toFixed(4))}°, দ্রাঘিমাংশ: {toBanglaNumber(activeLng.toFixed(4))}° (UTC+৬)
+              অক্ষাংশ: {toBanglaNumber(activeLat.toFixed(4))}°, দ্রাঘিমাংশ: {toBanglaNumber(activeLng.toFixed(4))}° ({timezoneLabel}){customCoords?.accuracy ? ` · GPS ±${Math.round(customCoords.accuracy)}m` : ''}
             </p>
           </div>
         </div>
@@ -144,6 +151,8 @@ export const PrayerTimesView: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {geoError && <div role="status" className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">{geoError}</div>}
 
       {/* Hero Next Prayer Countdown Card */}
       <div className="bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden border border-emerald-700/60">

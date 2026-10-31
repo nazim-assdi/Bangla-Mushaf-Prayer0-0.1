@@ -14,9 +14,9 @@ export default defineConfig(() => {
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icon.svg', 'pwa-192x192.png', 'pwa-512x512.png'],
         manifest: {
           id: '/',
-          name: 'বাংলা কুরআন ও নামাজের সময়',
-          short_name: 'কুরআন ও সালাত',
-          description: 'বাংলা শব্দে শব্দে কুরআনুল কারীম, অডিও তিলাওয়াত, বহুভাষিক তাফসীর, নামাজের সময়সূচী, কিবলা ও মাসনুন আযকার',
+          name: 'Al-Quran Al-Kareem',
+          short_name: 'Al-Quran',
+          description: 'Read, reflect, and remember with Quran recitation, translations, tafsir, prayer times, and Qibla.',
           theme_color: '#064e3b',
           background_color: '#064e3b',
           display: 'standalone',

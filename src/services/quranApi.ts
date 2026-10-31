@@ -190,47 +190,7 @@ export async function fetchTafsir(verseKey: string): Promise<TafsirContent[]> {
     return MULTI_LANG_TAFSIRS[verseKey];
   }
 
-  // Fallback multi-language tafsir generators for any verse
-  const [s, a] = verseKey.split(':');
-  const dynamicTafsirs: TafsirContent[] = [
-    {
-      author: 'আল্লামা ইবনে কাসীর (র.)',
-      nameBn: 'তাফসীর ইবনে কাসীর (বাংলা)',
-      language: 'bn',
-      text: `সূরা ${s}, আয়াত ${a} এর তাফসীর: এই আয়াতে মহান আল্লাহ বান্দাদের হেদায়াত, তাওহীদ এবং ঈমানের মৌলিক শিক্ষার দিকনির্দেশনা প্রদান করেছেন। রাসুলুল্লাহ (সা.) এই আয়াতের শিক্ষাকে বাস্তব জীবনে ধারণ ও আমল করার নির্দেশ দিয়েছেন।`,
-    },
-    {
-      author: 'Ibn Kathir (English Tafsir)',
-      nameBn: 'Tafsir Ibn Kathir (English)',
-      language: 'en',
-      text: `Surah ${s}, Ayah ${a}: This verse emphasizes devotion, faith in Allah's oneness, guidance, and adherence to righteous deeds as revealed to the Prophet Muhammad (peace be upon him).`,
-    },
-    {
-      author: 'تفسير ابن كثير (عربي)',
-      nameBn: 'تفسير ابن كثير (Arabic)',
-      language: 'ar',
-      text: `تفسير الآية ${a} من سورة ${s}: توضح هذه الآية العظيمة قواعد التوحيد والإيمان والهدى الذي أُنزل على النبي محمد صلى الله عليه وسلم.`,
-    },
-    {
-      author: 'تفسیر ابن کثیر (اردو)',
-      nameBn: 'تفسیر ابن کثیر (Urdu)',
-      language: 'ur',
-      text: `سورہ ${s} کی آیت ${a} کی تفسیر: یہ آیت توحید، ہدایت اور رسول اکرم ﷺ پر نازل ہونے والی تعلیمات کی عظمت کو بیان کرتی ہے۔`,
-    },
-    {
-      author: 'तफ़सीर इब्न कसीर (हिन्दी)',
-      nameBn: 'तफ़सीर इब्न कसीर (Hindi)',
-      language: 'hi',
-      text: `सूरह ${s}, आयत ${a} की तफ़सीर: यह आयत तौहीद, मार्गदर्शन और नेक अमल के महत्व को उजागर करती है।`,
-    },
-    {
-      author: 'İbn Kesir Tefsiri (Türkçe)',
-      nameBn: 'İbn Kesir Tefsiri (Turkish)',
-      language: 'tr',
-      text: `Sure ${s}, Ayet ${a} Tefsiri: Bu ayet, Allah'ın birliğini, hidayeti ve Hz. Muhammed'e (s.a.v.) indirilen ilahi hükümleri açıklamaktadır.`,
-    },
-  ];
-
-  tafsirCache[verseKey] = dynamicTafsirs;
-  return dynamicTafsirs;
+  // Do not invent tafsir text or attribute generated summaries to named scholars.
+  // Only explicitly curated, source-checked entries above are returned.
+  return [];
 }

@@ -19,6 +19,8 @@ import { RECITERS } from '../services/quranApi';
 import { QURAN_LANGUAGES, QuranLanguage, fetchVersesByLanguage } from '../services/multiLangQuran';
 import { toBanglaNumber, toArabicNumber } from '../utils/banglaNumbers';
 import { TafsirModal } from './TafsirModal';
+import { OfflineQuranDownload } from './OfflineQuranDownload';
+import { AyahStudyTools } from './AyahStudyTools';
 
 export type ViewMode = 'wbw' | 'verse' | 'mushaf';
 
@@ -68,6 +70,26 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
   const [hifzRepeatCount, setHifzRepeatCount] = useState<number>(1);
   const [currentRepeat, setCurrentRepeat] = useState<number>(1);
   const [copiedAyahKey, setCopiedAyahKey] = useState<string | null>(null);
+  const [studyRecords, setStudyRecords] = useState<Record<string, { read: boolean; note: string }>>({});
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('mushaf_ayah_study_v1');
+      if (stored) setStudyRecords(JSON.parse(stored));
+    } catch (error) {
+      console.warn('Could not restore reading notes:', error);
+    }
+  }, []);
+
+  const updateStudyRecord = (verseKey: string, patch: Partial<{ read: boolean; note: string }>) => {
+    setStudyRecords((previous) => {
+      const next = { ...previous, [verseKey]: { read: previous[verseKey]?.read ?? false, note: previous[verseKey]?.note ?? '', ...patch } };
+      try { localStorage.setItem('mushaf_ayah_study_v1', JSON.stringify(next)); } catch (error) { console.warn('Could not save reading notes:', error); }
+      return next;
+    });
+  };
+
+  const readCount = ayahs.filter((ayah) => studyRecords[ayah.verseKey]?.read).length;
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const wordAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -194,7 +216,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
   const langMeta = QURAN_LANGUAGES.find((l) => l.code === currentLanguage) || QURAN_LANGUAGES[0];
 
   return (
-    <div className="min-h-screen pb-32 pt-2 px-2 sm:px-4 max-w-5xl mx-auto font-bangla">
+    <div className="min-h-screen w-full min-w-0 pb-32 pt-2 px-3 sm:px-5 max-w-7xl mx-auto font-bangla">
       <audio
         ref={audioRef}
         onEnded={handleAyahAudioEnded}
@@ -265,6 +287,16 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
           </button>
         </div>
       </div>
+
+      <OfflineQuranDownload />
+
+      <section className="mb-5 rounded-2xl border border-emerald-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900" aria-label="Reading progress">
+        <div className="flex items-center justify-between gap-3">
+          <div><h3 className="font-bold text-stone-900 dark:text-white">Reading Progress</h3><p className="text-xs text-stone-500 dark:text-stone-400">এই সূরার কতটি আয়াত পড়েছেন তা চিহ্নিত করুন</p></div>
+          <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-extrabold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">{readCount}/{currentSurah.versesCount}</span>
+        </div>
+        <div className="mt-3 h-2 overflow-hidden rounded-full bg-stone-100 dark:bg-stone-800"><div className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-amber-400 transition-all" style={{ width: `${Math.round(readCount / currentSurah.versesCount * 100)}%` }} /></div>
+      </section>
 
       {/* Reading Controls Toolbar & Language Selector */}
       <div className="bg-white dark:bg-stone-900 rounded-xl p-3 shadow-xs border border-stone-200 dark:border-stone-800 mb-5 flex flex-wrap items-center justify-between gap-3 text-xs">
@@ -475,6 +507,8 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
                     </button>
                   </div>
                 </div>
+
+                <div className="px-4 sm:px-6"><AyahStudyTools read={!!studyRecords[ayah.verseKey]?.read} note={studyRecords[ayah.verseKey]?.note ?? ''} onToggleRead={() => updateStudyRecord(ayah.verseKey, { read: !studyRecords[ayah.verseKey]?.read })} onNoteChange={(note) => updateStudyRecord(ayah.verseKey, { note })} /></div>
 
                 {/* Body Content */}
                 <div className="p-4 sm:p-6 space-y-4">

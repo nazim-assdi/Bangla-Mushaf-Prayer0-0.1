@@ -1,0 +1,9 @@
+{
+  "appId": "com.nazimassdi.banglamushaf",
+  "appName": "বাংলা কুরআন ও নামাজ",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "android": {
+    "allowMixedContent": false
+  }
+}

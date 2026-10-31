@@ -220,7 +220,7 @@ export const TafsirModal: React.FC<TafsirModalProps> = ({
 
         {/* Footer */}
         <div className="p-3 bg-stone-50 dark:bg-stone-800/60 border-t border-stone-200 dark:border-stone-800 flex items-center justify-between text-xs font-bangla text-stone-500 dark:text-stone-400">
-          <span>তাফসীর ইবনে কাসীর ও নির্ভরযোগ্য তাফসীরগ্রন্থ হতে সংকলিত</span>
+          <span>উপরে প্রদর্শিত নির্বাচিত তাফসীরের উৎস ও লেখক দেখুন</span>
           <button
             onClick={onClose}
             className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg font-medium transition-colors"
