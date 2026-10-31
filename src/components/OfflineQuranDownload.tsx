@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { CheckCircle2, Download, HardDrive, LoaderCircle, Trash2, Flower2 } from 'lucide-react';
-import { downloadFullQuranOffline, QURAN_LANGUAGES, QuranLanguage } from '../services/multiLangQuran';
+import { clearOfflineLanguageCache, downloadFullQuranOffline, QURAN_LANGUAGES, QuranLanguage } from '../services/multiLangQuran';
 import { deleteOfflineLanguage, getOfflineSurahCount } from '../services/offlineQuranStore';
 import { DonationCard } from './DonationCard';
 
@@ -51,6 +51,7 @@ export const OfflineQuranDownload: React.FC = () => {
     if (!window.confirm(`${QURAN_LANGUAGES.find((item) => item.code === lang)?.nativeName} ভাষার অফলাইন কনটেন্ট মুছে ফেলবেন?`)) return;
     try {
       await deleteOfflineLanguage(lang);
+      clearOfflineLanguageCache(lang);
       setSaved((current) => ({ ...current, [lang]: 0 }));
       setProgress((current) => ({ ...current, [lang]: 0 }));
       setMessage('নির্বাচিত ভাষার অফলাইন কনটেন্ট মুছে ফেলা হয়েছে।');
