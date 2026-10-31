@@ -339,9 +339,9 @@ function AppContent() {
           />
         )}
 
-        {activeTab === 'prayer' && <PrayerTimesView />}
+        {activeTab === 'prayer' && <PrayerTimesView uiLanguage={uiLanguage} />}
 
-        {activeTab === 'qibla' && <QiblaCompassView />}
+        {activeTab === 'qibla' && <QiblaCompassView uiLanguage={uiLanguage} />}
 
         {activeTab === 'dhikr' && <DailyDhikrView />}\n\n        {activeTab === 'planner' && <ReadingPlanner />}
 
