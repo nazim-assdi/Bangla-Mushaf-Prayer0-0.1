@@ -107,7 +107,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
       </section>
 
-      <OfflineNotesAccount />
+      <OfflineNotesAccount uiLanguage={uiLanguage} />
 
       <OfflineQuranDownload uiLanguage={uiLanguage} />
 
