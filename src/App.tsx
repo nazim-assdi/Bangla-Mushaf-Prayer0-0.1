@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navbar, ActiveTab, ThemeMode } from './components/Navbar';
 import { MushafReader } from './components/MushafReader';
 import { SurahDrawer } from './components/SurahDrawer';
@@ -82,34 +82,14 @@ function AppContent() {
     return { surahId: 1, ayahNumber: 1, surahNameBn: 'আল-ফাতিহা' };
   });
 
-  // Real-time Firestore sync and Cloud SQL sync when user is signed in.
-  // On the first snapshot only, migrate existing local bookmarks if the account is empty.
-  const receivedInitialBookmarksSnapshot = useRef(false);
+  // Firestore is the source of truth for a signed-in account.
+  // Always apply snapshots, including empty ones, so another account's local data
+  // can never be copied into this account or resurrect deleted bookmarks.
   useEffect(() => {
-    receivedInitialBookmarksSnapshot.current = false;
     if (!user) return;
 
     void syncUserToCloudSQL(user);
     const unsubscribe = subscribeToBookmarks(user.uid, (remoteBookmarks) => {
-      if (!receivedInitialBookmarksSnapshot.current) {
-        receivedInitialBookmarksSnapshot.current = true;
-
-        if (remoteBookmarks.length === 0 && bookmarks.length > 0) {
-          // Preserve a user's existing local bookmarks when linking a new account.
-          bookmarks.forEach((bookmark) => {
-            const id = bookmark.id || bookmark.verseKey.replace(':', '_');
-            void saveBookmarkToFirestore(user.uid, {
-              ...bookmark,
-              id,
-              userId: user.uid,
-            });
-            void addBookmarkToCloudSQL(user, bookmark);
-          });
-          return;
-        }
-      }
-
-      // An empty remote list is meaningful: it must clear stale local/demo entries.
       setBookmarks(remoteBookmarks);
     });
 
