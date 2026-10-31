@@ -11,7 +11,14 @@ export const UI_LANGUAGES: { code: UiLanguage; name: string; nativeName: string;
 
 const messages: Record<UiLanguage, Record<string, string>> = {
   bn: {
-    noteClose:'নোট বন্ধ করুন',
+    onlineLogin:'অনলাইন অ্যাকাউন্ট',
+    loginHelp:'লগইন করতে ইন্টারনেট লাগবে। লগইন ছাড়াও কুরআন পড়া, নোট লেখা ও সংরক্ষণ অফলাইনে করা যাবে।',
+    accountChecking:'অ্যাকাউন্টের অবস্থা যাচাই হচ্ছে…',
+    signedIn:'লগইন করা আছে',
+    signOut:'লগআউট',
+    googleSignIn:'Google দিয়ে অনলাইনে লগইন করুন',
+    cloudSyncNote:'নোট এই ডিভাইসে অফলাইনে সংরক্ষিত থাকে। ক্লাউড ব্যাকআপ ও অন্য ডিভাইসে সিঙ্ক এখনো চালু হয়নি।',
+        noteClose:'নোট বন্ধ করুন',
     noteView:'নোট দেখুন / সম্পাদনা',
     noteWrite:'নোট লিখুন',
     notePlaceholder:'এই আয়াত সম্পর্কে আপনার ব্যক্তিগত নোট লিখুন...',
@@ -66,7 +73,14 @@ const messages: Record<UiLanguage, Record<string, string>> = {
     salatTimes:'সালাতের সময়', bookmarks:'সংরক্ষিত আয়াত', appMenu:'অ্যাপ মেনু'
   },
   en: {
-    noteClose:'Close note',
+    onlineLogin:'Online account',
+    loginHelp:'Internet is required to sign in. Quran reading and personal notes work offline without an account.',
+    accountChecking:'Checking account status…',
+    signedIn:'Signed in as',
+    signOut:'Sign out',
+    googleSignIn:'Sign in online with Google',
+    cloudSyncNote:'Notes are stored offline on this device. Cloud backup and cross-device sync are not available yet.',
+        noteClose:'Close note',
     noteView:'View / edit note',
     noteWrite:'Write a note',
     notePlaceholder:'Write your personal note about this verse...',
@@ -121,7 +135,14 @@ const messages: Record<UiLanguage, Record<string, string>> = {
     salatTimes:'Prayer times', bookmarks:'Saved verses', appMenu:'App menu'
   },
   ar: {
-    noteClose:'إغلاق الملاحظة',
+    onlineLogin:'الحساب عبر الإنترنت',
+    loginHelp:'يلزم الاتصال بالإنترنت لتسجيل الدخول. تعمل قراءة القرآن والملاحظات دون اتصال ودون حساب.',
+    accountChecking:'جارٍ التحقق من الحساب…',
+    signedIn:'تم تسجيل الدخول باسم',
+    signOut:'تسجيل الخروج',
+    googleSignIn:'تسجيل الدخول عبر Google',
+    cloudSyncNote:'تُحفظ الملاحظات على هذا الجهاز دون اتصال. النسخ السحابي والمزامنة بين الأجهزة غير متاحين بعد.',
+        noteClose:'إغلاق الملاحظة',
     noteView:'عرض / تعديل الملاحظة',
     noteWrite:'اكتب ملاحظة',
     notePlaceholder:'اكتب ملاحظتك الشخصية حول هذه الآية...',
@@ -176,7 +197,14 @@ const messages: Record<UiLanguage, Record<string, string>> = {
     salatTimes:'مواقيت الصلاة', bookmarks:'الآيات المحفوظة', appMenu:'قائمة التطبيق'
   },
   hi: {
-    noteClose:'नोट बंद करें',
+    onlineLogin:'ऑनलाइन खाता',
+    loginHelp:'साइन इन करने के लिए इंटरनेट चाहिए। बिना खाते के कुरआन पढ़ना और नोट ऑफ़लाइन काम करते हैं।',
+    accountChecking:'खाते की स्थिति जाँची जा रही है…',
+    signedIn:'इस रूप में साइन इन',
+    signOut:'साइन आउट',
+    googleSignIn:'Google से ऑनलाइन साइन इन करें',
+    cloudSyncNote:'नोट इस डिवाइस पर ऑफ़लाइन सहेजे जाते हैं। क्लाउड बैकअप और डिवाइस सिंक अभी उपलब्ध नहीं हैं।',
+        noteClose:'नोट बंद करें',
     noteView:'नोट देखें / संपादित करें',
     noteWrite:'नोट लिखें',
     notePlaceholder:'इस आयत के बारे में अपना निजी नोट लिखें...',
@@ -231,7 +259,14 @@ const messages: Record<UiLanguage, Record<string, string>> = {
     salatTimes:'नमाज़ का समय', bookmarks:'सहेजी गई आयतें', appMenu:'ऐप मेनू'
   },
   ur: {
-    noteClose:'نوٹ بند کریں',
+    onlineLogin:'آن لائن اکاؤنٹ',
+    loginHelp:'سائن اِن کے لیے انٹرنیٹ ضروری ہے۔ قرآن پڑھنا اور ذاتی نوٹس اکاؤنٹ کے بغیر آف لائن کام کرتے ہیں۔',
+    accountChecking:'اکاؤنٹ کی حالت چیک ہو رہی ہے…',
+    signedIn:'اس اکاؤنٹ میں سائن اِن',
+    signOut:'سائن آؤٹ',
+    googleSignIn:'Google کے ذریعے آن لائن سائن اِن کریں',
+    cloudSyncNote:'نوٹس اسی ڈیوائس پر آف لائن محفوظ ہوتے ہیں۔ کلاؤڈ بیک اپ اور ڈیوائسز کے درمیان ہم آہنگی ابھی دستیاب نہیں۔',
+        noteClose:'نوٹ بند کریں',
     noteView:'نوٹ دیکھیں / ترمیم کریں',
     noteWrite:'نوٹ لکھیں',
     notePlaceholder:'اس آیت کے بارے میں اپنا ذاتی نوٹ لکھیں...',
@@ -286,7 +321,14 @@ const messages: Record<UiLanguage, Record<string, string>> = {
     salatTimes:'نماز کے اوقات', bookmarks:'محفوظ آیات', appMenu:'ایپ مینو'
   },
   tr: {
-    noteClose:'Notu kapat',
+    onlineLogin:'Çevrimiçi hesap',
+    loginHelp:'Oturum açmak için internet gerekir. Kur’an okuma ve kişisel notlar hesapsız çevrimdışı çalışır.',
+    accountChecking:'Hesap durumu kontrol ediliyor…',
+    signedIn:'Oturum açıldı:',
+    signOut:'Çıkış yap',
+    googleSignIn:'Google ile çevrimiçi oturum aç',
+    cloudSyncNote:'Notlar bu cihazda çevrimdışı saklanır. Bulut yedekleme ve cihazlar arası eşitleme henüz kullanılamıyor.',
+        noteClose:'Notu kapat',
     noteView:'Notu görüntüle / düzenle',
     noteWrite:'Not yaz',
     notePlaceholder:'Bu ayet hakkındaki kişisel notunuzu yazın...',
