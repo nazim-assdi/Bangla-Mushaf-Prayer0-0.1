@@ -180,6 +180,10 @@ export async function fetchSurahVerses(surahId: number, reciterId: string = 'ala
 /**
  * Fetch Tafsir in multiple languages (Bengali, English, Arabic, Urdu, Hindi, Turkish) for a given verse
  */
+export function getBundledTafsir(verseKey: string): TafsirContent[] {
+  return tafsirCache[verseKey] || MULTI_LANG_TAFSIRS[verseKey] || [];
+}
+
 export async function fetchTafsir(verseKey: string): Promise<TafsirContent[]> {
   if (tafsirCache[verseKey]) {
     return tafsirCache[verseKey];
