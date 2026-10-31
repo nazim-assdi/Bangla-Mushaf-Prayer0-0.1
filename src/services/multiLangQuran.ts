@@ -1,5 +1,5 @@
 /**
- * Multi-language Quran Service supporting verified Bengali, English, Hindi, Urdu, and Turkish translation resources
+ * Quran translation service using approved Quran.com translation resources across 63 languages
  */
 import { QuranAyah, QuranWord, TafsirContent } from '../data/quranSampleData';
 import { SURAH_LIST } from '../data/quranMetadata';
@@ -171,6 +171,7 @@ export async function fetchVersesByLanguage(
             translationUr: lang === 'ur' ? wordText : (isVerseMarker ? wordText : undefined),
             translationHi: lang === 'hi' ? wordText : (isVerseMarker ? wordText : undefined),
             translationTr: lang === 'tr' ? wordText : (isVerseMarker ? wordText : undefined),
+            translationText: isVerseMarker ? '' : rawText,
             audioUrl: audioPath,
           };
         });
