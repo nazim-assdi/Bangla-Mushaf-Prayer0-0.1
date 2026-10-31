@@ -2,7 +2,7 @@ import React from 'react';
 import {
   X, UserRoundPlus, Heart, MapPin, Bell, Clock3, Languages, Settings,
   Star, Share2, MessageCircle, MessageSquare, BarChart3, Search,
-  Compass, Sparkles, Bookmark, BookOpen, CalendarDays
+  Bookmark, BookOpen
 } from 'lucide-react';
 
 interface SideMenuProps {
@@ -11,15 +11,13 @@ interface SideMenuProps {
   onSearch: () => void;
   onSettings: () => void;
   onPrayer: () => void;
-  onQibla: () => void;
-  onDhikr: () => void;
   onBookmarks: () => void;
   onGoToAyah: () => void;
 }
 
 export const SideMenu: React.FC<SideMenuProps> = ({
   isOpen, onClose, onSearch, onSettings, onPrayer, onQibla,
-  onDhikr, onBookmarks, onGoToAyah
+  onBookmarks, onGoToAyah
 }) => {
   if (!isOpen) return null;
 
@@ -61,9 +59,6 @@ export const SideMenu: React.FC<SideMenuProps> = ({
     { label: 'Feedback', icon: MessageSquare, action: () => openWhatsApp('আসসালামু আলাইকুম। Al-Quran Al-Kareem অ্যাপ সম্পর্কে আমার মতামত: ') },
     { label: 'Share পরিসংখ্যান', icon: BarChart3, action: onBookmarks },
     { label: 'Search', icon: Search, action: onSearch },
-    { label: 'Qibla', icon: Compass, action: onQibla },
-    { label: 'Adhkar', icon: Sparkles, action: onDhikr },
-    { label: 'Planner', icon: CalendarDays, action: () => { onClose(); window.dispatchEvent(new CustomEvent('mushaf:open-planner')); } },
     { label: 'Library', icon: BookOpen, action: onBookmarks }
   ];
 
