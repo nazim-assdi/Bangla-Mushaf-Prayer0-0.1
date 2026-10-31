@@ -343,7 +343,9 @@ function AppContent() {
 
         {activeTab === 'qibla' && <QiblaCompassView uiLanguage={uiLanguage} />}
 
-        {activeTab === 'dhikr' && <DailyDhikrView uiLanguage={uiLanguage} />}\n\n        {activeTab === 'planner' && <ReadingPlanner />}
+        {activeTab === 'dhikr' && <DailyDhikrView uiLanguage={uiLanguage} />}
+
+        {activeTab === 'planner' && <ReadingPlanner />}
 
         {activeTab === 'bookmarks' && (
           <BookmarksView
