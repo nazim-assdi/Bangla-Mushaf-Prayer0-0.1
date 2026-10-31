@@ -56,7 +56,12 @@ function AppContent() {
   const [showTransliteration, setShowTransliteration] = useState<boolean>(true);
   const [showTranslation, setShowTranslation] = useState<boolean>(true);
   const [selectedReciterId, setSelectedReciterId] = useState<string>('alafasy');
-  const [currentLanguage, setCurrentLanguage] = useState<QuranLanguage>('bn');
+  const [currentLanguage, setCurrentLanguage] = useState<QuranLanguage>(() => {
+    const saved = localStorage.getItem('mushaf_quran_language');
+    if (saved === 'bn' || saved === 'en' || saved === 'hi' || saved === 'ur' || saved === 'tr') return saved;
+    const ui = localStorage.getItem('mushaf_ui_language');
+    return ui === 'bn' || ui === 'hi' || ui === 'ur' || ui === 'tr' ? ui : 'en';
+  });
   const [uiLanguage, setUiLanguage] = useState<UiLanguage | null>(() => {
     const saved = localStorage.getItem('mushaf_ui_language');
     return saved === 'bn' || saved === 'en' || saved === 'ar' || saved === 'hi' || saved === 'ur' || saved === 'tr' ? saved : null;
@@ -170,6 +175,11 @@ function AppContent() {
     setUiLanguage(language);
     setLanguageDraft(language);
     localStorage.setItem('mushaf_ui_language', language);
+    if (!localStorage.getItem('mushaf_quran_language')) {
+      const translationLanguage: QuranLanguage = language === 'ar' ? 'en' : language;
+      setCurrentLanguage(translationLanguage);
+      localStorage.setItem('mushaf_quran_language', translationLanguage);
+    }
   };
 
   // Handle theme classes on html
@@ -232,6 +242,11 @@ function AppContent() {
       deleteBookmarkFromFirestore(user.uid, verseKey.replace(':', '_'));
       deleteBookmarkFromCloudSQL(user, verseKey);
     }
+  };
+
+  const handleQuranLanguageChange = (language: QuranLanguage) => {
+    setCurrentLanguage(language);
+    localStorage.setItem('mushaf_quran_language', language);
   };
 
   const handleSelectSurah = (surahId: number, targetAyah?: number) => {
@@ -304,7 +319,7 @@ function AppContent() {
             selectedReciterId={selectedReciterId}
             onSelectReciter={setSelectedReciterId}
             currentLanguage={currentLanguage}
-            onSelectLanguage={setCurrentLanguage}
+            onSelectLanguage={handleQuranLanguageChange}
           />
         )}
 
