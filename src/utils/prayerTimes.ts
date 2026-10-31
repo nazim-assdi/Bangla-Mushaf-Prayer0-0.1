@@ -349,7 +349,7 @@ export function getWaqtsStatus(times: PrayerTimesResult, now: Date = new Date())
   ];
   const currentKey = intervals.find((interval) =>
     nowMs >= interval.start.getTime() && nowMs < interval.end.getTime()
-  )?.key;
+  )?.key ?? (nowMs < times.fajr.getTime() ? 'isha' : undefined);
 
   const displayItems = [
     prayers[0],
