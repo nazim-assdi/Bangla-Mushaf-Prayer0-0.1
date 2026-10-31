@@ -6,9 +6,12 @@ import { ThemeMode } from './Navbar';
 import { OfflineNotesAccount } from './OfflineNotesAccount';
 import { OfflineQuranDownload } from './OfflineQuranDownload';
 import { UI_LANGUAGES, UiLanguage, translateUi } from '../services/i18n';
+import { ARABIC_FONTS } from '../services/arabicFonts';
 
 interface SettingsModalProps {
   arabicFontSize: number;
+  arabicFontId: string;
+  setArabicFontId: (id: string) => void;
   setArabicFontSize: (size: number) => void;
   banglaFontSize: number;
   setBanglaFontSize: (size: number) => void;
@@ -27,6 +30,8 @@ interface SettingsModalProps {
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   arabicFontSize,
   setArabicFontSize,
+  arabicFontId,
+  setArabicFontId,
   banglaFontSize,
   setBanglaFontSize,
   showTransliteration,
@@ -227,6 +232,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Bundled Arabic font selector */}
+      <section className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm dark:border-stone-800 dark:bg-stone-900 space-y-3">
+        <h3 className="font-bold text-stone-900 dark:text-white">Arabic Mushaf Font · 10 fonts</h3>
+        <p className="text-xs text-stone-500 dark:text-stone-400">Fonts are bundled with the app, so the selected typeface is available offline.</p>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {ARABIC_FONTS.map((font) => (
+            <button key={font.id} type="button" onClick={() => setArabicFontId(font.id)} aria-pressed={arabicFontId === font.id}
+              className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-3 text-left transition ${arabicFontId === font.id ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40' : 'border-stone-200 dark:border-stone-700'}`}>
+              <span className="min-w-0"><span className="block text-sm font-semibold text-stone-900 dark:text-white">{font.name}</span><span className="text-[10px] text-stone-500 uppercase">{font.style}</span></span>
+              <span className="shrink-0 text-2xl text-emerald-900 dark:text-emerald-200" style={{ fontFamily: font.family }} dir="rtl">بِسْمِ اللَّهِ</span>
+            </button>
+          ))}
+        </div>
+      </section>
 
       {/* Reciter Picker */}
       <div className="bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200 dark:border-stone-800 space-y-4">
