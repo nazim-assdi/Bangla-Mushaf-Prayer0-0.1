@@ -26,7 +26,7 @@ test('Duration to Bangla string works', () => {
   assert.equal(formatDurationToBangla(120), '২ ঘণ্টা');
 });
 
-test('Qibla direction from Dhaka, Bangladesh is approximately 268-270 degrees', () => {
+test('Qibla direction from Dhaka, Bangladesh is approximately 277.6 degrees', () => {
   // Dhaka coordinates: 23.8103° N, 90.4125° E
   const bearing = calculateQiblaDirection(23.8103, 90.4125);
   // Expected Qibla from Dhaka is 277.6°
