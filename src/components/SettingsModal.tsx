@@ -4,6 +4,7 @@ import { RECITERS } from '../services/quranApi';
 import { toBanglaNumber } from '../utils/banglaNumbers';
 import { ThemeMode } from './Navbar';
 import { OfflineNotesAccount } from './OfflineNotesAccount';
+import { OfflineQuranDownload } from './OfflineQuranDownload';
 
 interface SettingsModalProps {
   arabicFontSize: number;
@@ -78,6 +79,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       </div>
 
       <OfflineNotesAccount />
+
+      <OfflineQuranDownload />
 
       {/* Theme Selection */}
       <div className="bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200 dark:border-stone-800 space-y-3">
