@@ -282,6 +282,7 @@ function AppContent() {
         onOpenMenu={() => setIsSideMenuOpen(true)}
         currentSurahNameBn={currentSurah.nameBengali}
         currentSurahId={currentSurahId}
+        uiLanguage={uiLanguage}
       />
 
       {/* Offline Status Banner */}
