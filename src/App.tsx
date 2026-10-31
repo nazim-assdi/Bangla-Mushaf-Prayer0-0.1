@@ -336,6 +336,8 @@ function AppContent() {
             setSelectedReciterId={setSelectedReciterId}
             theme={theme}
             setTheme={setTheme}
+            uiLanguage={uiLanguage}
+            onUiLanguageChange={handleUiLanguageChange}
           />
         )}
       </main>
