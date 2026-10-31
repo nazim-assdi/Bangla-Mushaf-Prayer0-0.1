@@ -5,6 +5,7 @@ import { toBanglaNumber } from '../utils/banglaNumbers';
 import { ThemeMode } from './Navbar';
 import { OfflineNotesAccount } from './OfflineNotesAccount';
 import { OfflineQuranDownload } from './OfflineQuranDownload';
+import { OfflineTafsirDownload } from './OfflineTafsirDownload';
 import { UI_LANGUAGES, UiLanguage, translateUi } from '../services/i18n';
 import { ARABIC_FONTS } from '../services/arabicFonts';
 
@@ -118,6 +119,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       <OfflineNotesAccount uiLanguage={uiLanguage} />
 
       <OfflineQuranDownload uiLanguage={uiLanguage} />
+
+      <OfflineTafsirDownload uiLanguage={uiLanguage} />
 
       {/* Theme Selection */}
       <div className="bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200 dark:border-stone-800 space-y-3">
