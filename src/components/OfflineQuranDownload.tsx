@@ -7,7 +7,6 @@ import { DonationCard } from './DonationCard';
 const languageNote: Record<QuranLanguage, string> = {
   bn: 'বাংলা অনুবাদ',
   en: 'English translation',
-  ar: 'আরবি তাফসির রিসোর্স (অনুবাদ নয়)',
   hi: 'हिन्दी अनुवाद',
   ur: 'اردو ترجمہ',
   tr: 'Türkçe meal',
@@ -71,7 +70,7 @@ export const OfflineQuranDownload: React.FC = () => {
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"><HardDrive className="h-6 w-6" /></div>
             <div className="min-w-0 flex-1">
               <h3 className="text-lg font-extrabold text-stone-900 dark:text-white">🌸 Offline Quran Library</h3>
-              <p className="text-xs text-stone-600 dark:text-stone-400">প্রতিটি ভাষার ১১৪টি সূরা আলাদাভাবে ডাউনলোড ও মুছে ফেলুন</p>
+              <p className="text-xs text-stone-600 dark:text-stone-400">প্রতিটি অনুবাদ ভাষার ১১৪টি সূরা আলাদাভাবে ডাউনলোড ও মুছে ফেলুন</p>
             </div>
             <span className="hidden rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 sm:inline-flex"><Flower2 className="mr-1 h-3.5 w-3.5" />{totalSaved} সূরা-ভাষা সংরক্ষিত</span>
           </div>
@@ -102,7 +101,7 @@ export const OfflineQuranDownload: React.FC = () => {
             })}
           </div>
           <p className="mt-3 text-xs text-stone-600 dark:text-stone-300" aria-live="polite">{message || 'ডাউনলোড শেষ হলে কনটেন্ট এই ডিভাইসের Offline Library-তে স্বয়ংক্রিয়ভাবে যুক্ত হবে।'}</p>
-          <p className="mt-2 text-[11px] leading-relaxed text-stone-500 dark:text-stone-400">প্রথম ডাউনলোডে ইন্টারনেট ও পর্যাপ্ত স্টোরেজ লাগবে। অডিও আলাদাভাবে ডাউনলোড হয় না। আরবি রিসোর্সটি বর্তমানে API-তে তাফসির হিসেবে চিহ্নিত; একে অনুবাদ হিসেবে দেখানো হয়নি।</p>
+          <p className="mt-2 text-[11px] leading-relaxed text-stone-500 dark:text-stone-400">প্রথম ডাউনলোডে ইন্টারনেট ও পর্যাপ্ত স্টোরেজ লাগবে। অডিও আলাদাভাবে ডাউনলোড হয় না। আরবি মূল পাঠ আলাদা; এই তালিকায় শুধু অনুবাদের রিসোর্স রাখা হয়েছে।</p>
         </div>
       </div>
       <DonationCard />
