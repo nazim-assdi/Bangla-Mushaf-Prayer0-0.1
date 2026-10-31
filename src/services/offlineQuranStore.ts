@@ -56,6 +56,41 @@ export async function saveOfflineSurah(surahId: number, language: string, ayahs:
   }
 }
 
+export async function deleteOfflineSurah(surahId: number, language: string): Promise<void> {
+  const db = await openDatabase();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, 'readwrite');
+      transaction.objectStore(STORE_NAME).delete(`${language}:${surahId}`);
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+      transaction.onabort = () => reject(transaction.error || new Error('Offline delete was cancelled.'));
+    });
+  } finally {
+    db.close();
+  }
+}
+
+export async function deleteOfflineLanguage(language: string): Promise<void> {
+  const db = await openDatabase();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.getAllKeys();
+      request.onsuccess = () => {
+        (request.result as string[]).filter((key) => key.startsWith(`${language}:`)).forEach((key) => store.delete(key));
+      };
+      request.onerror = () => reject(request.error);
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+      transaction.onabort = () => reject(transaction.error || new Error('Offline delete was cancelled.'));
+    });
+  } finally {
+    db.close();
+  }
+}
+
 export async function getOfflineSurahCount(language: string): Promise<number> {
   const db = await openDatabase();
   try {
