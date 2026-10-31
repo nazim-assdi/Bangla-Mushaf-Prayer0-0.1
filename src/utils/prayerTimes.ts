@@ -320,44 +320,49 @@ export function formatTimeEn(d: Date): string {
 
 export function getWaqtsStatus(times: PrayerTimesResult, now: Date = new Date()): WaqtInfo[] {
   const nowMs = now.getTime();
+  const dayMs = 24 * 60 * 60 * 1000;
 
-  const mainWaqts: {
-    key: 'fajr' | 'sunrise' | 'dhuhr' | 'asr' | 'maghrib' | 'isha';
-    nameBn: string;
-    nameEn: string;
-    nameAr: string;
-    time: Date;
-  }[] = [
-    { key: 'fajr', nameBn: 'ফজর', nameEn: 'Fajr', nameAr: 'الفجر', time: times.fajr },
-    { key: 'sunrise', nameBn: 'সূর্যোদয়', nameEn: 'Sunrise', nameAr: 'الشروق', time: times.sunrise },
-    { key: 'dhuhr', nameBn: 'যোহর', nameEn: 'Dhuhr', nameAr: 'الظهر', time: times.dhuhr },
-    { key: 'asr', nameBn: 'আসর', nameEn: 'Asr', nameAr: 'العصر', time: times.asr },
-    { key: 'maghrib', nameBn: 'মাগরিব', nameEn: 'Maghrib', nameAr: 'المغرب', time: times.maghrib },
-    { key: 'isha', nameBn: 'ইশা', nameEn: 'Isha', nameAr: 'العشاء', time: times.isha },
+  // Sunrise is displayed as an important solar time, but it is not one of
+  // the five daily prayers and must never be selected as the next prayer.
+  const prayers = [
+    { key: 'fajr' as const, nameBn: 'ফজর', nameEn: 'Fajr', nameAr: 'الفجر', time: times.fajr },
+    { key: 'dhuhr' as const, nameBn: 'যোহর', nameEn: 'Dhuhr', nameAr: 'الظهر', time: times.dhuhr },
+    { key: 'asr' as const, nameBn: 'আসর', nameEn: 'Asr', nameAr: 'العصر', time: times.asr },
+    { key: 'maghrib' as const, nameBn: 'মাগরিব', nameEn: 'Maghrib', nameAr: 'المغرب', time: times.maghrib },
+    { key: 'isha' as const, nameBn: 'ইশা', nameEn: 'Isha', nameAr: 'العشاء', time: times.isha },
   ];
 
-  // After Isha, the next Fajr belongs to the following local day.
-  if (nowMs >= mainWaqts[5].time.getTime()) {
-    mainWaqts[0].time = new Date(mainWaqts[0].time.getTime() + 24 * 60 * 60 * 1000);
+  const nextPrayerIndex = prayers.findIndex((prayer) => prayer.time.getTime() > nowMs);
+  const nextIndex = nextPrayerIndex === -1 ? 0 : nextPrayerIndex;
+  if (nextPrayerIndex === -1) {
+    prayers[0].time = new Date(prayers[0].time.getTime() + dayMs);
   }
 
-  // Determine current active prayer
-  let currentIndex = -1;
-  for (let i = 0; i < mainWaqts.length; i++) {
-    if (nowMs >= mainWaqts[i].time.getTime()) {
-      currentIndex = i;
-    }
-  }
+  // A prayer is current only within its valid interval. After sunrise and
+  // before Dhuhr there is no active obligatory-prayer interval.
+  const intervals = [
+    { key: 'fajr', start: times.fajr, end: times.sunrise },
+    { key: 'dhuhr', start: times.dhuhr, end: times.asr },
+    { key: 'asr', start: times.asr, end: times.maghrib },
+    { key: 'maghrib', start: times.maghrib, end: times.isha },
+    { key: 'isha', start: times.isha, end: new Date(times.fajr.getTime() + dayMs) },
+  ];
+  const currentKey = intervals.find((interval) =>
+    nowMs >= interval.start.getTime() && nowMs < interval.end.getTime()
+  )?.key;
 
-  // Next prayer
-  const nextIndex = (currentIndex + 1) % mainWaqts.length;
+  const displayItems = [
+    prayers[0],
+    { key: 'sunrise' as const, nameBn: 'সূর্যোদয়', nameEn: 'Sunrise', nameAr: 'الشروق', time: times.sunrise },
+    ...prayers.slice(1),
+  ];
 
-  return mainWaqts.map((item, idx) => ({
+  return displayItems.map((item) => ({
     ...item,
     timeFormattedBn: formatTimeBn(item.time),
     timeFormattedEn: formatTimeEn(item.time),
     isPassed: nowMs >= item.time.getTime(),
-    isCurrent: idx === currentIndex,
-    isNext: idx === nextIndex,
+    isCurrent: item.key === currentKey,
+    isNext: item.key !== 'sunrise' && item.key === prayers[nextIndex].key,
   }));
 }
