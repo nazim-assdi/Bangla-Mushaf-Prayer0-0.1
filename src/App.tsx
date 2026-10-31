@@ -346,7 +346,7 @@ function AppContent() {
       />
 
       {/* Primary mobile navigation: seven destinations */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-emerald-900/10 bg-white/95 px-1 py-2 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur-md dark:border-stone-700 dark:bg-stone-950/95 sm:hidden" aria-label="Main navigation">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-emerald-900/10 bg-white/95 px-1 py-2 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur-md dark:border-stone-700 dark:bg-stone-950/95" aria-label="Main navigation">
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-1 overflow-x-auto">
           <button onClick={() => setActiveTab('mushaf')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'mushaf' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">📖</span><span>Home</span></button>
           <button onClick={() => setActiveTab('qibla')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'qibla' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">🕋</span><span>Qibla</span></button>
