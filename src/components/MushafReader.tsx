@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Play,
   Pause,
@@ -103,6 +103,17 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
   };
 
   const readCount = ayahs.filter((ayah) => studyRecords[ayah.verseKey]?.read).length;
+
+  const mushafPages = useMemo(() => {
+    const pages = new Map<number, QuranAyah[]>();
+    ayahs.forEach((ayah) => {
+      const page = ayah.pageNumber || 0;
+      const existing = pages.get(page) || [];
+      existing.push(ayah);
+      pages.set(page, existing);
+    });
+    return Array.from(pages.entries()).sort((a, b) => a[0] - b[0]);
+  }, [ayahs]);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const wordAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -444,26 +455,29 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
           <p>আয়াত লোড করা সম্ভব হয়নি।</p>
         </div>
       ) : viewMode === 'mushaf' ? (
-        <div className="bg-[#faf7ee] dark:bg-stone-900/90 text-stone-900 dark:text-stone-100 rounded-2xl p-6 sm:p-10 shadow-md border-2 border-amber-300/60 dark:border-stone-800 leading-[3.2rem]">
-          <div className="text-justify font-arabic" style={{ fontSize: `${arabicFontSize + 6}px` }} dir="rtl">
-            {ayahs.map((ayah) => {
-              const isPlaying = playingAyahKey === ayah.verseKey;
-              return (
-                <span
-                  key={ayah.id}
-                  className={`inline cursor-pointer px-1 py-0.5 rounded transition-colors ${
-                    isPlaying ? 'bg-amber-300/40 text-emerald-950' : 'hover:bg-amber-100 dark:hover:bg-stone-800'
-                  }`}
-                  onClick={() => handlePlayAyah(ayah)}
-                >
-                  {ayah.textUthmani}{' '}
-                  <span className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-amber-600/60 text-amber-700 dark:text-amber-400 text-sm mx-1 align-middle font-arabic font-bold">
-                    {toArabicNumber(ayah.verseNumber)}
-                  </span>{' '}
-                </span>
-              );
-            })}
-          </div>
+        <div className="space-y-5">
+          {mushafPages.map(([pageNumber, pageAyahs]) => (
+            <article key={pageNumber} className="mushaf-page mx-auto w-full max-w-3xl rounded-2xl p-5 sm:p-8">
+              <div className="mb-4 flex items-center justify-between border-b border-current/15 pb-2 text-[10px] font-semibold opacity-60">
+                <span>{currentSurah.nameEnglish}</span>
+                <span>Mushaf page {pageNumber || '—'}</span>
+              </div>
+              <div className="text-justify font-arabic leading-[3.4rem] sm:leading-[4rem]" style={{ fontSize: `${arabicFontSize + 6}px` }} dir="rtl">
+                {pageAyahs.map((ayah) => {
+                  const isPlaying = playingAyahKey === ayah.verseKey;
+                  return (
+                    <span key={ayah.id} className={`inline cursor-pointer rounded px-1 py-0.5 transition-colors ${isPlaying ? 'bg-amber-300/50 text-emerald-950' : 'hover:bg-amber-100/50 dark:hover:bg-stone-800'}`} onClick={() => handlePlayAyah(ayah)}>
+                      {ayah.textUthmani}{' '}
+                      <span className="mx-1 inline-flex h-8 w-8 items-center justify-center rounded-full border border-current/40 align-middle text-sm font-bold">
+                        {toArabicNumber(ayah.verseNumber)}
+                      </span>{' '}
+                    </span>
+                  );
+                })}
+              </div>
+              <div className="mt-4 border-t border-current/15 pt-2 text-center text-[10px] opacity-50">Page {pageNumber || '—'} · {pageAyahs.length} verses in this chapter</div>
+            </article>
+          ))}
         </div>
       ) : (
         <div className="space-y-6">
