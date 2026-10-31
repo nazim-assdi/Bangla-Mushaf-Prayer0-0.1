@@ -1,5 +1,7 @@
 import React from 'react';
 import { UiLanguage, translateUi } from '../services/i18n';
+import { Capacitor } from '@capacitor/core';
+import { Share } from '@capacitor/share';
 import {
   X, UserRoundPlus, Heart, MapPin, Bell, Clock3, Languages, Settings,
   Star, Share2, MessageCircle, MessageSquare, BarChart3, Search,
@@ -29,9 +31,15 @@ export const SideMenu: React.FC<SideMenuProps> = ({
       text: 'কুরআন পড়ুন, বুঝুন ও আমল করুন।',
       url: window.location.origin
     };
+    onClose();
     try {
-      if (navigator.share) await navigator.share(shareData);
-      else window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareData.url)}`, '_blank', 'noopener,noreferrer');
+      if (Capacitor.isNativePlatform()) {
+        await Share.share({ ...shareData, dialogTitle: 'Share Al-Quran Al-Kareem' });
+      } else if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareData.url)}`, '_blank', 'noopener,noreferrer');
+      }
     } catch (error) {
       console.warn('Share was cancelled or unavailable:', error);
     }
