@@ -70,6 +70,43 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
   const [currentRepeat, setCurrentRepeat] = useState<number>(1);
   const [copiedAyahKey, setCopiedAyahKey] = useState<string | null>(null);
   const [studyRecords, setStudyRecords] = useState<Record<string, { read: boolean; note: string }>>({});
+  const [readerZoom, setReaderZoom] = useState(1);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const pinchStartRef = useRef<{ distance: number; zoom: number } | null>(null);
+  const getTouchDistance = (touches: React.TouchList) => {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+  const handleReaderTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (event.touches.length === 2) {
+      touchStartRef.current = null;
+      pinchStartRef.current = { distance: getTouchDistance(event.touches), zoom: readerZoom };
+    } else if (event.touches.length === 1) {
+      touchStartRef.current = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+      pinchStartRef.current = null;
+    }
+  };
+  const handleReaderTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (event.touches.length === 2 && pinchStartRef.current) {
+      event.preventDefault();
+      const ratio = getTouchDistance(event.touches) / Math.max(1, pinchStartRef.current.distance);
+      setReaderZoom(Math.min(1.6, Math.max(0.8, pinchStartRef.current.zoom * ratio)));
+    }
+  };
+  const handleReaderTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (event.touches.length > 0) return;
+    if (touchStartRef.current && event.changedTouches.length) {
+      const dx = event.changedTouches[0].clientX - touchStartRef.current.x;
+      const dy = event.changedTouches[0].clientY - touchStartRef.current.y;
+      if (Math.abs(dx) > 95 && Math.abs(dx) > Math.abs(dy) * 1.25) {
+        if (dx < 0) handleNextSurah();
+        else handlePrevSurah();
+      }
+    }
+    touchStartRef.current = null;
+    pinchStartRef.current = null;
+  };
   const studyStorageKey = 'mushaf_ayah_study_v1';
 
   useEffect(() => {
@@ -217,7 +254,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
   const langMeta = QURAN_LANGUAGES.find((l) => l.code === currentLanguage) || QURAN_LANGUAGES[0];
 
   return (
-    <div className="min-h-screen w-full min-w-0 pb-32 pt-2 px-3 sm:px-5 max-w-7xl mx-auto font-bangla">
+    <div className="min-h-screen w-full min-w-0 pb-32 pt-2 px-3 sm:px-5 max-w-7xl mx-auto font-bangla touch-pan-y" style={{ zoom: readerZoom }} onTouchStart={handleReaderTouchStart} onTouchMove={handleReaderTouchMove} onTouchEnd={handleReaderTouchEnd}>
       <audio
         ref={audioRef}
         onEnded={handleAyahAudioEnded}
