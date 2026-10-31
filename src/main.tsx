@@ -3,7 +3,7 @@ import '@fontsource/scheherazade-new/400.css';
 import '@fontsource/noto-naskh-arabic/400.css';
 import '@fontsource/noto-sans-arabic/400.css';
 import '@fontsource/noto-kufi-arabic/400.css';
-import '@fontsource/reem-kufi/400.css';
+import '@fontsource-variable/reem-kufi/wght.css';
 import '@fontsource/cairo/400.css';
 import '@fontsource/tajawal/400.css';
 import '@fontsource/lateef/400.css';
