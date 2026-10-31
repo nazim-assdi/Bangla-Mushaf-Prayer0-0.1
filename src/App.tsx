@@ -19,6 +19,7 @@ import { QuranLanguage } from './services/multiLangQuran';
 import { UiLanguage, translateUi } from './services/i18n';
 import { LanguageSelectionScreen } from './components/LanguageSelectionScreen';
 import { ReadingPlanner } from './components/ReadingPlanner';
+import { ARABIC_FONTS } from './services/arabicFonts';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import {
@@ -53,6 +54,7 @@ function AppContent() {
   // Settings & display state
   const [theme, setTheme] = useState<ThemeMode>('emerald');
   const [arabicFontSize, setArabicFontSize] = useState<number>(28);
+  const [arabicFontId, setArabicFontId] = useState<string>(() => localStorage.getItem('mushaf_arabic_font') || 'noto-naskh');
   const [banglaFontSize, setBanglaFontSize] = useState<number>(15);
   const [showTransliteration, setShowTransliteration] = useState<boolean>(() => localStorage.getItem('mushaf_ui_language') === 'bn');
   const [showTranslation, setShowTranslation] = useState<boolean>(true);
@@ -182,6 +184,12 @@ function AppContent() {
       localStorage.setItem('mushaf_quran_language', translationLanguage);
     }
   };
+
+  useEffect(() => {
+    const font = ARABIC_FONTS.find((item) => item.id === arabicFontId) ?? ARABIC_FONTS[0];
+    document.documentElement.style.setProperty('--font-arabic', `${font.family}, serif`);
+    localStorage.setItem('mushaf_arabic_font', font.id);
+  }, [arabicFontId]);
 
   // Handle theme classes on html
   useEffect(() => {
@@ -344,6 +352,8 @@ function AppContent() {
           <SettingsModal
             arabicFontSize={arabicFontSize}
             setArabicFontSize={setArabicFontSize}
+            arabicFontId={arabicFontId}
+            setArabicFontId={setArabicFontId}
             banglaFontSize={banglaFontSize}
             setBanglaFontSize={setBanglaFontSize}
             showTransliteration={showTransliteration}
