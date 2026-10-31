@@ -52,14 +52,20 @@ function AppContent() {
   const [isSideMenuOpen, setIsSideMenuOpen] = useState<boolean>(false);
 
   // Settings & display state
-  const [theme, setTheme] = useState<ThemeMode>('emerald');
-  const [arabicFontSize, setArabicFontSize] = useState<number>(28);
+  const [theme, setTheme] = useState<ThemeMode>(() => {
+    const saved = localStorage.getItem('mushaf_theme');
+    return saved === 'dark' || saved === 'sepia' || saved === 'softblue' || saved === 'eyecare' ? saved : 'emerald';
+  });
+  const [arabicFontSize, setArabicFontSize] = useState<number>(() => Number(localStorage.getItem('mushaf_arabic_font_size')) || 28);
   const [arabicFontId, setArabicFontId] = useState<string>(() => localStorage.getItem('mushaf_arabic_font') || 'noto-naskh');
   const [mushafPageStyle, setMushafPageStyle] = useState<string>(() => localStorage.getItem('mushaf_page_style') || 'classic');
-  const [banglaFontSize, setBanglaFontSize] = useState<number>(15);
-  const [showTransliteration, setShowTransliteration] = useState<boolean>(() => localStorage.getItem('mushaf_ui_language') === 'bn');
-  const [showTranslation, setShowTranslation] = useState<boolean>(true);
-  const [selectedReciterId, setSelectedReciterId] = useState<string>('alafasy');
+  const [banglaFontSize, setBanglaFontSize] = useState<number>(() => Number(localStorage.getItem('mushaf_translation_font_size')) || 15);
+  const [showTransliteration, setShowTransliteration] = useState<boolean>(() => {
+    const saved = localStorage.getItem('mushaf_show_transliteration');
+    return saved === null ? localStorage.getItem('mushaf_ui_language') === 'bn' : saved === 'true';
+  });
+  const [showTranslation, setShowTranslation] = useState<boolean>(() => localStorage.getItem('mushaf_show_translation') !== 'false');
+  const [selectedReciterId, setSelectedReciterId] = useState<string>(() => localStorage.getItem('mushaf_selected_reciter') || 'alafasy');
   const [currentLanguage, setCurrentLanguage] = useState<QuranLanguage>(() => {
     const saved = localStorage.getItem('mushaf_quran_language');
     if (saved === 'bn' || saved === 'en' || saved === 'hi' || saved === 'ur' || saved === 'tr') return saved;
@@ -176,6 +182,8 @@ function AppContent() {
   }, [uiLanguage]);
 
   const handleUiLanguageChange = (language: UiLanguage) => {
+    const firstLaunch = !localStorage.getItem('mushaf_ui_language');
+    if (firstLaunch) setShowTransliteration(language === 'bn');
     setUiLanguage(language);
     setLanguageDraft(language);
     localStorage.setItem('mushaf_ui_language', language);
@@ -196,6 +204,16 @@ function AppContent() {
     document.documentElement.dataset.mushafStyle = mushafPageStyle;
     localStorage.setItem('mushaf_page_style', mushafPageStyle);
   }, [mushafPageStyle]);
+
+  useEffect(() => {
+    localStorage.setItem('mushaf_theme', theme);
+    localStorage.setItem('mushaf_arabic_font_size', String(arabicFontSize));
+    localStorage.setItem('mushaf_translation_font_size', String(banglaFontSize));
+    localStorage.setItem('mushaf_show_transliteration', String(showTransliteration));
+    localStorage.setItem('mushaf_show_translation', String(showTranslation));
+    localStorage.setItem('mushaf_selected_reciter', selectedReciterId);
+    localStorage.setItem('mushaf_quran_language', currentLanguage);
+  }, [theme, arabicFontSize, banglaFontSize, showTransliteration, showTranslation, selectedReciterId, currentLanguage]);
 
   // Handle theme classes on html
   useEffect(() => {
