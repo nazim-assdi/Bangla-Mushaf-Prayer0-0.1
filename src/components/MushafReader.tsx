@@ -19,6 +19,7 @@ import { RECITERS } from '../services/quranApi';
 import { QURAN_LANGUAGES, QuranLanguage, fetchVersesByLanguage } from '../services/multiLangQuran';
 import { toBanglaNumber, toArabicNumber } from '../utils/banglaNumbers';
 import { TafsirModal } from './TafsirModal';
+import { OfflineQuranDownload } from './OfflineQuranDownload';
 
 export type ViewMode = 'wbw' | 'verse' | 'mushaf';
 
@@ -265,6 +266,8 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
           </button>
         </div>
       </div>
+
+      <OfflineQuranDownload />
 
       {/* Reading Controls Toolbar & Language Selector */}
       <div className="bg-white dark:bg-stone-900 rounded-xl p-3 shadow-xs border border-stone-200 dark:border-stone-800 mb-5 flex flex-wrap items-center justify-between gap-3 text-xs">
