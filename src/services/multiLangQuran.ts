@@ -27,6 +27,12 @@ export const QURAN_LANGUAGES: LanguageMeta[] = [
 
 const multiLangCache: { [key: string]: QuranAyah[] } = {};
 
+export function clearOfflineLanguageCache(lang: QuranLanguage): void {
+  Object.keys(multiLangCache).forEach((key) => {
+    if (key.endsWith(`_${lang}`)) delete multiLangCache[key];
+  });
+}
+
 export async function downloadFullQuranOffline(
   lang: QuranLanguage,
   onProgress?: (completed: number, total: number) => void
