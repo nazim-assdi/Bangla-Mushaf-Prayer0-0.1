@@ -54,7 +54,7 @@ function AppContent() {
   const [theme, setTheme] = useState<ThemeMode>('emerald');
   const [arabicFontSize, setArabicFontSize] = useState<number>(28);
   const [banglaFontSize, setBanglaFontSize] = useState<number>(15);
-  const [showTransliteration, setShowTransliteration] = useState<boolean>(true);
+  const [showTransliteration, setShowTransliteration] = useState<boolean>(() => localStorage.getItem('mushaf_ui_language') === 'bn');
   const [showTranslation, setShowTranslation] = useState<boolean>(true);
   const [selectedReciterId, setSelectedReciterId] = useState<string>('alafasy');
   const [currentLanguage, setCurrentLanguage] = useState<QuranLanguage>(() => {
@@ -321,6 +321,7 @@ function AppContent() {
             onSelectReciter={setSelectedReciterId}
             currentLanguage={currentLanguage}
             onSelectLanguage={handleQuranLanguageChange}
+            uiLanguage={uiLanguage}
           />
         )}
 
