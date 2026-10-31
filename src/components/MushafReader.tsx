@@ -19,7 +19,6 @@ import { RECITERS } from '../services/quranApi';
 import { QURAN_LANGUAGES, QuranLanguage, fetchVersesByLanguage } from '../services/multiLangQuran';
 import { toBanglaNumber, toArabicNumber } from '../utils/banglaNumbers';
 import { TafsirModal } from './TafsirModal';
-import { OfflineQuranDownload } from './OfflineQuranDownload';
 import { AyahStudyTools } from './AyahStudyTools';
 
 export type ViewMode = 'wbw' | 'verse' | 'mushaf';
@@ -290,8 +289,6 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
         </div>
       </div>
 
-      <OfflineQuranDownload />
-
       <section className="mb-5 rounded-2xl border border-emerald-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900" aria-label="Reading progress">
         <div className="flex items-center justify-between gap-3">
           <div><h3 className="font-bold text-stone-900 dark:text-white">Reading Progress</h3><p className="text-xs text-stone-500 dark:text-stone-400">এই সূরার কতটি আয়াত পড়েছেন তা চিহ্নিত করুন</p></div>
@@ -339,7 +336,6 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
         {/* Multi-Language Selector */}
         <div className="flex items-center gap-2">
           <Globe className="w-3.5 h-3.5 text-emerald-600" />
-          <span className="text-stone-500 dark:text-stone-400">ভাষা / Translation:</span>
           <select
             value={currentLanguage}
             onChange={(e) => onSelectLanguage(e.target.value as QuranLanguage)}
