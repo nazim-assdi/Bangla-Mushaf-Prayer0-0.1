@@ -47,6 +47,18 @@ export async function createOfflineNoteAccount(usernameInput: string, password: 
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const key = await deriveKey(password, salt);
   accounts.push({ username, salt: bytesToBase64(salt), verifier: await makeVerifier(key), createdAt: new Date().toISOString() });
+  // Preserve notes from the pre-account version and assign them to the first local profile.
+  const legacyNotes = localStorage.getItem('mushaf_ayah_study_v1');
+  if (legacyNotes && !localStorage.getItem('mushaf_ayah_study_v1:guest')) {
+    localStorage.setItem('mushaf_ayah_study_v1:guest', legacyNotes);
+    localStorage.removeItem('mushaf_ayah_study_v1');
+  }
+  const guestNotes = localStorage.getItem('mushaf_ayah_study_v1:guest');
+  const accountNotesKey = `mushaf_ayah_study_v1:${username}`;
+  if (guestNotes && !localStorage.getItem(accountNotesKey)) {
+    localStorage.setItem(accountNotesKey, guestNotes);
+    localStorage.removeItem('mushaf_ayah_study_v1:guest');
+  }
   localStorage.setItem(ACCOUNT_KEY, JSON.stringify(accounts));
   localStorage.setItem(ACTIVE_KEY, username);
   window.dispatchEvent(new Event('mushaf-offline-note-account-change'));
