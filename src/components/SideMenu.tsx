@@ -61,7 +61,7 @@ export const SideMenu: React.FC<SideMenuProps> = ({
   };
 
   const items = [
-    { label: 'সদস্য হন', icon: UserRoundPlus, action: () => { onClose(); document.querySelector<HTMLButtonElement>('[aria-label*="সাইন"], [aria-label*="Sign"], button[title*="Sign"]')?.click(); } },
+    { label: translateUi(uiLanguage, 'onlineLogin'), icon: UserRoundPlus, action: () => { onClose(); document.querySelector<HTMLButtonElement>('[aria-label*="সাইন"], [aria-label*="Sign"], button[title*="Sign"]')?.click(); } },
     { label: translateUi(uiLanguage, 'donate'), icon: Heart, action: jumpToDonation },
     { label: translateUi(uiLanguage, 'jumpAyah'), icon: MapPin, action: onGoToAyah },
     { label: translateUi(uiLanguage, 'notifications'), icon: Bell, action: () => { onClose(); window.dispatchEvent(new CustomEvent('mushaf:open-notifications')); } },
