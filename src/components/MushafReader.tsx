@@ -21,6 +21,7 @@ import { toArabicNumber } from '../utils/banglaNumbers';
 import { TafsirModal } from './TafsirModal';
 import { AyahStudyTools } from './AyahStudyTools';
 import { UiLanguage, formatUiNumber, translateUi } from '../services/i18n';
+import { getOfflineTafsirForSurah, OfflineTafsirRecord } from '../services/offlineTafsir';
 
 export type ViewMode = 'wbw' | 'verse' | 'mushaf';
 
