@@ -1,297 +1,200 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import {
-  Compass,
-  MapPin,
-  RefreshCw,
-  CheckCircle2,
-  AlertTriangle,
-  RotateCw,
-  Info,
-  Sun,
-} from 'lucide-react';
-import {
-  BANGLADESH_DISTRICTS,
-  District,
-} from '../utils/prayerTimes';
-import {
-  calculateQiblaDirection,
-  calculateDistanceToKaaba,
-  getHeadingDeviation,
-} from '../utils/qibla';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Compass, MapPin, RefreshCw, CheckCircle2, AlertTriangle, Info, Smartphone } from 'lucide-react';
+import { BANGLADESH_DISTRICTS } from '../utils/prayerTimes';
+import { calculateQiblaDirection, calculateDistanceToKaaba, getHeadingDeviation } from '../utils/qibla';
 import { toBanglaNumber } from '../utils/banglaNumbers';
 
+type Coordinates = { lat: number; lng: number; nameBn: string; accuracy?: number };
+
 export const QiblaCompassView: React.FC = () => {
-  const [selectedDistrictId, setSelectedDistrictId] = useState<string>('dhaka');
-  const [customCoords, setCustomCoords] = useState<{ lat: number; lng: number; nameBn: string } | null>(null);
+  const [selectedDistrictId, setSelectedDistrictId] = useState('dhaka');
+  const [customCoords, setCustomCoords] = useState<Coordinates | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
-  
-  // Compass heading state (0° to 360°)
-  const [deviceHeading, setDeviceHeading] = useState<number>(0);
-  const [hasCompassSensor, setHasCompassSensor] = useState<boolean>(false);
-  const [manualAdjustment, setManualAdjustment] = useState<number>(0);
+  const [geoError, setGeoError] = useState('');
+  const [deviceHeading, setDeviceHeading] = useState<number | null>(null);
+  const [sensorError, setSensorError] = useState('');
 
-  const currentDistrict = useMemo(() => {
-    return BANGLADESH_DISTRICTS.find((d) => d.id === selectedDistrictId) || BANGLADESH_DISTRICTS[0];
-  }, [selectedDistrictId]);
+  const currentDistrict = useMemo(
+    () => BANGLADESH_DISTRICTS.find((district) => district.id === selectedDistrictId) || BANGLADESH_DISTRICTS[0],
+    [selectedDistrictId]
+  );
+  const activeLat = customCoords?.lat ?? currentDistrict.lat;
+  const activeLng = customCoords?.lng ?? currentDistrict.lng;
+  const locationLabel = customCoords?.nameBn ?? `${currentDistrict.nameBn} জেলা`;
+  const qiblaBearing = useMemo(() => calculateQiblaDirection(activeLat, activeLng), [activeLat, activeLng]);
+  const distanceKm = useMemo(() => calculateDistanceToKaaba(activeLat, activeLng), [activeLat, activeLng]);
+  const deviation = deviceHeading === null ? null : getHeadingDeviation(deviceHeading, qiblaBearing);
+  const isAligned = deviation !== null && Math.abs(deviation) <= 5;
 
-  const activeLat = customCoords ? customCoords.lat : currentDistrict.lat;
-  const activeLng = customCoords ? customCoords.lng : currentDistrict.lng;
-  const locationLabel = customCoords ? customCoords.nameBn : `${currentDistrict.nameBn} জেলা`;
-
-  // Calculated Qibla bearing and distance to Kaaba
-  const qiblaBearing = useMemo(() => {
-    return calculateQiblaDirection(activeLat, activeLng);
-  }, [activeLat, activeLng]);
-
-  const distanceKm = useMemo(() => {
-    return calculateDistanceToKaaba(activeLat, activeLng);
-  }, [activeLat, activeLng]);
-
-  // Combine device sensor heading + manual dial
-  const currentHeading = (deviceHeading + manualAdjustment) % 360;
-  const deviation = getHeadingDeviation(currentHeading, qiblaBearing);
-  const isAligned = Math.abs(deviation) <= 4; // within 4 degrees = perfect alignment
-
-  // Setup device orientation listener for real mobile compass
-  useEffect(() => {
-    const handleOrientation = (e: DeviceOrientationEvent) => {
-      // iOS webkitCompassHeading or standard alpha
-      let heading = 0;
-      if ('webkitCompassHeading' in e && typeof (e as any).webkitCompassHeading === 'number') {
-        heading = (e as any).webkitCompassHeading;
-        setHasCompassSensor(true);
-      } else if (e.alpha !== null) {
-        heading = 360 - e.alpha;
-        setHasCompassSensor(true);
-      }
-      setDeviceHeading(Math.round(heading));
-    };
-
-    if (window.DeviceOrientationEvent) {
-      window.addEventListener('deviceorientation', handleOrientation, true);
+  const handleOrientation = (event: DeviceOrientationEvent) => {
+    const iosHeading = (event as DeviceOrientationEvent & { webkitCompassHeading?: number }).webkitCompassHeading;
+    if (typeof iosHeading === 'number' && Number.isFinite(iosHeading)) {
+      setDeviceHeading((iosHeading + 360) % 360);
+      setSensorError('');
+      return;
     }
+    // Only trust the standard alpha value when the browser marks it as absolute.
+    if (event.absolute && event.alpha !== null && Number.isFinite(event.alpha)) {
+      const screenAngle = window.screen.orientation?.angle ?? 0;
+      const heading = (360 - event.alpha + screenAngle + 360) % 360;
+      setDeviceHeading(heading);
+      setSensorError('');
+    }
+  };
 
+  const enableCompass = async () => {
+    setSensorError('');
+    try {
+      const orientationApi = DeviceOrientationEvent as typeof DeviceOrientationEvent & {
+        requestPermission?: () => Promise<'granted' | 'denied'>;
+      };
+      if (typeof orientationApi.requestPermission === 'function') {
+        const permission = await orientationApi.requestPermission();
+        if (permission !== 'granted') {
+          setSensorError('কম্পাস ব্যবহারের অনুমতি দেওয়া হয়নি। ফোনের Settings থেকে Motion/Sensor permission চালু করুন।');
+          return;
+        }
+      }
+      if (!('DeviceOrientationEvent' in window)) {
+        setSensorError('এই ডিভাইসে ব্রাউজার কম্পাস সেন্সর পাওয়া যায়নি।');
+        return;
+      }
+      setSensorError('ফোনটি সমতল করে ধরে ধীরে ধীরে ৮ আকৃতিতে ঘুরিয়ে কম্পাস ক্যালিব্রেট করুন।');
+    } catch {
+      setSensorError('কম্পাস চালু করা যায়নি। ব্রাউজারের সেন্সর অনুমতি পরীক্ষা করুন।');
+    }
+  };
+
+  useEffect(() => {
+    const listener = (event: DeviceOrientationEvent) => handleOrientation(event);
+    window.addEventListener('deviceorientation', listener, true);
+    window.addEventListener('deviceorientationabsolute' as keyof WindowEventMap, listener as EventListener, true);
     return () => {
-      window.removeEventListener('deviceorientation', handleOrientation);
+      window.removeEventListener('deviceorientation', listener, true);
+      window.removeEventListener('deviceorientationabsolute' as keyof WindowEventMap, listener as EventListener, true);
     };
   }, []);
 
-  // Geolocation trigger
   const handleUseGPS = () => {
     if (!navigator.geolocation) {
-      alert('আপনার ব্রাউজারে জিপিএস উপলব্ধ নেই।');
+      setGeoError('এই ডিভাইসে GPS/Location সুবিধা পাওয়া যায়নি।');
       return;
     }
     setGeoLoading(true);
+    setGeoError('');
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      (position) => {
         setCustomCoords({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          nameBn: 'আমার বর্তমান জিপিএস অবস্থান',
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+          nameBn: 'বর্তমান GPS অবস্থান',
         });
         setGeoLoading(false);
       },
-      (err) => {
-        console.warn('GPS error:', err);
+      (error) => {
+        const messages: Record<number, string> = {
+          1: 'Location permission বন্ধ আছে। ফোনের Settings থেকে অনুমতি দিন।',
+          2: 'GPS অবস্থান পাওয়া যায়নি। Location চালু করে খোলা জায়গায় চেষ্টা করুন।',
+          3: 'GPS পেতে সময় শেষ হয়েছে। আবার চেষ্টা করুন।',
+        };
+        setGeoError(messages[error.code] || 'GPS অবস্থান পাওয়া যায়নি।');
         setGeoLoading(false);
       },
-      { timeout: 8000 }
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
     );
   };
 
-  // Align directly to Qibla helper button (e.g. for desktop test)
-  const handleAutoAlign = () => {
-    setManualAdjustment(qiblaBearing);
-  };
+  const shownHeading = deviceHeading === null ? 0 : deviceHeading;
 
   return (
-    <div className="max-w-3xl mx-auto px-3 sm:px-6 py-6 pb-28 font-bangla space-y-6">
-      {/* Location Bar */}
-      <div className="bg-white dark:bg-stone-900 rounded-2xl p-4 shadow-xs border border-stone-200 dark:border-stone-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 flex items-center justify-center shrink-0">
-            <Compass className="w-5 h-5" />
+    <div className="mx-auto w-full max-w-5xl px-3 py-4 pb-28 font-bangla sm:px-5 sm:py-6">
+      <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+            <Compass className="h-5 w-5" />
           </div>
-          <div>
-            <h2 className="text-base font-bold text-stone-900 dark:text-white">
-              {locationLabel} হতে পবিত্র কাবার কিবলা দিক
-            </h2>
+          <div className="min-w-0">
+            <h2 className="font-bold text-stone-900 dark:text-white">{locationLabel} থেকে কিবলার দিক</h2>
             <p className="text-xs text-stone-500 dark:text-stone-400">
-              কিবলার কোণ: <span className="font-bold text-emerald-700 dark:text-emerald-400">{toBanglaNumber(qiblaBearing)}°</span> (উত্তর হতে ঘড়ির কাঁটার দিকে)
+              উত্তর থেকে ঘড়ির কাঁটার দিকে {toBanglaNumber(qiblaBearing)}° · কাবা পর্যন্ত {toBanglaNumber(distanceKm.toLocaleString())} কিমি
             </p>
+            {customCoords?.accuracy && <p className="text-[11px] text-stone-500">GPS নির্ভুলতা: প্রায় {Math.round(customCoords.accuracy)} মিটার</p>}
           </div>
         </div>
-
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row">
           <select
             value={customCoords ? '' : selectedDistrictId}
-            onChange={(e) => {
-              setCustomCoords(null);
-              setSelectedDistrictId(e.target.value);
-            }}
-            className="px-3 py-2 rounded-xl bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-800 dark:text-stone-200 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500"
-            aria-label="কিবলার জন্য জেলা নির্বাচন করুন"
+            onChange={(event) => { setCustomCoords(null); setSelectedDistrictId(event.target.value); }}
+            className="min-h-10 min-w-0 rounded-xl border border-stone-200 bg-stone-100 px-3 text-sm text-stone-800 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100"
+            aria-label="জেলা নির্বাচন করুন"
           >
-            {BANGLADESH_DISTRICTS.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.nameBn}
-              </option>
-            ))}
+            {BANGLADESH_DISTRICTS.map((district) => <option key={district.id} value={district.id}>{district.nameBn}</option>)}
           </select>
-
-          <button
-            onClick={handleUseGPS}
-            disabled={geoLoading}
-            className="px-3 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-colors shrink-0 shadow-xs"
-            aria-label="জিপিএস দিয়ে সঠিক কিবলা বের করুন"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${geoLoading ? 'animate-spin' : ''}`} />
-            <span>জিপিএস</span>
+          <button onClick={handleUseGPS} disabled={geoLoading} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 text-sm font-semibold text-white disabled:opacity-60">
+            <RefreshCw className={`h-4 w-4 ${geoLoading ? 'animate-spin' : ''}`} />
+            {geoLoading ? 'GPS খোঁজা হচ্ছে…' : 'সঠিক GPS নিন'}
           </button>
         </div>
       </div>
 
-      {/* Alignment Status Banner */}
-      <div
-        className={`rounded-2xl p-4 text-center transition-all border flex items-center justify-center gap-2 text-sm sm:text-base font-bold ${
-          isAligned
-            ? 'bg-emerald-600 text-white border-emerald-500 shadow-lg shadow-emerald-500/20 animate-pulse'
-            : 'bg-amber-50 dark:bg-stone-800 text-amber-900 dark:text-amber-200 border-amber-200 dark:border-amber-800/60'
-        }`}
-      >
-        {isAligned ? (
-          <>
-            <CheckCircle2 className="w-5 h-5 text-white" />
-            <span>মাশাআল্লাহ! আপনি সঠিক কিবলার (পবিত্র কাবা) অভিমুখে আছেন</span>
-          </>
-        ) : (
-          <>
-            <RotateCw className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-            <span>
-              {deviation > 0
-                ? `কিবলার দিকে যেতে আরও ${toBanglaNumber(Math.abs(Math.round(deviation)))}° ডানে ঘুরুন`
-                : `কিবলার দিকে যেতে আরও ${toBanglaNumber(Math.abs(Math.round(deviation)))}° বামে ঘুরুন`}
-            </span>
-          </>
-        )}
-      </div>
+      {(geoError || sensorError) && (
+        <div role="status" className="mb-4 flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>{geoError || sensorError}</span>
+        </div>
+      )}
 
-      {/* Compass Dial Hero Card */}
-      <div className="bg-gradient-to-b from-stone-900 to-emerald-950 text-white rounded-3xl p-6 sm:p-10 shadow-2xl border border-emerald-800/50 flex flex-col items-center justify-center relative overflow-hidden">
-        {/* Decorative backdrop rings */}
-        <div className="absolute inset-0 bg-radial from-emerald-500/10 via-transparent to-transparent pointer-events-none" />
-
-        {/* Distance and angle pill */}
-        <div className="flex items-center gap-3 text-xs mb-6 z-10">
-          <span className="px-3 py-1 rounded-full bg-emerald-900/80 border border-emerald-700 text-amber-300 font-medium">
-            দূরত্ব: {toBanglaNumber(distanceKm.toLocaleString())} কি.মি.
-          </span>
-          <span className="px-3 py-1 rounded-full bg-emerald-900/80 border border-emerald-700 text-emerald-200 font-medium">
-            বর্তমান দিক: {toBanglaNumber(currentHeading)}°
+      <div className="rounded-3xl border border-emerald-800/50 bg-gradient-to-b from-stone-950 via-emerald-950 to-stone-950 px-4 py-6 text-white shadow-xl sm:px-8">
+        <div className="mb-5 flex flex-wrap items-center justify-center gap-2 text-xs">
+          <span className="rounded-full border border-emerald-700 bg-emerald-900/70 px-3 py-1.5 text-amber-200">কিবলা {toBanglaNumber(qiblaBearing)}°</span>
+          <span className="rounded-full border border-emerald-700 bg-emerald-900/70 px-3 py-1.5 text-emerald-100">
+            {deviceHeading === null ? 'কম্পাস সেন্সর অপেক্ষমাণ' : `ফোনের দিক ${toBanglaNumber(Math.round(deviceHeading))}°`}
           </span>
         </div>
 
-        {/* The Animated SVG Compass Dial */}
-        <div className="relative w-64 h-64 sm:w-80 sm:h-80 flex items-center justify-center">
-          {/* Compass Outer Ring (Rotates inversely with device heading) */}
-          <div
-            className="absolute inset-0 rounded-full border-4 border-amber-400/30 flex items-center justify-center transition-transform duration-300 ease-out shadow-inner"
-            style={{ transform: `rotate(${-currentHeading}deg)` }}
-          >
-            {/* Degree ticks */}
-            <div className="absolute inset-2 rounded-full border border-dashed border-emerald-400/20" />
-
-            {/* Cardinal direction labels */}
-            <span className="absolute top-2 font-bold text-sm text-rose-400 font-bangla">উ (North)</span>
-            <span className="absolute bottom-2 font-bold text-sm text-stone-300 font-bangla">দ (South)</span>
-            <span className="absolute right-2 font-bold text-sm text-stone-300 font-bangla">পূ (East)</span>
-            <span className="absolute left-2 font-bold text-sm text-amber-400 font-bangla">প (West)</span>
-
-            {/* Kaaba Direction Marker on the ring */}
-            <div
-              className="absolute w-full h-full flex flex-col items-center justify-start pointer-events-none"
-              style={{ transform: `rotate(${qiblaBearing}deg)` }}
-            >
-              <div className="w-7 h-7 -mt-3.5 bg-amber-400 text-emerald-950 rounded-lg flex items-center justify-center shadow-lg font-bold text-xs ring-2 ring-white">
-                🕋
-              </div>
+        <div className="relative mx-auto flex aspect-square w-full max-w-[300px] items-center justify-center">
+          <div className="absolute inset-0 rounded-full border-[5px] border-amber-400/50 shadow-[inset_0_0_35px_rgba(16,185,129,0.15)]" style={{ transform: `rotate(${-shownHeading}deg)` }}>
+            <div className="absolute inset-3 rounded-full border border-dashed border-emerald-300/40" />
+            <span className="absolute left-1/2 top-3 -translate-x-1/2 font-bold text-rose-300">উত্তর</span>
+            <span className="absolute bottom-3 left-1/2 -translate-x-1/2 text-stone-300">দক্ষিণ</span>
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-300">পূর্ব</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-300">পশ্চিম</span>
+            <div className="absolute inset-0 flex justify-center" style={{ transform: `rotate(${qiblaBearing}deg)` }}>
+              <span className="mt-1 text-2xl drop-shadow-lg">🕋</span>
             </div>
           </div>
-
-          {/* Center Needle & Kaaba Pointer */}
-          <div
-            className="relative z-10 flex flex-col items-center justify-center pointer-events-none transition-transform duration-300 ease-out"
-            style={{ transform: `rotate(${qiblaBearing - currentHeading}deg)` }}
-          >
-            {/* North pointing arrow tip */}
-            <div
-              className={`w-0 h-0 border-l-[14px] border-l-transparent border-r-[14px] border-r-transparent border-b-[60px] drop-shadow-md transition-colors ${
-                isAligned ? 'border-b-emerald-400' : 'border-b-amber-400'
-              }`}
-            />
-            {/* Center Pivot Hub */}
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-300 to-amber-600 border-2 border-white shadow-xl flex items-center justify-center text-sm font-bold text-stone-900 my-[-6px]">
-              🕋
-            </div>
-            {/* South pointing tail */}
-            <div className="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[50px] border-t-stone-600/70" />
+          <div className="relative z-10 flex flex-col items-center" style={{ transform: `rotate(${qiblaBearing - shownHeading}deg)` }}>
+            <div className="h-0 w-0 border-b-[76px] border-l-[17px] border-r-[17px] border-l-transparent border-r-transparent border-b-amber-400 drop-shadow-lg" />
+            <div className="h-4 w-4 rounded-full border-2 border-white bg-amber-500" />
+            <div className="h-0 w-0 border-l-[10px] border-r-[10px] border-t-[45px] border-l-transparent border-r-transparent border-t-stone-500" />
           </div>
         </div>
 
-        {/* Alignment Guidance */}
-        <div className="mt-8 text-center z-10 max-w-sm">
-          <p className="text-sm font-semibold text-stone-200">
-            {isAligned ? (
-              <span className="text-emerald-400">আপনি সরাসরি পবিত্র কাবার মুখোমুখি আছেন।</span>
-            ) : (
-              <span>কম্পাসের তীরটি গোল গোলকের স্বর্ণালী কাবার সাথে মিলিত করুন।</span>
-            )}
-          </p>
-          <p className="text-xs text-stone-400 mt-1">
-            বাংলাদেশে কিবলা সাধারণত পশ্চিম হতে সামান্য উত্তর দিকে (প্রায় ২৭৭°-২৭৮°) অবস্থিত।
-          </p>
+        <div className="mt-5 text-center">
+          {deviation === null ? (
+            <p className="text-sm text-amber-200">কম্পাস চালু করে ফোন ঘোরান; সেন্সর ছাড়া সঠিক alignment দেখানো সম্ভব নয়।</p>
+          ) : isAligned ? (
+            <p className="flex items-center justify-center gap-2 font-bold text-emerald-300"><CheckCircle2 className="h-5 w-5" /> কিবলার দিকে প্রায় সোজা</p>
+          ) : (
+            <p className="font-semibold text-amber-200">{deviation > 0 ? 'ডানে' : 'বামে'} আরও {toBanglaNumber(Math.abs(Math.round(deviation)))}° ঘোরান</p>
+          )}
+          <p className="mt-2 text-xs text-emerald-100/70">ফোন সমতল রাখুন এবং ধাতব বস্তু, চুম্বক ও বৈদ্যুতিক যন্ত্র থেকে দূরে থাকুন।</p>
         </div>
 
-        {/* Simulation / Manual adjustment slider for desktop users */}
-        <div className="w-full max-w-md mt-6 pt-5 border-t border-emerald-900/60 z-10">
-          <div className="flex items-center justify-between text-xs text-stone-300 mb-2">
-            <span>কম্পাস ঘুরিয়ে পরীক্ষা করুন:</span>
-            <button
-              onClick={handleAutoAlign}
-              className="px-2.5 py-1 rounded-lg bg-amber-400 hover:bg-amber-300 text-emerald-950 font-bold transition-transform hover:scale-105"
-            >
-              সরাসরি কিবলায় মেলান
-            </button>
-          </div>
-          <input
-            type="range"
-            min="0"
-            max="360"
-            value={manualAdjustment}
-            onChange={(e) => setManualAdjustment(Number(e.target.value))}
-            className="w-full accent-amber-400 cursor-pointer"
-            aria-label="ম্যানুয়াল কম্পাস ডায়াল ঘূর্ণন"
-          />
+        <div className="mt-6 flex justify-center">
+          <button onClick={enableCompass} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-amber-400 px-5 py-2.5 font-bold text-emerald-950 shadow hover:bg-amber-300">
+            <Smartphone className="h-4 w-4" /> কম্পাস চালু / অনুমতি দিন
+          </button>
         </div>
       </div>
 
-      {/* Helpful Direction Finding Tips */}
-      <div className="bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200 dark:border-stone-800 space-y-3 text-xs text-stone-600 dark:text-stone-300">
-        <h4 className="font-bold text-sm text-stone-900 dark:text-white flex items-center gap-1.5">
-          <Info className="w-4 h-4 text-emerald-600" />
-          <span>নির্ভুল কিবলা নির্ণয়ের নিয়ম ও সতর্কতা</span>
-        </h4>
-        <ul className="list-disc pl-5 space-y-1.5 leading-relaxed">
-          <li>
-            <strong className="text-stone-800 dark:text-stone-100">চৌম্বকীয় বিভ্রান্তি এড়ান:</strong> মোবাইল ফোনটিকে ল্যাপটপ, চার্জার, ধাতব টেবিল বা বৈদ্যুতিক তার হতে দূরে সমতল স্থানে রাখুন।
-          </li>
-          <li>
-            <strong className="text-stone-800 dark:text-stone-100">কম্পাস ক্যালিব্রেশন:</strong> ফোনের সেন্সর সঠিকভাবে কাজ করতে ফোনটিকে হাতের তালুতে নিয়ে বায়ুতে ইংরেজি '৮' (Figure 8) আকৃতিতে কয়েকবার ঘোরান।
-          </li>
-          <li>
-            <strong className="text-stone-800 dark:text-stone-100">সূর্যের অবস্থান দিয়ে যাচাই:</strong> বাংলাদেশে সূর্যাস্তের দিক হলো পশ্চিম। কিবলা পশ্চিম দিগন্ত হতে সামান্য ডান দিকে (উত্তর দিকে প্রায় ৭-৮ ডিগ্রি) হেলে থাকে।
-          </li>
+      <div className="mt-4 rounded-2xl border border-stone-200 bg-white p-4 text-sm text-stone-600 dark:border-stone-800 dark:bg-stone-900 dark:text-stone-300">
+        <h3 className="mb-2 flex items-center gap-2 font-bold text-stone-900 dark:text-white"><Info className="h-4 w-4 text-emerald-600" /> নির্ভুলতার জন্য</h3>
+        <ul className="list-disc space-y-1.5 pl-5 text-xs leading-relaxed">
+          <li>প্রথমে GPS দিয়ে বর্তমান অবস্থান নিন; জেলা নির্বাচন শুধু আনুমানিক অবস্থান।</li>
+          <li>ফোনকে সমতল রেখে Figure-8 আকারে কয়েকবার ঘুরিয়ে সেন্সর ক্যালিব্রেট করুন।</li>
+          <li>কম্পাসের ফল ফোনের সেন্সর ও স্থানীয় চৌম্বকীয় প্রভাবের ওপর নির্ভরশীল; প্রয়োজনে মানচিত্র/বিশ্বস্ত কম্পাস দিয়ে যাচাই করুন।</li>
         </ul>
       </div>
     </div>
