@@ -20,6 +20,7 @@ import { QURAN_LANGUAGES, QuranLanguage, fetchVersesByLanguage } from '../servic
 import { toBanglaNumber, toArabicNumber } from '../utils/banglaNumbers';
 import { TafsirModal } from './TafsirModal';
 import { AyahStudyTools } from './AyahStudyTools';
+import { UiLanguage, translateUi } from '../services/i18n';
 
 export type ViewMode = 'wbw' | 'verse' | 'mushaf';
 
@@ -37,6 +38,7 @@ interface MushafReaderProps {
   onSelectReciter: (id: string) => void;
   currentLanguage: QuranLanguage;
   onSelectLanguage: (lang: QuranLanguage) => void;
+  uiLanguage: UiLanguage;
 }
 
 export const MushafReader: React.FC<MushafReaderProps> = ({
@@ -53,6 +55,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
   onSelectReciter,
   currentLanguage,
   onSelectLanguage,
+  uiLanguage,
 }) => {
   const [ayahs, setAyahs] = useState<QuranAyah[]>([]);
   const [loading, setLoading] = useState(true);
@@ -274,20 +277,20 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
             className={`p-2 rounded-xl border border-emerald-700/60 bg-emerald-950/40 text-emerald-200 transition-colors flex items-center gap-1 text-xs ${
               surahId <= 1 ? 'opacity-40 cursor-not-allowed' : 'hover:bg-emerald-700 hover:text-white'
             }`}
-            aria-label="পূর্ববর্তী সূরা"
+            aria-label={translateUi(uiLanguage, 'previousSurah')}
           >
             <ChevronLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">পূর্ববর্তী</span>
+            <span className="hidden sm:inline">{translateUi(uiLanguage, 'previousSurah')}</span>
           </button>
 
           <div className="text-center">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/70 border border-amber-400/30 text-amber-300 text-xs mb-2 shadow-xs">
               <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              <span>সূরা নম্বর: {toBanglaNumber(currentSurah.id)}</span>
+              <span>{translateUi(uiLanguage, 'surahNumber')}: {toBanglaNumber(currentSurah.id)}</span>
               <span>•</span>
-              <span>{currentSurah.revelationPlace === 'makkah' ? 'মাক্কী' : 'মাদানী'}</span>
+              <span>{currentSurah.revelationPlace === 'makkah' ? translateUi(uiLanguage, 'revelationMakkah') : translateUi(uiLanguage, 'revelationMadinah')}</span>
               <span>•</span>
-              <span>{toBanglaNumber(currentSurah.versesCount)} আয়াত</span>
+              <span>{toBanglaNumber(currentSurah.versesCount)} {translateUi(uiLanguage, 'verses')}</span>
             </div>
 
             <div className="flex flex-col items-center">
@@ -305,10 +308,10 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
             <button
               onClick={onOpenSurahList}
               className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-400 hover:bg-amber-300 text-emerald-950 font-bold text-xs transition-transform hover:scale-105 shadow-sm"
-              aria-label="সূরা তালিকা খুলুন"
+              aria-label={translateUi(uiLanguage, 'chooseSurah')}
             >
               <BookOpen className="w-3.5 h-3.5" />
-              <span>অন্য সূরা নির্বাচন করুন</span>
+              <span>{translateUi(uiLanguage, 'chooseAnotherSurah')}</span>
             </button>
           </div>
 
@@ -318,9 +321,9 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
             className={`p-2 rounded-xl border border-emerald-700/60 bg-emerald-950/40 text-emerald-200 transition-colors flex items-center gap-1 text-xs ${
               surahId >= 114 ? 'opacity-40 cursor-not-allowed' : 'hover:bg-emerald-700 hover:text-white'
             }`}
-            aria-label="পরবর্তী সূরা"
+            aria-label={translateUi(uiLanguage, 'nextSurah')}
           >
-            <span className="hidden sm:inline">পরবর্তী</span>
+            <span className="hidden sm:inline">{translateUi(uiLanguage, 'nextSurah')}</span>
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
@@ -328,7 +331,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
 
       <section className="mb-5 rounded-2xl border border-emerald-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900" aria-label="Reading progress">
         <div className="flex items-center justify-between gap-3">
-          <div><h3 className="font-bold text-stone-900 dark:text-white">Reading Progress</h3><p className="text-xs text-stone-500 dark:text-stone-400">এই সূরার কতটি আয়াত পড়েছেন তা চিহ্নিত করুন</p></div>
+          <div><h3 className="font-bold text-stone-900 dark:text-white">{translateUi(uiLanguage, 'readingProgress')}</h3><p className="text-xs text-stone-500 dark:text-stone-400">এই সূরার কতটি আয়াত পড়েছেন তা চিহ্নিত করুন</p></div>
           <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-extrabold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">{readCount}/{currentSurah.versesCount}</span>
         </div>
         <div className="mt-3 h-2 overflow-hidden rounded-full bg-stone-100 dark:bg-stone-800"><div className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-amber-400 transition-all" style={{ width: `${Math.round(readCount / currentSurah.versesCount * 100)}%` }} /></div>
@@ -346,7 +349,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
                 : 'text-stone-700 dark:text-stone-300 hover:text-emerald-700'
             }`}
           >
-            🔤 শব্দে শব্দে
+            🔤 {translateUi(uiLanguage, 'wordByWord')}
           </button>
           <button
             onClick={() => setViewMode('verse')}
@@ -356,7 +359,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
                 : 'text-stone-700 dark:text-stone-300 hover:text-emerald-700'
             }`}
           >
-            📄 পূর্ণ আয়াত
+            📄 {translateUi(uiLanguage, 'fullVerse')}
           </button>
           <button
             onClick={() => setViewMode('mushaf')}
@@ -366,7 +369,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
                 : 'text-stone-700 dark:text-stone-300 hover:text-emerald-700'
             }`}
           >
-            📖 মুসহাফ পাতা
+            📖 {translateUi(uiLanguage, 'mushafPage')}
           </button>
         </div>
 
@@ -377,7 +380,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
             value={currentLanguage}
             onChange={(e) => onSelectLanguage(e.target.value as QuranLanguage)}
             className="px-2.5 py-1.5 rounded-lg bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-800 dark:text-stone-200 font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500"
-            aria-label="কুরআন অনুবাদ ভাষা নির্বাচন করুন"
+            aria-label={translateUi(uiLanguage, 'translation')}
           >
             {QURAN_LANGUAGES.map((l) => (
               <option key={l.code} value={l.code}>
@@ -506,7 +509,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
                       aria-label="অডিও শুনুন"
                     >
                       {isPlayingThisAyah ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-                      <span className="hidden sm:inline">তিলাওয়াত</span>
+                      <span className="hidden sm:inline">{translateUi(uiLanguage, 'listen')}</span>
                     </button>
 
                     <button
@@ -515,10 +518,10 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
                         setIsTafsirOpen(true);
                       }}
                       className="p-1.5 rounded-lg bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-200 hover:bg-emerald-600 hover:text-white transition-colors flex items-center gap-1"
-                      aria-label="তাফসীর"
+                      aria-label={translateUi(uiLanguage, 'tafsir')}
                     >
                       <BookOpen className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
-                      <span className="hidden sm:inline">তাফসীর</span>
+                      <span className="hidden sm:inline">{translateUi(uiLanguage, 'tafsir')}</span>
                     </button>
 
                     <button
@@ -528,7 +531,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
                           ? 'bg-amber-500 text-white'
                           : 'bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-200 hover:bg-amber-500 hover:text-white'
                       }`}
-                      aria-label="বুকমার্ক"
+                      aria-label={translateUi(uiLanguage, 'bookmark')}
                     >
                       <Bookmark className="w-3.5 h-3.5" />
                     </button>
@@ -536,7 +539,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
                     <button
                       onClick={() => handleCopyAyah(ayah)}
                       className="p-1.5 rounded-lg bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-200 hover:bg-emerald-600 hover:text-white transition-colors"
-                      aria-label="কপি"
+                      aria-label={translateUi(uiLanguage, 'copy')}
                     >
                       {copiedAyahKey === ayah.verseKey ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                     </button>
@@ -595,7 +598,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
                             style={{ fontSize: `${banglaFontSize}px` }}
                           >
                             <span className="font-semibold text-emerald-800 dark:text-emerald-400 mr-1.5">
-                              ({langMeta.nativeName}) Translation:
+                              ({langMeta.nativeName}) {translateUi(uiLanguage, 'translation')}:
                             </span>
                             {translationText}
                           </p>
