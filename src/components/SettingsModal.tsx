@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Type, Volume2, Eye, Info, Sparkles, Moon, Sun, Check } from 'lucide-react';
 import { RECITERS } from '../services/quranApi';
 import { toBanglaNumber } from '../utils/banglaNumbers';
@@ -33,6 +33,38 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   theme,
   setTheme,
 }) => {
+  const [keepScreenAwake, setKeepScreenAwake] = useState<boolean>(() => localStorage.getItem('mushaf_keep_screen_awake') === 'true');
+  const [wakeLockError, setWakeLockError] = useState<string>('');
+
+  useEffect(() => {
+    localStorage.setItem('mushaf_keep_screen_awake', String(keepScreenAwake));
+    if (!keepScreenAwake) return;
+    let lock: { release: () => Promise<void> } | null = null;
+    let cancelled = false;
+    const acquire = async () => {
+      try {
+        const wakeLockApi = (navigator as Navigator & { wakeLock?: { request: (type: 'screen') => Promise<{ release: () => Promise<void> }> } }).wakeLock;
+        if (!wakeLockApi) {
+          setWakeLockError('এই ব্রাউজার/ডিভাইসে Screen Wake Lock সমর্থিত নয়।');
+          return;
+        }
+        lock = await wakeLockApi.request('screen');
+        if (cancelled && lock) await lock.release();
+        else setWakeLockError('');
+      } catch {
+        setWakeLockError('স্ক্রিন চালু রাখার অনুমতি পাওয়া যায়নি।');
+      }
+    };
+    void acquire();
+    const onVisibility = () => { if (document.visibilityState === 'visible' && !lock) void acquire(); };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      cancelled = true;
+      document.removeEventListener('visibilitychange', onVisibility);
+      if (lock) void lock.release();
+    };
+  }, [keepScreenAwake]);
+
   return (
     <div className="max-w-2xl mx-auto px-3 sm:px-6 py-6 pb-28 font-bangla space-y-6">
       <div className="border-b border-stone-200 dark:border-stone-800 pb-3">
@@ -259,6 +291,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             />
           </button>
         </div>
+      </div>
+
+      {/* Keep screen awake */}
+      <div className="rounded-2xl border border-amber-200/70 bg-gradient-to-br from-white via-amber-50/70 to-emerald-50/80 p-5 shadow-sm dark:border-emerald-900 dark:from-stone-900 dark:via-stone-900 dark:to-emerald-950/50 space-y-2">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-bold text-stone-900 dark:text-white">স্ক্রিন সবসময় চালু রাখুন</p>
+            <p className="mt-1 text-xs text-stone-600 dark:text-stone-400">চালু করলে কুরআন পড়ার সময় স্ক্রিন ঘুমাবে না। বন্ধ করলে স্বাভাবিক নিয়মে স্ক্রিন বন্ধ হবে।</p>
+          </div>
+          <button type="button" role="switch" aria-checked={keepScreenAwake} onClick={() => setKeepScreenAwake((value) => !value)} className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${keepScreenAwake ? 'bg-emerald-600' : 'bg-stone-300 dark:bg-stone-700'}`}>
+            <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-transform ${keepScreenAwake ? 'translate-x-6' : 'translate-x-1'}`} />
+          </button>
+        </div>
+        {wakeLockError && <p className="text-[11px] text-amber-700 dark:text-amber-300">{wakeLockError}</p>}
       </div>
 
       {/* About Box */}
