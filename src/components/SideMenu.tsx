@@ -1,4 +1,5 @@
 import React from 'react';
+import { UiLanguage, translateUi } from '../services/i18n';
 import {
   X, UserRoundPlus, Heart, MapPin, Bell, Clock3, Languages, Settings,
   Star, Share2, MessageCircle, MessageSquare, BarChart3, Search,
@@ -13,11 +14,12 @@ interface SideMenuProps {
   onPrayer: () => void;
   onBookmarks: () => void;
   onGoToAyah: () => void;
+  uiLanguage: UiLanguage;
 }
 
 export const SideMenu: React.FC<SideMenuProps> = ({
   isOpen, onClose, onSearch, onSettings, onPrayer,
-  onBookmarks, onGoToAyah
+  onBookmarks, onGoToAyah, uiLanguage
 }) => {
   if (!isOpen) return null;
 
@@ -47,29 +49,29 @@ export const SideMenu: React.FC<SideMenuProps> = ({
 
   const items = [
     { label: 'সদস্য হন', icon: UserRoundPlus, action: () => { onClose(); document.querySelector<HTMLButtonElement>('[aria-label*="সাইন"], [aria-label*="Sign"], button[title*="Sign"]')?.click(); } },
-    { label: 'Donate করুন', icon: Heart, action: jumpToDonation },
-    { label: 'নির্দিষ্ট আয়াতে যান', icon: MapPin, action: onGoToAyah },
-    { label: 'Notification', icon: Bell, action: () => { onClose(); window.dispatchEvent(new CustomEvent('mushaf:open-notifications')); } },
-    { label: 'সালাতের সময়সূচি', icon: Clock3, action: onPrayer },
-    { label: 'আরবি অভিধান', icon: Languages, action: () => { onClose(); window.dispatchEvent(new CustomEvent('mushaf:open-dictionary')); } },
-    { label: 'Settings', icon: Settings, action: onSettings },
-    { label: 'App Rating', icon: Star, action: () => { window.open('https://play.google.com/store/search?q=Al-Quran%20Al-Kareem&c=apps', '_blank', 'noopener,noreferrer'); onClose(); } },
-    { label: 'App Share', icon: Share2, action: shareApp },
-    { label: 'আমাদের সাথে কথা বলুন', icon: MessageCircle, action: () => openWhatsApp('আসসালামু আলাইকুম। Al-Quran Al-Kareem অ্যাপ সম্পর্কে কথা বলতে চাই।') },
-    { label: 'Feedback', icon: MessageSquare, action: () => openWhatsApp('আসসালামু আলাইকুম। Al-Quran Al-Kareem অ্যাপ সম্পর্কে আমার মতামত: ') },
-    { label: 'Share পরিসংখ্যান', icon: BarChart3, action: onBookmarks },
-    { label: 'Search', icon: Search, action: onSearch },
-    { label: 'Library', icon: BookOpen, action: onBookmarks }
+    { label: translateUi(uiLanguage, 'donate'), icon: Heart, action: jumpToDonation },
+    { label: translateUi(uiLanguage, 'jumpAyah'), icon: MapPin, action: onGoToAyah },
+    { label: translateUi(uiLanguage, 'notifications'), icon: Bell, action: () => { onClose(); window.dispatchEvent(new CustomEvent('mushaf:open-notifications')); } },
+    { label: translateUi(uiLanguage, 'salatTimes'), icon: Clock3, action: onPrayer },
+    { label: translateUi(uiLanguage, 'dictionary'), icon: Languages, action: () => { onClose(); window.dispatchEvent(new CustomEvent('mushaf:open-dictionary')); } },
+    { label: translateUi(uiLanguage, 'settings'), icon: Settings, action: onSettings },
+    { label: translateUi(uiLanguage, 'rateApp'), icon: Star, action: () => { window.open('https://play.google.com/store/search?q=Al-Quran%20Al-Kareem&c=apps', '_blank', 'noopener,noreferrer'); onClose(); } },
+    { label: translateUi(uiLanguage, 'shareApp'), icon: Share2, action: shareApp },
+    { label: translateUi(uiLanguage, 'contact'), icon: MessageCircle, action: () => openWhatsApp('আসসালামু আলাইকুম। Al-Quran Al-Kareem অ্যাপ সম্পর্কে কথা বলতে চাই।') },
+    { label: translateUi(uiLanguage, 'feedback'), icon: MessageSquare, action: () => openWhatsApp('আসসালামু আলাইকুম। Al-Quran Al-Kareem অ্যাপ সম্পর্কে আমার মতামত: ') },
+    { label: translateUi(uiLanguage, 'stats'), icon: BarChart3, action: onBookmarks },
+    { label: translateUi(uiLanguage, 'search'), icon: Search, action: onSearch },
+    { label: translateUi(uiLanguage, 'library'), icon: BookOpen, action: onBookmarks }
   ];
 
   return (
-    <div className="fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-label="অ্যাপ মেনু">
+    <div className="fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-label={translateUi(uiLanguage, 'appMenu')}>
       <button className="absolute inset-0 bg-black/55 backdrop-blur-[2px]" onClick={onClose} aria-label="মেনু বন্ধ করুন" />
       <aside className="absolute right-0 top-0 flex h-full w-[min(88vw,380px)] flex-col border-l border-amber-300/20 bg-gradient-to-b from-emerald-950 via-emerald-900 to-stone-950 text-white shadow-2xl animate-in slide-in-from-right duration-300">
         <div className="flex items-center justify-between border-b border-white/10 px-5 py-5">
           <div>
             <p className="text-[10px] tracking-[0.22em] text-amber-300">AL-QURAN AL-KAREEM</p>
-            <h2 className="mt-1 text-xl font-bold">মেনু</h2>
+            <h2 className="mt-1 text-xl font-bold">{translateUi(uiLanguage, 'menu')}</h2>
             <p className="mt-1 text-xs text-emerald-100/70">পড়ুন · বুঝুন · আমল করুন</p>
           </div>
           <button onClick={onClose} className="rounded-xl border border-white/15 bg-white/10 p-2 hover:bg-white/20" aria-label="বন্ধ করুন"><X className="h-5 w-5" /></button>
