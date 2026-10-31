@@ -21,6 +21,7 @@ import { toBanglaNumber, toArabicNumber } from '../utils/banglaNumbers';
 import { TafsirModal } from './TafsirModal';
 import { OfflineQuranDownload } from './OfflineQuranDownload';
 import { AyahStudyTools } from './AyahStudyTools';
+import { getOfflineNoteUser } from '../services/offlineNotesAuth';
 
 export type ViewMode = 'wbw' | 'verse' | 'mushaf';
 
@@ -71,20 +72,29 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
   const [currentRepeat, setCurrentRepeat] = useState<number>(1);
   const [copiedAyahKey, setCopiedAyahKey] = useState<string | null>(null);
   const [studyRecords, setStudyRecords] = useState<Record<string, { read: boolean; note: string }>>({});
+  const [noteAccount, setNoteAccount] = useState<string>(() => getOfflineNoteUser() || 'guest');
+  const studyStorageKey = `mushaf_ayah_study_v1:${noteAccount}`;
+
+  useEffect(() => {
+    const refreshAccount = () => setNoteAccount(getOfflineNoteUser() || 'guest');
+    window.addEventListener('mushaf-offline-note-account-change', refreshAccount);
+    return () => window.removeEventListener('mushaf-offline-note-account-change', refreshAccount);
+  }, []);
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem('mushaf_ayah_study_v1');
-      if (stored) setStudyRecords(JSON.parse(stored));
+      const stored = localStorage.getItem(studyStorageKey);
+      setStudyRecords(stored ? JSON.parse(stored) : {});
     } catch (error) {
       console.warn('Could not restore reading notes:', error);
+      setStudyRecords({});
     }
-  }, []);
+  }, [studyStorageKey]);
 
   const updateStudyRecord = (verseKey: string, patch: Partial<{ read: boolean; note: string }>) => {
     setStudyRecords((previous) => {
       const next = { ...previous, [verseKey]: { read: previous[verseKey]?.read ?? false, note: previous[verseKey]?.note ?? '', ...patch } };
-      try { localStorage.setItem('mushaf_ayah_study_v1', JSON.stringify(next)); } catch (error) { console.warn('Could not save reading notes:', error); }
+      try { localStorage.setItem(studyStorageKey, JSON.stringify(next)); } catch (error) { console.warn('Could not save reading notes:', error); }
       return next;
     });
   };
