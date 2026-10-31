@@ -328,7 +328,7 @@ function AppContent() {
         onOpenSurahSearch={() => setIsSurahDrawerOpen(true)}
         onOpenGlobalSearch={() => setIsGlobalSearchOpen(true)}
         onOpenMenu={() => setIsSideMenuOpen(true)}
-        currentSurahNameBn={currentSurah.nameBengali}
+        currentSurahNameBn={uiLanguage === 'bn' ? currentSurah.nameBengali : currentSurah.nameEnglish}
         currentSurahId={currentSurahId}
         uiLanguage={uiLanguage}
       />
