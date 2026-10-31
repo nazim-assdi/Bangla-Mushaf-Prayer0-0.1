@@ -15,7 +15,7 @@ import { DailyDhikrView } from './components/DailyDhikrView';
 import { GlobalSearchModal } from './components/GlobalSearchModal';
 import { SideMenu } from './components/SideMenu';
 import { SURAH_LIST } from './data/quranMetadata';
-import { QuranLanguage } from './services/multiLangQuran';
+import { QURAN_LANGUAGES, QuranLanguage } from './services/multiLangQuran';
 import { UiLanguage, translateUi } from './services/i18n';
 import { LanguageSelectionScreen } from './components/LanguageSelectionScreen';
 import { ReadingPlanner } from './components/ReadingPlanner';
@@ -68,9 +68,9 @@ function AppContent() {
   const [selectedReciterId, setSelectedReciterId] = useState<string>(() => localStorage.getItem('mushaf_selected_reciter') || 'alafasy');
   const [currentLanguage, setCurrentLanguage] = useState<QuranLanguage>(() => {
     const saved = localStorage.getItem('mushaf_quran_language');
-    if (saved === 'bn' || saved === 'en' || saved === 'hi' || saved === 'ur' || saved === 'tr') return saved;
+    if (saved && QURAN_LANGUAGES.some((item) => item.code === saved)) return saved as QuranLanguage;
     const ui = localStorage.getItem('mushaf_ui_language');
-    return ui === 'bn' || ui === 'hi' || ui === 'ur' || ui === 'tr' ? ui : 'en';
+    return ui && QURAN_LANGUAGES.some((item) => item.code === ui) ? ui as QuranLanguage : 'en';
   });
   const [uiLanguage, setUiLanguage] = useState<UiLanguage | null>(() => {
     const saved = localStorage.getItem('mushaf_ui_language');
