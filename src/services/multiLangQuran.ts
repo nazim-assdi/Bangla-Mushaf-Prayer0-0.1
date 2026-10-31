@@ -144,17 +144,36 @@ export async function fetchVersesByLanguage(
   const langMeta = QURAN_LANGUAGES.find((l) => l.code === lang) || QURAN_LANGUAGES[0];
 
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
-
-    const res = await fetch(
-      `https://api.quran.com/api/v4/verses/by_chapter/${surahId}?language=${lang}&words=true&translations=${langMeta.translationId}&word_fields=text_uthmani,location,audio_url&per_page=300`,
-      { signal: controller.signal }
-    );
-    clearTimeout(timeoutId);
-
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
+    // Quran.com limits paginated verse responses to 50 records per request.
+    // Fetch every page so long surahs are never silently truncated.
+    const allVerses: any[] = [];
+    let page = 1;
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      let response: Response;
+      try {
+        response = await fetch(
+          `https://api.quran.com/api/v4/verses/by_chapter/${surahId}?language=${lang}&words=true&translations=${langMeta.translationId}&word_fields=text_uthmani,location,audio_url&per_page=50&page=${page}`,
+          { signal: controller.signal }
+        );
+      } finally {
+        clearTimeout(timeoutId);
+      }
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const pageData = await response.json();
+      const pageVerses = Array.isArray(pageData.verses) ? pageData.verses : [];
+      if (pageVerses.length === 0) break;
+      allVerses.push(...pageVerses);
+      if (pageData.pagination?.next_page) {
+        page = pageData.pagination.next_page;
+      } else if (pageVerses.length === 50) {
+        page += 1;
+      } else {
+        break;
+      }
+    }
+    const data = { verses: allVerses };
 
     if (data.verses && Array.isArray(data.verses)) {
       const parsedAyahs: QuranAyah[] = data.verses.map((v: any) => {
