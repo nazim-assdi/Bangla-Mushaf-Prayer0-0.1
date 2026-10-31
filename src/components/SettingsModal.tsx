@@ -191,7 +191,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         {/* Arabic Font Slider */}
         <div className="space-y-2">
           <div className="flex justify-between text-xs text-stone-600 dark:text-stone-400">
-            <span>আরবি ফন্ট সাইজ:</span>
+            <span>{translateUi(uiLanguage, 'arabicFont')}:</span>
             <span className="font-bold text-emerald-700 dark:text-emerald-400">
               {toBanglaNumber(arabicFontSize)} পিক্সেল
             </span>
@@ -319,14 +319,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <span className="font-semibold text-xs text-stone-900 dark:text-white">
               Transliteration
             </span>
-            <p className="text-[11px] text-stone-500">শব্দে শব্দে বাংলা উচ্চারণ প্রদর্শন</p>
+            <p className="text-[11px] text-stone-500">Show transliteration when available</p>
           </div>
           <button
             onClick={() => setShowTransliteration(!showTransliteration)}
             className={`w-12 h-6 rounded-full p-0.5 transition-colors ${
               showTransliteration ? 'bg-emerald-600' : 'bg-stone-300 dark:bg-stone-700'
             }`}
-            aria-label="বাংলা উচ্চারণ টগল"
+            aria-label="Toggle transliteration"
           >
             <div
               className={`w-5 h-5 rounded-full bg-white transition-transform ${
@@ -339,16 +339,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="flex items-center justify-between p-3 rounded-xl bg-stone-50 dark:bg-stone-800">
           <div>
             <span className="font-semibold text-xs text-stone-900 dark:text-white">
-              বাংলা পূর্ণ অনুবাদ
+              {translateUi(uiLanguage, 'translation')}
             </span>
-            <p className="text-[11px] text-stone-500">আয়াতের নিচে পূর্ণ অনুবাদ প্রদর্শন</p>
+            <p className="text-[11px] text-stone-500">Display the selected translation below each ayah</p>
           </div>
           <button
             onClick={() => setShowTranslation(!showTranslation)}
             className={`w-12 h-6 rounded-full p-0.5 transition-colors ${
               showTranslation ? 'bg-emerald-600' : 'bg-stone-300 dark:bg-stone-700'
             }`}
-            aria-label="বাংলা অনুবাদ টগল"
+            aria-label="Toggle translation"
           >
             <div
               className={`w-5 h-5 rounded-full bg-white transition-transform ${
@@ -374,17 +374,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       </div>
 
       {/* About Box */}
-      <div className="bg-emerald-50 dark:bg-stone-900 rounded-2xl p-5 border border-emerald-200 dark:border-stone-800 text-xs text-stone-600 dark:text-stone-300 space-y-2">
-        <h4 className="font-bold text-stone-900 dark:text-white text-sm">
-          কুরআনুল কারীম (বাংলা শব্দে শব্দে মুসহাফ)
-        </h4>
-        <p className="leading-relaxed">
-          এই অ্যাপ্লিকেশনটি বাংলাভাষী মুসলিমদের জন্য শব্দে শব্দে কুরআনের অর্থ ও উচ্চারণ শিক্ষা, উচ্চমানের অডিও তিলাওয়াত, বহুভাষিক প্রামাণ্য তাফসীর এবং বাংলাদেশের ৬৪ জেলার নির্ভুল নামাজের সময় ও কিবলা কম্পাস প্রদানের উদ্দেশ্যে তৈরি করা হয়েছে।
-        </p>
-        <p className="text-stone-400 pt-1">
-          কুরআন ডাটা: Quran.com API v4 এবং তাফসীর ইবনে কাসীর।
-        </p>
-      </div>
+      <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-xs text-stone-600 dark:border-stone-800 dark:bg-stone-900 dark:text-stone-300 space-y-2">
+        <h4 className="text-sm font-bold text-stone-900 dark:text-white">{translateUi(uiLanguage, 'aboutApp')}</h4>
+        <p className="leading-relaxed">{translateUi(uiLanguage, 'aboutDescription')}</p>
+        <p className="border-t border-stone-200 pt-2 text-stone-500 dark:border-stone-800 dark:text-stone-400">{translateUi(uiLanguage, 'sourceNote')}</p>
+      </section>
     </div>
   );
 };
