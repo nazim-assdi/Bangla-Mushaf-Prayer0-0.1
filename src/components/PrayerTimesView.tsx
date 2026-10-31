@@ -172,7 +172,7 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
   };
 
   // Group districts by division for tidy dropdown
-  const divisions = ['ঢাকা', 'চট্টগ্রাম', 'সিলেট', 'রাজশাহী', 'খুলনা', 'বরিশাল', 'রংপুর', 'ময়মনসিংহ'];
+  const divisions = Array.from(new Set(BANGLADESH_DISTRICTS.map((district) => uiLanguage === 'bn' ? district.divisionBn : district.divisionEn)));
 
   return (
     <div className="mx-auto w-full max-w-6xl px-3 py-4 pb-28 font-bangla sm:px-5 sm:py-6 space-y-5">
@@ -201,10 +201,10 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
             aria-label={translateUi(uiLanguage, 'districtFallback')}
           >
             {divisions.map((div) => (
-              <optgroup key={div} label={`${div} বিভাগ`}>
+              <optgroup key={div} label={div}>
                 {BANGLADESH_DISTRICTS.filter((d) => d.divisionBn === div).map((d) => (
                   <option key={d.id} value={d.id}>
-                    {d.nameBn} ({d.nameEn})
+                    {uiLanguage === 'bn' ? d.nameBn : d.nameEn}
                   </option>
                 ))}
               </optgroup>
