@@ -11,7 +11,13 @@ export const UI_LANGUAGES: { code: UiLanguage; name: string; nativeName: string;
 
 const messages: Record<UiLanguage, Record<string, string>> = {
   bn: {
-    onlineLogin:'অনলাইন অ্যাকাউন্ট',
+    useGps:'বর্তমান GPS অবস্থান ব্যবহার করুন',
+    districtFallback:'বাংলাদেশের জেলা (GPS না থাকলে)',
+    noTranslationAvailable:'এই ভাষায় যাচাইকৃত অনুবাদ এখনো যুক্ত করা হয়নি।',
+    prayerTimesTitle:'নামাজের সময়সূচি',
+    qiblaDirection:'কিবলার দিক',
+    gpsAccuracy:'GPS নির্ভুলতা',
+        onlineLogin:'অনলাইন অ্যাকাউন্ট',
     loginHelp:'লগইন করতে ইন্টারনেট লাগবে। লগইন ছাড়াও কুরআন পড়া, নোট লেখা ও সংরক্ষণ অফলাইনে করা যাবে।',
     accountChecking:'অ্যাকাউন্টের অবস্থা যাচাই হচ্ছে…',
     signedIn:'লগইন করা আছে',
@@ -73,7 +79,13 @@ const messages: Record<UiLanguage, Record<string, string>> = {
     salatTimes:'সালাতের সময়', bookmarks:'সংরক্ষিত আয়াত', appMenu:'অ্যাপ মেনু'
   },
   en: {
-    onlineLogin:'Online account',
+    useGps:'Use current GPS location',
+    districtFallback:'Bangladesh district (fallback only)',
+    noTranslationAvailable:'A verified translation in this language has not been added yet.',
+    prayerTimesTitle:'Prayer times',
+    qiblaDirection:'Qibla direction',
+    gpsAccuracy:'GPS accuracy',
+        onlineLogin:'Online account',
     loginHelp:'Internet is required to sign in. Quran reading and personal notes work offline without an account.',
     accountChecking:'Checking account status…',
     signedIn:'Signed in as',
@@ -135,7 +147,13 @@ const messages: Record<UiLanguage, Record<string, string>> = {
     salatTimes:'Prayer times', bookmarks:'Saved verses', appMenu:'App menu'
   },
   ar: {
-    onlineLogin:'الحساب عبر الإنترنت',
+    useGps:'استخدم موقع GPS الحالي',
+    districtFallback:'منطقة في بنغلاديش (للاستخدام الاحتياطي)',
+    noTranslationAvailable:'لم تتم إضافة ترجمة موثوقة بهذه اللغة بعد.',
+    prayerTimesTitle:'مواقيت الصلاة',
+    qiblaDirection:'اتجاه القبلة',
+    gpsAccuracy:'دقة GPS',
+        onlineLogin:'الحساب عبر الإنترنت',
     loginHelp:'يلزم الاتصال بالإنترنت لتسجيل الدخول. تعمل قراءة القرآن والملاحظات دون اتصال ودون حساب.',
     accountChecking:'جارٍ التحقق من الحساب…',
     signedIn:'تم تسجيل الدخول باسم',
@@ -197,7 +215,13 @@ const messages: Record<UiLanguage, Record<string, string>> = {
     salatTimes:'مواقيت الصلاة', bookmarks:'الآيات المحفوظة', appMenu:'قائمة التطبيق'
   },
   hi: {
-    onlineLogin:'ऑनलाइन खाता',
+    useGps:'वर्तमान GPS स्थान का उपयोग करें',
+    districtFallback:'बांग्लादेश जिला (केवल वैकल्पिक)',
+    noTranslationAvailable:'इस भाषा में सत्यापित अनुवाद अभी उपलब्ध नहीं है।',
+    prayerTimesTitle:'नमाज़ का समय',
+    qiblaDirection:'क़िबला दिशा',
+    gpsAccuracy:'GPS सटीकता',
+        onlineLogin:'ऑनलाइन खाता',
     loginHelp:'साइन इन करने के लिए इंटरनेट चाहिए। बिना खाते के कुरआन पढ़ना और नोट ऑफ़लाइन काम करते हैं।',
     accountChecking:'खाते की स्थिति जाँची जा रही है…',
     signedIn:'इस रूप में साइन इन',
@@ -259,7 +283,13 @@ const messages: Record<UiLanguage, Record<string, string>> = {
     salatTimes:'नमाज़ का समय', bookmarks:'सहेजी गई आयतें', appMenu:'ऐप मेनू'
   },
   ur: {
-    onlineLogin:'آن لائن اکاؤنٹ',
+    useGps:'موجودہ GPS مقام استعمال کریں',
+    districtFallback:'بنگلہ دیش کا ضلع (صرف متبادل)',
+    noTranslationAvailable:'اس زبان میں تصدیق شدہ ترجمہ ابھی شامل نہیں کیا گیا۔',
+    prayerTimesTitle:'نماز کے اوقات',
+    qiblaDirection:'قبلے کی سمت',
+    gpsAccuracy:'GPS کی درستگی',
+        onlineLogin:'آن لائن اکاؤنٹ',
     loginHelp:'سائن اِن کے لیے انٹرنیٹ ضروری ہے۔ قرآن پڑھنا اور ذاتی نوٹس اکاؤنٹ کے بغیر آف لائن کام کرتے ہیں۔',
     accountChecking:'اکاؤنٹ کی حالت چیک ہو رہی ہے…',
     signedIn:'اس اکاؤنٹ میں سائن اِن',
@@ -321,7 +351,13 @@ const messages: Record<UiLanguage, Record<string, string>> = {
     salatTimes:'نماز کے اوقات', bookmarks:'محفوظ آیات', appMenu:'ایپ مینو'
   },
   tr: {
-    onlineLogin:'Çevrimiçi hesap',
+    useGps:'Mevcut GPS konumunu kullan',
+    districtFallback:'Bangladeş ilçesi (yalnızca yedek)',
+    noTranslationAvailable:'Bu dilde doğrulanmış bir çeviri henüz eklenmedi.',
+    prayerTimesTitle:'Namaz vakitleri',
+    qiblaDirection:'Kıble yönü',
+    gpsAccuracy:'GPS doğruluğu',
+        onlineLogin:'Çevrimiçi hesap',
     loginHelp:'Oturum açmak için internet gerekir. Kur’an okuma ve kişisel notlar hesapsız çevrimdışı çalışır.',
     accountChecking:'Hesap durumu kontrol ediliyor…',
     signedIn:'Oturum açıldı:',
