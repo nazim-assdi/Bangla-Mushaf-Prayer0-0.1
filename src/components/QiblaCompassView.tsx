@@ -130,7 +130,7 @@ export const QiblaCompassView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangu
             className="min-h-10 min-w-0 rounded-xl border border-stone-200 bg-stone-100 px-3 text-sm text-stone-800 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100"
             aria-label={translateUi(uiLanguage, 'districtFallback')}
           >
-            {BANGLADESH_DISTRICTS.map((district) => <option key={district.id} value={district.id}>{district.nameBn}</option>)}
+            {BANGLADESH_DISTRICTS.map((district) => <option key={district.id} value={district.id}>{uiLanguage === 'bn' ? district.nameBn : district.nameEn}</option>)}
           </select>
           <button onClick={handleUseGPS} disabled={geoLoading} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 text-sm font-semibold text-white disabled:opacity-60">
             <RefreshCw className={`h-4 w-4 ${geoLoading ? 'animate-spin' : ''}`} />
