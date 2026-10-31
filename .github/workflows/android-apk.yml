@@ -61,7 +61,7 @@ jobs:
               opening_tag_end = source.find(">", source.find("<manifest"))
               if opening_tag_end < 0:
                   raise SystemExit("Android manifest opening tag was not found")
-              source = source[:opening_tag_end + 1] + "\\n" + permission + source[opening_tag_end + 1:]
+              source = source[:opening_tag_end + 1] + "\n" + permission + source[opening_tag_end + 1:]
               manifest.write_text(source)
           PY
 
