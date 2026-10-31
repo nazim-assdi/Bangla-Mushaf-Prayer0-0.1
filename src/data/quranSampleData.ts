@@ -12,6 +12,7 @@ export interface QuranWord {
   translationUr?: string;
   translationHi?: string;
   translationTr?: string;
+  translationText?: string;
   audioUrl: string;
 }
 
@@ -25,6 +26,7 @@ export interface QuranAyah {
   translationUr?: string;
   translationHi?: string;
   translationTr?: string;
+  translationText?: string;
   transliterationBn: string;
   audioUrl: string;
   juzNumber: number;
