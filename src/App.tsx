@@ -351,6 +351,7 @@ function AppContent() {
         onPrayer={() => { setIsSideMenuOpen(false); setActiveTab('prayer'); }}
         onBookmarks={() => { setIsSideMenuOpen(false); setActiveTab('bookmarks'); }}
         onGoToAyah={() => { setIsSideMenuOpen(false); setIsSurahDrawerOpen(true); }}
+        uiLanguage={uiLanguage}
       />
 
       {/* Surah & Juz Selection Drawer Modal */}
