@@ -248,21 +248,25 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
   };
 
   // Helper to extract correct translation string based on current language
-  const getAyahTranslation = (ayah: any): string => {
+  const getAyahTranslation = (ayah: QuranAyah): string => {
+    if (ayah.translationText) return ayah.translationText;
     if (currentLanguage === 'en') return ayah.translationEn || '';
     if (currentLanguage === 'hi') return ayah.translationHi || '';
     if (currentLanguage === 'ur') return ayah.translationUr || '';
     if (currentLanguage === 'tr') return ayah.translationTr || '';
-    return ayah.translationBn || '';
+    if (currentLanguage === 'bn') return ayah.translationBn || '';
+    return '';
   };
 
   // Never substitute another language's wording when a verified translation is absent.
   const getWordTranslation = (word: QuranWord): string => {
+    if (word.translationText) return word.translationText;
     if (currentLanguage === 'en') return word.translationEn || '';
     if (currentLanguage === 'hi') return word.translationHi || '';
     if (currentLanguage === 'ur') return word.translationUr || '';
     if (currentLanguage === 'tr') return word.translationTr || '';
-    return word.translationBn || '';
+    if (currentLanguage === 'bn') return word.translationBn || '';
+    return '';
   };
 
   const langMeta = QURAN_LANGUAGES.find((l) => l.code === currentLanguage) || QURAN_LANGUAGES[0];
