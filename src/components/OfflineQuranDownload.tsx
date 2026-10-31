@@ -5,7 +5,7 @@ import { deleteOfflineLanguage, getOfflineSurahCount } from '../services/offline
 import { DonationCard } from './DonationCard';
 import { UiLanguage, translateUi } from '../services/i18n';
 
-const languageNote: Record<QuranLanguage, string> = {
+const languageNote: Partial<Record<QuranLanguage, string>> = {
   bn: 'বাংলা অনুবাদ',
   en: 'English translation',
   hi: 'हिन्दी अनुवाद',
@@ -85,7 +85,7 @@ export const OfflineQuranDownload: React.FC<{ uiLanguage: UiLanguage }> = ({ uiL
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <h4 className="font-bold text-stone-900 dark:text-white">{lang.nativeName}</h4>
-                      <p className="text-[11px] text-stone-500 dark:text-stone-400">{languageNote[lang.code]}</p>
+                      <p className="text-[11px] text-stone-500 dark:text-stone-400">{languageNote[lang.code] || `${lang.name} translation`}</p>
                     </div>
                     <span className="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">{count}/114</span>
                   </div>
