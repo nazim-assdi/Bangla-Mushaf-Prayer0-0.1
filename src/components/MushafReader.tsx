@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { QuranAyah, QuranWord } from '../data/quranSampleData';
 import { SURAH_LIST } from '../data/quranMetadata';
-import { RECITERS } from '../services/quranApi';
+import { RECITERS, getBundledTafsir } from '../services/quranApi';
 import { QURAN_LANGUAGES, QuranLanguage, fetchVersesByLanguage } from '../services/multiLangQuran';
 import { toBanglaNumber, toArabicNumber } from '../utils/banglaNumbers';
 import { TafsirModal } from './TafsirModal';
