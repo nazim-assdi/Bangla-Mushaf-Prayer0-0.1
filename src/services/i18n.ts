@@ -11,7 +11,8 @@ export const UI_LANGUAGES: { code: UiLanguage; name: string; nativeName: string;
 
 const messages: Record<UiLanguage, Record<string, string>> = {
   bn: {
-    download:'ডাউনলোড',
+    mushaf:'মুসহাফ',
+        download:'ডাউনলোড',
     saved:'সংরক্ষিত',
     resumeDownload:'বাকি ডাউনলোড',
     downloading:'ডাউনলোড হচ্ছে',
@@ -44,7 +45,8 @@ const messages: Record<UiLanguage, Record<string, string>> = {
     salatTimes:'সালাতের সময়', bookmarks:'সংরক্ষিত আয়াত', appMenu:'অ্যাপ মেনু'
   },
   en: {
-    download:'Download',
+    mushaf:'Mushaf',
+        download:'Download',
     saved:'Saved',
     resumeDownload:'Resume download',
     downloading:'Downloading',
@@ -77,7 +79,8 @@ const messages: Record<UiLanguage, Record<string, string>> = {
     salatTimes:'Prayer times', bookmarks:'Saved verses', appMenu:'App menu'
   },
   ar: {
-    download:'تنزيل',
+    mushaf:'المصحف',
+        download:'تنزيل',
     saved:'تم الحفظ',
     resumeDownload:'متابعة التنزيل',
     downloading:'جارٍ التنزيل',
@@ -110,7 +113,8 @@ const messages: Record<UiLanguage, Record<string, string>> = {
     salatTimes:'مواقيت الصلاة', bookmarks:'الآيات المحفوظة', appMenu:'قائمة التطبيق'
   },
   hi: {
-    download:'डाउनलोड',
+    mushaf:'मुसहफ़',
+        download:'डाउनलोड',
     saved:'सहेजा गया',
     resumeDownload:'डाउनलोड जारी रखें',
     downloading:'डाउनलोड हो रहा है',
@@ -143,7 +147,8 @@ const messages: Record<UiLanguage, Record<string, string>> = {
     salatTimes:'नमाज़ का समय', bookmarks:'सहेजी गई आयतें', appMenu:'ऐप मेनू'
   },
   ur: {
-    download:'ڈاؤن لوڈ',
+    mushaf:'مصحف',
+        download:'ڈاؤن لوڈ',
     saved:'محفوظ',
     resumeDownload:'ڈاؤن لوڈ جاری رکھیں',
     downloading:'ڈاؤن لوڈ ہو رہا ہے',
@@ -176,7 +181,8 @@ const messages: Record<UiLanguage, Record<string, string>> = {
     salatTimes:'نماز کے اوقات', bookmarks:'محفوظ آیات', appMenu:'ایپ مینو'
   },
   tr: {
-    download:'İndir',
+    mushaf:'Mushaf',
+        download:'İndir',
     saved:'Kaydedildi',
     resumeDownload:'İndirmeye devam et',
     downloading:'İndiriliyor',
