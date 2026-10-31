@@ -12,6 +12,8 @@ interface SettingsModalProps {
   arabicFontSize: number;
   arabicFontId: string;
   setArabicFontId: (id: string) => void;
+  mushafPageStyle: string;
+  setMushafPageStyle: (style: string) => void;
   setArabicFontSize: (size: number) => void;
   banglaFontSize: number;
   setBanglaFontSize: (size: number) => void;
@@ -32,6 +34,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   setArabicFontSize,
   arabicFontId,
   setArabicFontId,
+  mushafPageStyle,
+  setMushafPageStyle,
   banglaFontSize,
   setBanglaFontSize,
   showTransliteration,
@@ -245,6 +249,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <span className="shrink-0 text-2xl text-emerald-900 dark:text-emerald-200" style={{ fontFamily: font.family }} dir="rtl">بِسْمِ اللَّهِ</span>
             </button>
           ))}
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm dark:border-stone-800 dark:bg-stone-900 space-y-3">
+        <h3 className="font-bold text-stone-900 dark:text-white">Mushaf page appearance · 10 styles</h3>
+        <p className="text-xs text-stone-500 dark:text-stone-400">These options change page appearance only. They do not change Quran text, recitation, script edition or riwayah.</p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">          <button key="classic" type="button" onClick={() => setMushafPageStyle('classic')} aria-pressed={mushafPageStyle === 'classic'} className={`rounded-xl border p-3 text-left text-xs font-semibold transition ${mushafPageStyle === 'classic' ? 'border-emerald-600 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-100' : 'border-stone-200 text-stone-700 dark:border-stone-700 dark:text-stone-200'}`}><span className="mb-2 block h-7 rounded-lg border border-current/20 bg-gradient-to-r from-amber-50 to-emerald-100 dark:from-stone-800 dark:to-emerald-950" />Classic</button>
+          <button key="madinah" type="button" onClick={() => setMushafPageStyle('madinah')} aria-pressed={mushafPageStyle === 'madinah'} className={`rounded-xl border p-3 text-left text-xs font-semibold transition ${mushafPageStyle === 'madinah' ? 'border-emerald-600 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-100' : 'border-stone-200 text-stone-700 dark:border-stone-700 dark:text-stone-200'}`}><span className="mb-2 block h-7 rounded-lg border border-current/20 bg-gradient-to-r from-amber-50 to-emerald-100 dark:from-stone-800 dark:to-emerald-950" />Madinah page</button>
+          <button key="indopak" type="button" onClick={() => setMushafPageStyle('indopak')} aria-pressed={mushafPageStyle === 'indopak'} className={`rounded-xl border p-3 text-left text-xs font-semibold transition ${mushafPageStyle === 'indopak' ? 'border-emerald-600 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-100' : 'border-stone-200 text-stone-700 dark:border-stone-700 dark:text-stone-200'}`}><span className="mb-2 block h-7 rounded-lg border border-current/20 bg-gradient-to-r from-amber-50 to-emerald-100 dark:from-stone-800 dark:to-emerald-950" />Indo-Pak frame</button>
+          <button key="minimal" type="button" onClick={() => setMushafPageStyle('minimal')} aria-pressed={mushafPageStyle === 'minimal'} className={`rounded-xl border p-3 text-left text-xs font-semibold transition ${mushafPageStyle === 'minimal' ? 'border-emerald-600 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-100' : 'border-stone-200 text-stone-700 dark:border-stone-700 dark:text-stone-200'}`}><span className="mb-2 block h-7 rounded-lg border border-current/20 bg-gradient-to-r from-amber-50 to-emerald-100 dark:from-stone-800 dark:to-emerald-950" />Minimal</button>
+          <button key="parchment" type="button" onClick={() => setMushafPageStyle('parchment')} aria-pressed={mushafPageStyle === 'parchment'} className={`rounded-xl border p-3 text-left text-xs font-semibold transition ${mushafPageStyle === 'parchment' ? 'border-emerald-600 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-100' : 'border-stone-200 text-stone-700 dark:border-stone-700 dark:text-stone-200'}`}><span className="mb-2 block h-7 rounded-lg border border-current/20 bg-gradient-to-r from-amber-50 to-emerald-100 dark:from-stone-800 dark:to-emerald-950" />Parchment</button>
+          <button key="sepia" type="button" onClick={() => setMushafPageStyle('sepia')} aria-pressed={mushafPageStyle === 'sepia'} className={`rounded-xl border p-3 text-left text-xs font-semibold transition ${mushafPageStyle === 'sepia' ? 'border-emerald-600 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-100' : 'border-stone-200 text-stone-700 dark:border-stone-700 dark:text-stone-200'}`}><span className="mb-2 block h-7 rounded-lg border border-current/20 bg-gradient-to-r from-amber-50 to-emerald-100 dark:from-stone-800 dark:to-emerald-950" />Sepia</button>
+          <button key="night" type="button" onClick={() => setMushafPageStyle('night')} aria-pressed={mushafPageStyle === 'night'} className={`rounded-xl border p-3 text-left text-xs font-semibold transition ${mushafPageStyle === 'night' ? 'border-emerald-600 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-100' : 'border-stone-200 text-stone-700 dark:border-stone-700 dark:text-stone-200'}`}><span className="mb-2 block h-7 rounded-lg border border-current/20 bg-gradient-to-r from-amber-50 to-emerald-100 dark:from-stone-800 dark:to-emerald-950" />Night</button>
+          <button key="emerald" type="button" onClick={() => setMushafPageStyle('emerald')} aria-pressed={mushafPageStyle === 'emerald'} className={`rounded-xl border p-3 text-left text-xs font-semibold transition ${mushafPageStyle === 'emerald' ? 'border-emerald-600 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-100' : 'border-stone-200 text-stone-700 dark:border-stone-700 dark:text-stone-200'}`}><span className="mb-2 block h-7 rounded-lg border border-current/20 bg-gradient-to-r from-amber-50 to-emerald-100 dark:from-stone-800 dark:to-emerald-950" />Emerald</button>
+          <button key="blue" type="button" onClick={() => setMushafPageStyle('blue')} aria-pressed={mushafPageStyle === 'blue'} className={`rounded-xl border p-3 text-left text-xs font-semibold transition ${mushafPageStyle === 'blue' ? 'border-emerald-600 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-100' : 'border-stone-200 text-stone-700 dark:border-stone-700 dark:text-stone-200'}`}><span className="mb-2 block h-7 rounded-lg border border-current/20 bg-gradient-to-r from-amber-50 to-emerald-100 dark:from-stone-800 dark:to-emerald-950" />Soft blue</button>
+          <button key="high-contrast" type="button" onClick={() => setMushafPageStyle('high-contrast')} aria-pressed={mushafPageStyle === 'high-contrast'} className={`rounded-xl border p-3 text-left text-xs font-semibold transition ${mushafPageStyle === 'high-contrast' ? 'border-emerald-600 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-100' : 'border-stone-200 text-stone-700 dark:border-stone-700 dark:text-stone-200'}`}><span className="mb-2 block h-7 rounded-lg border border-current/20 bg-gradient-to-r from-amber-50 to-emerald-100 dark:from-stone-800 dark:to-emerald-950" />High contrast</button>
         </div>
       </section>
 
