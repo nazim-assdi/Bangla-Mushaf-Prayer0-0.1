@@ -112,7 +112,7 @@ export const PrayerTimesView: React.FC = () => {
               {locationLabel}
             </h2>
             <p className="text-xs text-stone-500 dark:text-stone-400">
-              অক্ষাংশ: {toBanglaNumber(activeLat.toFixed(4))}°, দ্রাঘিমাংশ: {toBanglaNumber(activeLng.toFixed(4))}° (UTC+6 device local time)
+              অক্ষাংশ: {toBanglaNumber(activeLat.toFixed(4))}°, দ্রাঘিমাংশ: {toBanglaNumber(activeLng.toFixed(4))}° ({timezoneLabel}){customCoords?.accuracy ? ` · GPS ±${Math.round(customCoords.accuracy)}m` : ''}
             </p>
           </div>
         </div>
