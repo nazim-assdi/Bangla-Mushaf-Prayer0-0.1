@@ -11,6 +11,7 @@ interface TafsirModalProps {
   surahNameBn: string;
   translationText?: string;
   translationLanguage?: string;
+  preloadedTafsirs?: TafsirContent[];
 }
 
 export const TafsirModal: React.FC<TafsirModalProps> = ({
@@ -20,6 +21,7 @@ export const TafsirModal: React.FC<TafsirModalProps> = ({
   surahNameBn,
   translationText,
   translationLanguage,
+  preloadedTafsirs,
 }) => {
   const [tafsirs, setTafsirs] = useState<TafsirContent[]>([]);
   const [loading, setLoading] = useState(false);
@@ -31,8 +33,13 @@ export const TafsirModal: React.FC<TafsirModalProps> = ({
     if (!ayah || !isOpen) return;
 
     let isMounted = true;
-    setLoading(true);
     setSelectedTafsirIndex(0);
+    if (preloadedTafsirs && preloadedTafsirs.length > 0) {
+      setTafsirs(preloadedTafsirs);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
 
     fetchTafsir(ayah.verseKey)
       .then((data) => {
@@ -49,7 +56,7 @@ export const TafsirModal: React.FC<TafsirModalProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [ayah, isOpen]);
+  }, [ayah, isOpen, preloadedTafsirs]);
 
   if (!isOpen || !ayah) return null;
 
@@ -57,7 +64,7 @@ export const TafsirModal: React.FC<TafsirModalProps> = ({
 
   const handleCopyTafsir = () => {
     if (!currentTafsir) return;
-    const textToCopy = `সূরা: ${surahNameBn}, আয়াত: ${toArabicNumber(ayah.verseNumber)}\n\nতাফসীরকারক: ${currentTafsir.nameBn}\n\n${currentTafsir.text}`;
+    const textToCopy = `সূরা: ${surahNameBn}, আয়াত: ${toArabicNumber(ayah.verseNumber)}\n\nতাফসীরকারক: ${currentTafsir.nameEn || currentTafsir.nameBn}\n\n${currentTafsir.text}`;
     navigator.clipboard.writeText(textToCopy);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
