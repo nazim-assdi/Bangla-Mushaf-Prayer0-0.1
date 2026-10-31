@@ -1,7 +1,7 @@
 /**
  * Multi-language Quran Service supporting Bengali, English, Arabic, Hindi, Urdu, and Turkish translations and tafsirs
  */
-import { QuranAyah, QuranWord, SAMPLE_AYAHS, TafsirContent } from '../data/quranSampleData';
+import { QuranAyah, QuranWord, TafsirContent } from '../data/quranSampleData';
 import { padNumber, getAyahAudioUrl } from './quranApi';
 import { toArabicNumber } from '../utils/banglaNumbers';
 import { getOfflineSurah, saveOfflineSurah, getOfflineSurahCount } from './offlineQuranStore';
@@ -37,8 +37,8 @@ export async function downloadFullQuranOffline(
     const cached = await getOfflineSurah(surahId, lang);
     if (!cached || cached.length === 0) {
       await fetchVersesByLanguage(surahId, lang);
+      completed += 1;
     }
-    completed += 1;
     onProgress?.(completed, total);
   }
 }
