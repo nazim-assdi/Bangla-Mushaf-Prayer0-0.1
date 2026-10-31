@@ -7,21 +7,86 @@ import { padNumber, getAyahAudioUrl } from './quranApi';
 import { toArabicNumber } from '../utils/banglaNumbers';
 import { getOfflineSurah, saveOfflineSurah } from './offlineQuranStore';
 
-export type QuranLanguage = 'bn' | 'en' | 'hi' | 'ur' | 'tr';
+export type QuranLanguage =
+  | 'bn' | 'en' | 'hi' | 'ur' | 'tr' | 'es' | 'fr' | 'bs' | 'ru' | 'ml'
+  | 'id' | 'uz' | 'nl' | 'de' | 'tg' | 'ta' | 'ja' | 'it' | 'vi' | 'zh'
+  | 'fa' | 'bg' | 'pt' | 'ro' | 'sw' | 'kk' | 'th' | 'tl' | 'as' | 'ko'
+  | 'so' | 'az' | 'ku' | 'dv' | 'ms' | 'prs' | 'zgh' | 'am' | 'ce' | 'cs'
+  | 'fi' | 'gu' | 'he' | 'kn' | 'lg' | 'mr' | 'ne' | 'no' | 'om' | 'pl'
+  | 'ps' | 'rw' | 'sd' | 'si' | 'sv' | 'te' | 'tt' | 'ug' | 'uk' | 'sq'
+  | 'yo' | 'ha' | 'km';
 
 export interface LanguageMeta {
   code: QuranLanguage;
   name: string;
   nativeName: string;
-  translationId: number; // Quran.com API translation resource ID
+  translationId: number;
 }
 
 export const QURAN_LANGUAGES: LanguageMeta[] = [
   { code: 'bn', name: 'Bengali', nativeName: 'বাংলা', translationId: 163 },
-  { code: 'en', name: 'English', nativeName: 'English', translationId: 131 }, // Sahih International
-  { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', translationId: 122 }, // Suhel Farooq Khan
-  { code: 'ur', name: 'Urdu', nativeName: 'اردو', translationId: 97 }, // Jalandhry
-  { code: 'tr', name: 'Turkish', nativeName: 'Türkçe', translationId: 77 }, // Diyanet İşleri
+  { code: 'en', name: 'English', nativeName: 'English', translationId: 20 },
+  { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', translationId: 122 },
+  { code: 'ur', name: 'Urdu', nativeName: 'اردو', translationId: 234 },
+  { code: 'tr', name: 'Turkish', nativeName: 'Türkçe', translationId: 77 },
+  { code: 'es', name: 'Spanish', nativeName: 'Español', translationId: 83 },
+  { code: 'fr', name: 'French', nativeName: 'Français', translationId: 31 },
+  { code: 'bs', name: 'Bosnian', nativeName: 'Bosanski', translationId: 126 },
+  { code: 'ru', name: 'Russian', nativeName: 'Русский', translationId: 45 },
+  { code: 'ml', name: 'Malayalam', nativeName: 'മലയാളം', translationId: 37 },
+  { code: 'id', name: 'Indonesian', nativeName: 'Bahasa Indonesia', translationId: 33 },
+  { code: 'uz', name: 'Uzbek', nativeName: 'O‘zbek', translationId: 127 },
+  { code: 'nl', name: 'Dutch', nativeName: 'Nederlands', translationId: 144 },
+  { code: 'de', name: 'German', nativeName: 'Deutsch', translationId: 27 },
+  { code: 'tg', name: 'Tajik', nativeName: 'Тоҷикӣ', translationId: 74 },
+  { code: 'ta', name: 'Tamil', nativeName: 'தமிழ்', translationId: 133 },
+  { code: 'ja', name: 'Japanese', nativeName: '日本語', translationId: 35 },
+  { code: 'it', name: 'Italian', nativeName: 'Italiano', translationId: 153 },
+  { code: 'vi', name: 'Vietnamese', nativeName: 'Tiếng Việt', translationId: 220 },
+  { code: 'zh', name: 'Chinese (Simplified)', nativeName: '中文', translationId: 109 },
+  { code: 'fa', name: 'Persian', nativeName: 'فارسی', translationId: 29 },
+  { code: 'bg', name: 'Bulgarian', nativeName: 'Български', translationId: 237 },
+  { code: 'pt', name: 'Portuguese', nativeName: 'Português', translationId: 43 },
+  { code: 'ro', name: 'Romanian', nativeName: 'Română', translationId: 44 },
+  { code: 'sw', name: 'Swahili', nativeName: 'Kiswahili', translationId: 49 },
+  { code: 'kk', name: 'Kazakh', nativeName: 'Қазақша', translationId: 113 },
+  { code: 'th', name: 'Thai', nativeName: 'ภาษาไทย', translationId: 51 },
+  { code: 'tl', name: 'Tagalog', nativeName: 'Filipino', translationId: 211 },
+  { code: 'as', name: 'Assamese', nativeName: 'অসমীয়া', translationId: 120 },
+  { code: 'ko', name: 'Korean', nativeName: '한국어', translationId: 36 },
+  { code: 'so', name: 'Somali', nativeName: 'Soomaali', translationId: 46 },
+  { code: 'az', name: 'Azerbaijani', nativeName: 'Azərbaycan dili', translationId: 75 },
+  { code: 'ku', name: 'Kurdish', nativeName: 'Kurdî', translationId: 81 },
+  { code: 'dv', name: 'Divehi', nativeName: 'ދިވެހި', translationId: 86 },
+  { code: 'ms', name: 'Malay', nativeName: 'Bahasa Melayu', translationId: 39 },
+  { code: 'prs', name: 'Dari', nativeName: 'دری', translationId: 785 },
+  { code: 'zgh', name: 'Amazigh', nativeName: 'Tamaziɣt', translationId: 236 },
+  { code: 'am', name: 'Amharic', nativeName: 'አማርኛ', translationId: 87 },
+  { code: 'ce', name: 'Chechen', nativeName: 'Нохчийн мотт', translationId: 106 },
+  { code: 'cs', name: 'Czech', nativeName: 'Čeština', translationId: 26 },
+  { code: 'fi', name: 'Finnish', nativeName: 'Suomi', translationId: 30 },
+  { code: 'gu', name: 'Gujarati', nativeName: 'ગુજરાતી', translationId: 225 },
+  { code: 'he', name: 'Hebrew', nativeName: 'עברית', translationId: 233 },
+  { code: 'kn', name: 'Kannada', nativeName: 'ಕನ್ನಡ', translationId: 771 },
+  { code: 'lg', name: 'Ganda', nativeName: 'Luganda', translationId: 232 },
+  { code: 'mr', name: 'Marathi', nativeName: 'मराठी', translationId: 226 },
+  { code: 'ne', name: 'Nepali', nativeName: 'नेपाली', translationId: 108 },
+  { code: 'no', name: 'Norwegian', nativeName: 'Norsk', translationId: 41 },
+  { code: 'om', name: 'Oromo', nativeName: 'Afaan Oromoo', translationId: 111 },
+  { code: 'pl', name: 'Polish', nativeName: 'Polski', translationId: 42 },
+  { code: 'ps', name: 'Pashto', nativeName: 'پښتو', translationId: 118 },
+  { code: 'rw', name: 'Kinyarwanda', nativeName: 'Ikinyarwanda', translationId: 774 },
+  { code: 'sd', name: 'Sindhi', nativeName: 'سنڌي', translationId: 238 },
+  { code: 'si', name: 'Sinhala', nativeName: 'සිංහල', translationId: 228 },
+  { code: 'sv', name: 'Swedish', nativeName: 'Svenska', translationId: 48 },
+  { code: 'te', name: 'Telugu', nativeName: 'తెలుగు', translationId: 227 },
+  { code: 'tt', name: 'Tatar', nativeName: 'Татарча', translationId: 53 },
+  { code: 'ug', name: 'Uyghur', nativeName: 'ئۇيغۇرچە', translationId: 76 },
+  { code: 'uk', name: 'Ukrainian', nativeName: 'Українська', translationId: 217 },
+  { code: 'sq', name: 'Albanian', nativeName: 'Shqip', translationId: 89 },
+  { code: 'yo', name: 'Yoruba', nativeName: 'Yorùbá', translationId: 125 },
+  { code: 'ha', name: 'Hausa', nativeName: 'Hausa', translationId: 32 },
+  { code: 'km', name: 'Khmer', nativeName: 'ខ្មែរ', translationId: 128 },
 ];
 
 const multiLangCache: { [key: string]: QuranAyah[] } = {};
@@ -123,6 +188,7 @@ export async function fetchVersesByLanguage(
           textUthmani: v.text_uthmani || words.map((w) => w.textUthmani).join(' '),
           translationBn: lang === 'bn' ? translatedText : '',
           translationEn: lang === 'en' ? translatedText : '',
+          translationText: translatedText,
           transliterationBn: '',
           audioUrl: getAyahAudioUrl(surahId, verseNum, reciterId),
           juzNumber: v.juz_number || 1,
