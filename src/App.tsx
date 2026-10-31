@@ -345,7 +345,7 @@ function AppContent() {
 
         {activeTab === 'dhikr' && <DailyDhikrView uiLanguage={uiLanguage} />}
 
-        {activeTab === 'planner' && <ReadingPlanner />}
+        {activeTab === 'planner' && <ReadingPlanner uiLanguage={uiLanguage} />}
 
         {activeTab === 'bookmarks' && (
           <BookmarksView
