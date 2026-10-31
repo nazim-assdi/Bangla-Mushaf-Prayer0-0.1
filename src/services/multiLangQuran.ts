@@ -14,7 +14,7 @@ export type QuranLanguage =
   | 'so' | 'az' | 'ku' | 'dv' | 'ms' | 'prs' | 'zgh' | 'am' | 'ce' | 'cs'
   | 'fi' | 'gu' | 'he' | 'kn' | 'lg' | 'mr' | 'ne' | 'no' | 'om' | 'pl'
   | 'ps' | 'rw' | 'sd' | 'si' | 'sv' | 'te' | 'tt' | 'ug' | 'uk' | 'sq'
-  | 'yo' | 'ha' | 'km';
+  | 'yo' | 'ha' | 'km' | 'bm' | 'mrn' | 'yuw';
 
 export interface LanguageMeta {
   code: QuranLanguage;
@@ -87,6 +87,9 @@ export const QURAN_LANGUAGES: LanguageMeta[] = [
   { code: 'yo', name: 'Yoruba', nativeName: 'Yorùbá', translationId: 125 },
   { code: 'ha', name: 'Hausa', nativeName: 'Hausa', translationId: 32 },
   { code: 'km', name: 'Khmer', nativeName: 'ខ្មែរ', translationId: 128 },
+  { code: 'bm', name: 'Bambara', nativeName: 'Bamanankan', translationId: 795 },
+  { code: 'mrn', name: 'Maranao', nativeName: 'Mëranaw', translationId: 38 },
+  { code: 'yuw', name: 'Yau', nativeName: 'Yau', translationId: 798 },
 ];
 
 const multiLangCache: { [key: string]: QuranAyah[] } = {};
