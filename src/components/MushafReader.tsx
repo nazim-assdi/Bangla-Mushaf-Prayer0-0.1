@@ -153,7 +153,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
     const refreshTafsir = () => {
       getOfflineTafsirForSurah(surahId)
         .then((records) => { if (active) setOfflineTafsirRecords(records); })
-        .catch((error) => console.warn('Could not load offline tafsir:', error));
+        .catch((error: unknown) => console.warn('Could not load offline tafsir:', error));
     };
     refreshTafsir();
     window.addEventListener('mushaf:tafsir-updated', refreshTafsir);
