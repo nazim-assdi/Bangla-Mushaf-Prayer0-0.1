@@ -37,14 +37,14 @@
     "@fontsource/noto-naskh-arabic": "^5.3.0",
     "@fontsource/noto-sans-arabic": "^5.3.0",
     "@fontsource/noto-kufi-arabic": "^5.3.0",
-    "@fontsource/reem-kufi": "^5.3.0",
     "@fontsource/cairo": "^5.3.0",
     "@fontsource/tajawal": "^5.3.0",
     "@fontsource/lateef": "^5.3.0",
     "@fontsource/aref-ruqaa": "^5.3.0",
     "@capacitor/share": "^7.0.0",
     "@fontsource/hind-siliguri": "^5.3.0",
-    "@fontsource/noto-serif-bengali": "^5.3.0"
+    "@fontsource/noto-serif-bengali": "^5.3.0",
+    "@fontsource-variable/reem-kufi": "^5.3.0"
   },
   "devDependencies": {
     "@capacitor/cli": "^7.0.0",
