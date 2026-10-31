@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Bookmark, BookOpen, Heart, Sparkles, ChevronRight, Share2, Trash2 } from 'lucide-react';
 import { toBanglaNumber, toArabicNumber } from '../utils/banglaNumbers';
 import { SURAH_LIST } from '../data/quranMetadata';
+import { UiLanguage, translateUi } from '../services/i18n';
 
 interface BookmarkItem {
   verseKey: string;
@@ -15,6 +16,7 @@ interface BookmarksViewProps {
   onRemoveBookmark: (verseKey: string) => void;
   onNavigateToAyah: (surahId: number, ayahNumber: number) => void;
   lastRead: { surahId: number; ayahNumber: number; surahNameBn: string } | null;
+  uiLanguage: UiLanguage;
 }
 
 const RABBANA_DUAS = [
@@ -65,6 +67,7 @@ export const BookmarksView: React.FC<BookmarksViewProps> = ({
   onRemoveBookmark,
   onNavigateToAyah,
   lastRead,
+  uiLanguage,
 }) => {
   const [activeTab, setActiveTab] = useState<'bookmarks' | 'duas' | 'recommended'>('bookmarks');
 
@@ -86,9 +89,9 @@ export const BookmarksView: React.FC<BookmarksViewProps> = ({
               <BookOpen className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs text-emerald-200">সর্বশেষ পঠিত আয়াত</p>
+              <p className="text-xs text-emerald-200">{translateUi(uiLanguage, 'readingProgress')}</p>
               <h3 className="text-base sm:text-lg font-bold text-amber-300">
-                সূরা {lastRead.surahNameBn} — আয়াত ﴿{toArabicNumber(lastRead.ayahNumber)}﴾
+                Surah {lastRead.surahNameBn} — Ayah ﴿{toArabicNumber(lastRead.ayahNumber)}﴾
               </h3>
             </div>
           </div>
@@ -97,7 +100,7 @@ export const BookmarksView: React.FC<BookmarksViewProps> = ({
             onClick={() => onNavigateToAyah(lastRead.surahId, lastRead.ayahNumber)}
             className="px-4 py-2 bg-amber-400 hover:bg-amber-300 text-emerald-950 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 transition-transform hover:scale-105 shadow-sm"
           >
-            <span>পড়া চালিয়ে যান</span>
+            <span>Continue reading</span>
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
@@ -224,7 +227,7 @@ export const BookmarksView: React.FC<BookmarksViewProps> = ({
               </p>
 
               <p className="text-xs sm:text-sm text-stone-700 dark:text-stone-300 font-bangla-serif leading-relaxed">
-                <strong className="text-emerald-800 dark:text-emerald-400">অর্থ:</strong> {dua.banglaMeaning}
+                <strong className="text-emerald-800 dark:text-emerald-400">অর্থ:</strong> {uiLanguage === 'bn' ? dua.banglaMeaning : translateUi(uiLanguage, 'noTranslationAvailable')}
               </p>
 
               <div className="flex justify-end pt-2">
@@ -261,7 +264,7 @@ export const BookmarksView: React.FC<BookmarksViewProps> = ({
                   </div>
 
                   <h4 className="text-base font-bold text-stone-900 dark:text-white group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
-                    {rec.nameBn}
+                    {uiLanguage === 'bn' ? rec.nameBn : surah.nameEnglish}
                   </h4>
                   <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
                     {surah.bengaliMeaning} • {toBanglaNumber(surah.versesCount)} আয়াত
@@ -270,7 +273,7 @@ export const BookmarksView: React.FC<BookmarksViewProps> = ({
 
                 <div className="mt-4 pt-3 border-t border-stone-100 dark:border-stone-800 flex items-center justify-between text-xs">
                   <span className="text-amber-700 dark:text-amber-300 font-medium">
-                    {rec.note}
+                    {uiLanguage === 'bn' ? rec.note : ''}
                   </span>
                   <ChevronRight className="w-4 h-4 text-emerald-600 group-hover:translate-x-1 transition-transform" />
                 </div>
