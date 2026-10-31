@@ -139,7 +139,7 @@ export const PrayerTimesView: React.FC = () => {
           </div>
           <div>
             <h2 className="text-base font-bold text-stone-900 dark:text-white">
-              {locationLabel}
+              {locationLabel} {gpsLive && <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />LIVE GPS</span>}
             </h2>
             <p className="text-xs text-stone-500 dark:text-stone-400">
               অক্ষাংশ: {toBanglaNumber(activeLat.toFixed(4))}°, দ্রাঘিমাংশ: {toBanglaNumber(activeLng.toFixed(4))}° ({timezoneLabel}){customCoords?.accuracy ? ` · GPS ±${Math.round(customCoords.accuracy)}m` : ''}{lastGpsUpdate ? ` · আপডেট ${lastGpsUpdate.toLocaleTimeString('bn-BD')}` : ''}
