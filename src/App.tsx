@@ -307,6 +307,11 @@ function AppContent() {
     }
   };
 
+  if (!uiLanguage) {
+    return <LanguageSelectionScreen selectedLanguage={languageDraft} onSelect={setLanguageDraft} onContinue={() => handleUiLanguageChange(languageDraft)} firstLaunch />;
+  }
+  const activeUiLanguage: UiLanguage = uiLanguage;
+
   return (
     <div
       className={`min-h-screen transition-colors duration-200 ${
@@ -328,9 +333,9 @@ function AppContent() {
         onOpenSurahSearch={() => setIsSurahDrawerOpen(true)}
         onOpenGlobalSearch={() => setIsGlobalSearchOpen(true)}
         onOpenMenu={() => setIsSideMenuOpen(true)}
-        currentSurahNameBn={uiLanguage === 'bn' ? currentSurah.nameBengali : currentSurah.nameEnglish}
+        currentSurahNameBn={activeUiLanguage === 'bn' ? currentSurah.nameBengali : currentSurah.nameEnglish}
         currentSurahId={currentSurahId}
-        uiLanguage={uiLanguage}
+        activeUiLanguage={activeUiLanguage}
       />
 
       {/* Offline Status Banner */}
@@ -353,17 +358,17 @@ function AppContent() {
             onSelectReciter={setSelectedReciterId}
             currentLanguage={currentLanguage}
             onSelectLanguage={handleQuranLanguageChange}
-            uiLanguage={uiLanguage}
+            activeUiLanguage={activeUiLanguage}
           />
         )}
 
-        {activeTab === 'prayer' && <PrayerTimesView uiLanguage={uiLanguage} />}
+        {activeTab === 'prayer' && <PrayerTimesView activeUiLanguage={activeUiLanguage} />}
 
-        {activeTab === 'qibla' && <QiblaCompassView uiLanguage={uiLanguage} />}
+        {activeTab === 'qibla' && <QiblaCompassView activeUiLanguage={activeUiLanguage} />}
 
-        {activeTab === 'dhikr' && <DailyDhikrView uiLanguage={uiLanguage} />}
+        {activeTab === 'dhikr' && <DailyDhikrView activeUiLanguage={activeUiLanguage} />}
 
-        {activeTab === 'planner' && <ReadingPlanner uiLanguage={uiLanguage} />}
+        {activeTab === 'planner' && <ReadingPlanner activeUiLanguage={activeUiLanguage} />}
 
         {activeTab === 'bookmarks' && (
           <BookmarksView
@@ -371,7 +376,7 @@ function AppContent() {
             onRemoveBookmark={handleRemoveBookmark}
             onNavigateToAyah={handleSelectSurah}
             lastRead={lastRead}
-            uiLanguage={uiLanguage}
+            activeUiLanguage={activeUiLanguage}
           />
         )}
 
@@ -393,7 +398,7 @@ function AppContent() {
             setSelectedReciterId={setSelectedReciterId}
             theme={theme}
             setTheme={setTheme}
-            uiLanguage={uiLanguage}
+            activeUiLanguage={activeUiLanguage}
             onUiLanguageChange={handleUiLanguageChange}
           />
         )}
@@ -408,7 +413,7 @@ function AppContent() {
         onPrayer={() => { setIsSideMenuOpen(false); setActiveTab('prayer'); }}
         onBookmarks={() => { setIsSideMenuOpen(false); setActiveTab('bookmarks'); }}
         onGoToAyah={() => { setIsSideMenuOpen(false); setIsSurahDrawerOpen(true); }}
-        uiLanguage={uiLanguage}
+        activeUiLanguage={activeUiLanguage}
       />
 
       {/* Surah & Juz Selection Drawer Modal */}
@@ -429,13 +434,13 @@ function AppContent() {
       {/* Primary mobile navigation: seven destinations */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-emerald-900/10 bg-white/95 px-1 py-2 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur-md dark:border-stone-700 dark:bg-stone-950/95" aria-label="Main navigation">
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-1 overflow-x-auto">
-          <button onClick={() => setActiveTab('mushaf')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'mushaf' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">📖</span><span>{translateUi(uiLanguage, 'home')}</span></button>
-          <button onClick={() => setActiveTab('qibla')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'qibla' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">🕋</span><span>{translateUi(uiLanguage, 'qibla')}</span></button>
-          <button onClick={() => setActiveTab('prayer')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'prayer' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">🕌</span><span>{translateUi(uiLanguage, 'salat')}</span></button>
-          <button onClick={() => setActiveTab('dhikr')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'dhikr' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">📿</span><span>{translateUi(uiLanguage, 'adhkar')}</span></button>
-          <button onClick={() => setActiveTab('planner')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'planner' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">🗓️</span><span>{translateUi(uiLanguage, 'planner')}</span></button>
-          <button onClick={() => setIsGlobalSearchOpen(true)} className="flex min-w-[64px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] text-stone-500"><span className="text-lg">🔎</span><span>{translateUi(uiLanguage, 'topicAyah')}</span></button>
-          <button onClick={() => setActiveTab('bookmarks')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'bookmarks' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">📚</span><span>{translateUi(uiLanguage, 'library')}</span></button>
+          <button onClick={() => setActiveTab('mushaf')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'mushaf' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">📖</span><span>{translateUi(activeUiLanguage, 'home')}</span></button>
+          <button onClick={() => setActiveTab('qibla')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'qibla' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">🕋</span><span>{translateUi(activeUiLanguage, 'qibla')}</span></button>
+          <button onClick={() => setActiveTab('prayer')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'prayer' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">🕌</span><span>{translateUi(activeUiLanguage, 'salat')}</span></button>
+          <button onClick={() => setActiveTab('dhikr')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'dhikr' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">📿</span><span>{translateUi(activeUiLanguage, 'adhkar')}</span></button>
+          <button onClick={() => setActiveTab('planner')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'planner' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">🗓️</span><span>{translateUi(activeUiLanguage, 'planner')}</span></button>
+          <button onClick={() => setIsGlobalSearchOpen(true)} className="flex min-w-[64px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] text-stone-500"><span className="text-lg">🔎</span><span>{translateUi(activeUiLanguage, 'topicAyah')}</span></button>
+          <button onClick={() => setActiveTab('bookmarks')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'bookmarks' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">📚</span><span>{translateUi(activeUiLanguage, 'library')}</span></button>
         </div>
       </nav>
     </div>
