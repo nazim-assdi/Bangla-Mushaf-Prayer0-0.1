@@ -5,7 +5,7 @@ import { QuranAyah, QuranWord, TafsirContent } from '../data/quranSampleData';
 import { SURAH_LIST } from '../data/quranMetadata';
 import { padNumber, getAyahAudioUrl } from './quranApi';
 import { toArabicNumber } from '../utils/banglaNumbers';
-import { getOfflineSurah, saveOfflineSurah, getOfflineSurahCount } from './offlineQuranStore';
+import { getOfflineSurah, saveOfflineSurah } from './offlineQuranStore';
 
 export type QuranLanguage = 'bn' | 'en' | 'ar' | 'hi' | 'ur' | 'tr';
 
