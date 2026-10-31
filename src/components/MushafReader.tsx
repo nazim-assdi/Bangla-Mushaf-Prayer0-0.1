@@ -563,7 +563,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
                   </div>
                 </div>
 
-                <div className="px-4 sm:px-6"><AyahStudyTools read={!!studyRecords[ayah.verseKey]?.read} note={studyRecords[ayah.verseKey]?.note ?? ''} onToggleRead={() => updateStudyRecord(ayah.verseKey, { read: !studyRecords[ayah.verseKey]?.read })} onNoteChange={(note) => updateStudyRecord(ayah.verseKey, { note })} /></div>
+                <div className="px-4 sm:px-6"><AyahStudyTools read={!!studyRecords[ayah.verseKey]?.read} note={studyRecords[ayah.verseKey]?.note ?? ''} onToggleRead={() => updateStudyRecord(ayah.verseKey, { read: !studyRecords[ayah.verseKey]?.read })} onNoteChange={(note) => updateStudyRecord(ayah.verseKey, { note })} uiLanguage={uiLanguage} /></div>
 
                 {/* Body Content */}
                 <div className="p-4 sm:p-6 space-y-4">
@@ -713,7 +713,9 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
         isOpen={isTafsirOpen}
         onClose={() => setIsTafsirOpen(false)}
         ayah={tafsirAyah}
-        surahNameBn={currentSurah.nameBengali}
+        surahNameBn={currentSurah.nameEnglish}
+        translationText={tafsirAyah ? getAyahTranslation(tafsirAyah) : ''}
+        translationLanguage={langMeta.nativeName}
       />
     </div>
   );
