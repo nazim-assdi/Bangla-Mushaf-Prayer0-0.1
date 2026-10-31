@@ -30,14 +30,14 @@ export const SideMenu: React.FC<SideMenuProps> = ({
       ? window.location.origin
       : undefined;
     const shareData = {
-      title: 'Al-Quran Al-Kareem',
-      text: 'Read and reflect on the Quran with Al-Quran Al-Kareem.',
+      title: 'Bangla Mushaf Prayer',
+      text: 'Read and reflect on the Quran with Bangla Mushaf Prayer.',
       ...(shareUrl ? { url: shareUrl } : {}),
     };
     onClose();
     try {
       if (Capacitor.isNativePlatform()) {
-        await Share.share({ ...shareData, dialogTitle: 'Share Al-Quran Al-Kareem' });
+        await Share.share({ ...shareData, dialogTitle: 'Share Bangla Mushaf Prayer' });
       } else if (navigator.share) {
         await navigator.share(shareData);
       } else if (shareUrl) {
@@ -70,8 +70,8 @@ export const SideMenu: React.FC<SideMenuProps> = ({
     { label: translateUi(uiLanguage, 'settings'), icon: Settings, action: onSettings },
     { label: translateUi(uiLanguage, 'rateApp'), icon: Star, action: () => { window.open('https://play.google.com/store/search?q=Al-Quran%20Al-Kareem&c=apps', '_blank', 'noopener,noreferrer'); onClose(); } },
     { label: translateUi(uiLanguage, 'shareApp'), icon: Share2, action: shareApp },
-    { label: translateUi(uiLanguage, 'contact'), icon: MessageCircle, action: () => openWhatsApp('আসসালামু আলাইকুম। Al-Quran Al-Kareem অ্যাপ সম্পর্কে কথা বলতে চাই।') },
-    { label: translateUi(uiLanguage, 'feedback'), icon: MessageSquare, action: () => openWhatsApp('আসসালামু আলাইকুম। Al-Quran Al-Kareem অ্যাপ সম্পর্কে আমার মতামত: ') },
+    { label: translateUi(uiLanguage, 'contact'), icon: MessageCircle, action: () => openWhatsApp('আসসালামু আলাইকুম। Bangla Mushaf Prayer অ্যাপ সম্পর্কে কথা বলতে চাই।') },
+    { label: translateUi(uiLanguage, 'feedback'), icon: MessageSquare, action: () => openWhatsApp('আসসালামু আলাইকুম। Bangla Mushaf Prayer অ্যাপ সম্পর্কে আমার মতামত: ') },
     { label: translateUi(uiLanguage, 'stats'), icon: BarChart3, action: onBookmarks },
     { label: translateUi(uiLanguage, 'search'), icon: Search, action: onSearch },
     { label: translateUi(uiLanguage, 'library'), icon: BookOpen, action: onBookmarks }
@@ -83,7 +83,7 @@ export const SideMenu: React.FC<SideMenuProps> = ({
       <aside className="absolute right-0 top-0 flex h-full w-[min(88vw,380px)] flex-col border-l border-amber-300/20 bg-gradient-to-b from-emerald-950 via-emerald-900 to-stone-950 text-white shadow-2xl animate-in slide-in-from-right duration-300">
         <div className="flex items-center justify-between border-b border-white/10 px-5 py-5">
           <div>
-            <p className="text-[10px] tracking-[0.22em] text-amber-300">AL-QURAN AL-KAREEM</p>
+            <p className="text-[10px] tracking-[0.22em] text-amber-300">BANGLA MUSHAF PRAYER</p>
             <h2 className="mt-1 text-xl font-bold">{translateUi(uiLanguage, 'menu')}</h2>
             <p className="mt-1 text-xs text-emerald-100/70">পড়ুন · বুঝুন · আমল করুন</p>
           </div>
