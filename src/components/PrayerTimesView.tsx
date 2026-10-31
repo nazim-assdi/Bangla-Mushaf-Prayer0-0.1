@@ -24,6 +24,7 @@ import {
   CALCULATION_METHODS,
 } from '../utils/prayerTimes';
 import { toBanglaNumber, formatDurationToBangla } from '../utils/banglaNumbers';
+import { schedulePrayerAlerts, cancelPrayerAlerts } from '../services/prayerNotifications';
 
 export const PrayerTimesView: React.FC = () => {
   const [selectedDistrictId, setSelectedDistrictId] = useState<string>('dhaka');
@@ -36,6 +37,32 @@ export const PrayerTimesView: React.FC = () => {
   const [gpsLive, setGpsLive] = useState(false);
   const [lastGpsUpdate, setLastGpsUpdate] = useState<Date | null>(null);
   const watchIdRef = useRef<number | null>(null);
+  const [prayerAlerts, setPrayerAlerts] = useState(() => localStorage.getItem('mushaf_prayer_alerts') === 'true');
+  const [makruhAlerts, setMakruhAlerts] = useState(() => localStorage.getItem('mushaf_makruh_alerts') === 'true');
+  const [alarmMessage, setAlarmMessage] = useState('');
+  const [alarmLoading, setAlarmLoading] = useState(false);
+
+  useEffect(() => { localStorage.setItem('mushaf_prayer_alerts', String(prayerAlerts)); }, [prayerAlerts]);
+  useEffect(() => { localStorage.setItem('mushaf_makruh_alerts', String(makruhAlerts)); }, [makruhAlerts]);
+
+  const handleScheduleAlerts = async () => {
+    setAlarmLoading(true);
+    setAlarmMessage('');
+    try {
+      if (!prayerAlerts && !makruhAlerts) {
+        await cancelPrayerAlerts();
+        setAlarmMessage('সব অ্যালার্ম বন্ধ করা হয়েছে।');
+      } else {
+        const result = await schedulePrayerAlerts({
+          prayerAlerts, makruhAlerts, latitude: activeLat, longitude: activeLng,
+          calculationMethod, asrJuristic,
+        });
+        setAlarmMessage(`${result.scheduled}টি নোটিফিকেশন আগামী ৭ দিনের জন্য সেট হয়েছে। Exact alarm: ${result.exactAlarm}.`);
+      }
+    } catch (error) {
+      setAlarmMessage(error instanceof Error ? error.message : 'অ্যালার্ম সেট করা যায়নি।');
+    } finally { setAlarmLoading(false); }
+  };
 
   // Update clock every 30 seconds for live countdown
   useEffect(() => {
@@ -182,6 +209,27 @@ export const PrayerTimesView: React.FC = () => {
       {gpsLive && <p className="-mt-3 text-xs text-emerald-700 dark:text-emerald-300">আপনার অবস্থান পরিবর্তন হলে নামাজের সময় স্বয়ংক্রিয়ভাবে পুনরায় হিসাব হবে। লাইভ GPS বন্ধ করতে জেলা নির্বাচন করুন।</p>}
 
       {geoError && <div role="status" className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">{geoError}</div>}
+
+      {/* Native background alarm controls */}
+      <section className="rounded-2xl border border-emerald-200 bg-white p-4 shadow-sm dark:border-emerald-900 dark:bg-stone-900 space-y-3">
+        <div>
+          <h3 className="font-bold text-stone-900 dark:text-white">অ্যালার্ম ও নোটিফিকেশন</h3>
+          <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">Android APK-তে অ্যাপ বন্ধ বা ফোন লক থাকলেও স্থানীয় অ্যালার্ম কাজ করার জন্য আগামী ৭ দিনের সময় সেট হবে।</p>
+        </div>
+        <label className="flex items-center justify-between gap-3 text-sm text-stone-800 dark:text-stone-200">
+          <span>পাঁচ ওয়াক্ত নামাজ শুরু হলে অ্যালার্ম</span>
+          <input type="checkbox" checked={prayerAlerts} onChange={e => setPrayerAlerts(e.target.checked)} className="h-5 w-5 accent-emerald-700" />
+        </label>
+        <label className="flex items-center justify-between gap-3 text-sm text-stone-800 dark:text-stone-200">
+          <span>মাকরুহ/নিষিদ্ধ সময়ের সতর্কতা</span>
+          <input type="checkbox" checked={makruhAlerts} onChange={e => setMakruhAlerts(e.target.checked)} className="h-5 w-5 accent-emerald-700" />
+        </label>
+        <button type="button" onClick={handleScheduleAlerts} disabled={alarmLoading} className="w-full rounded-xl bg-emerald-700 px-4 py-3 text-sm font-bold text-white disabled:opacity-60">
+          {alarmLoading ? 'অ্যালার্ম সেট হচ্ছে…' : prayerAlerts || makruhAlerts ? 'অনুমতি দিন ও অ্যালার্ম সেট করুন' : 'সব অ্যালার্ম বন্ধ করুন'}
+        </button>
+        {alarmMessage && <p role="status" className="text-xs text-emerald-700 dark:text-emerald-300">{alarmMessage}</p>}
+        <p className="text-[11px] text-stone-500 dark:text-stone-400">নোট: সময়সূচি/লোকেশন/মাযহাব বদলালে আবার অ্যালার্ম সেট করুন। যাওয়াল সতর্কতা যোহরের ৫ মিনিট আগে দেওয়া হয়; স্থানীয় নির্ভরযোগ্য সময়সূচির সঙ্গে মিলিয়ে নিন।</p>
+      </section>
 
       {/* Hero Next Prayer Countdown Card */}
       <div className="bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden border border-emerald-700/60">
