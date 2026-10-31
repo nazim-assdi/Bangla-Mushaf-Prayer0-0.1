@@ -59,12 +59,15 @@ function AppContent() {
   const [bookmarks, setBookmarks] = useState<BookmarkItem[]>(() => {
     try {
       const saved = localStorage.getItem('bangla_mushaf_bookmarks');
-      if (saved) return JSON.parse(saved);
-    } catch (e) {}
-    return [
-      { id: '1_1', verseKey: '1:1', surahNameBn: 'আল-ফাতিহা', ayahNumber: 1, addedAt: new Date().toISOString() },
-      { id: '112_1', verseKey: '112:1', surahNameBn: 'আল-ইখলাস', ayahNumber: 1, addedAt: new Date().toISOString() },
-    ];
+      if (saved) {
+        const parsed: unknown = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed as BookmarkItem[];
+      }
+    } catch (e) {
+      console.warn('Could not restore saved bookmarks:', e);
+    }
+    // Start with an empty list. Demo bookmarks must never appear as real user data.
+    return [];
   });
 
   const [lastRead, setLastRead] = useState<{
@@ -79,15 +82,17 @@ function AppContent() {
     return { surahId: 1, ayahNumber: 1, surahNameBn: 'আল-ফাতিহা' };
   });
 
-  // Real-time Firestore sync and Cloud SQL sync when user is signed in
+  // Firestore is the source of truth for a signed-in account.
+  // Always apply snapshots, including empty ones, so another account's local data
+  // can never be copied into this account or resurrect deleted bookmarks.
   useEffect(() => {
     if (!user) return;
-    syncUserToCloudSQL(user);
+
+    void syncUserToCloudSQL(user);
     const unsubscribe = subscribeToBookmarks(user.uid, (remoteBookmarks) => {
-      if (remoteBookmarks && remoteBookmarks.length > 0) {
-        setBookmarks(remoteBookmarks);
-      }
+      setBookmarks(remoteBookmarks);
     });
+
     return () => unsubscribe();
   }, [user]);
 

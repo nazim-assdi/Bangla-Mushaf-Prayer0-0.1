@@ -7,8 +7,8 @@
     "dev": "tsx server.ts",
     "build": "vite build",
     "preview": "vite preview",
-    "start": "node server.ts",
-    "clean": "rm -rf dist server.js",
+    "start": "tsx server.ts",
+    "clean": "node -e \"for (const p of ['dist','server.js']) require('node:fs').rmSync(p,{recursive:true,force:true})\"",
     "test": "tsx --test src/utils/logic.test.ts",
     "lint": "tsc --noEmit"
   },
