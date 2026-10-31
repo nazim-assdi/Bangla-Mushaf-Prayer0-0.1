@@ -56,7 +56,7 @@ export const TafsirModal: React.FC<TafsirModalProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [ayah, isOpen, preloadedTafsirs]);
+  }, [ayah?.verseKey, isOpen]);
 
   if (!isOpen || !ayah) return null;
 
