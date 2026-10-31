@@ -13,7 +13,7 @@ import {
   Sparkles,
   Globe,
 } from 'lucide-react';
-import { QuranAyah, QuranWord } from '../data/quranSampleData';
+import { QuranAyah, QuranWord, TafsirContent } from '../data/quranSampleData';
 import { SURAH_LIST } from '../data/quranMetadata';
 import { RECITERS, getBundledTafsir } from '../services/quranApi';
 import { QURAN_LANGUAGES, QuranLanguage, fetchVersesByLanguage } from '../services/multiLangQuran';
@@ -150,10 +150,17 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
 
   useEffect(() => {
     let active = true;
-    getOfflineTafsirForSurah(surahId)
-      .then((records) => { if (active) setOfflineTafsirRecords(records); })
-      .catch((error) => console.warn('Could not load offline tafsir:', error));
-    return () => { active = false; };
+    const refreshTafsir = () => {
+      getOfflineTafsirForSurah(surahId)
+        .then((records) => { if (active) setOfflineTafsirRecords(records); })
+        .catch((error) => console.warn('Could not load offline tafsir:', error));
+    };
+    refreshTafsir();
+    window.addEventListener('mushaf:tafsir-updated', refreshTafsir);
+    return () => {
+      active = false;
+      window.removeEventListener('mushaf:tafsir-updated', refreshTafsir);
+    };
   }, [surahId]);
 
   const getTafsirsForAyah = (verseKey: string): TafsirContent[] => {
