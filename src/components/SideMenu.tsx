@@ -26,10 +26,13 @@ export const SideMenu: React.FC<SideMenuProps> = ({
   if (!isOpen) return null;
 
   const shareApp = async () => {
+    const shareUrl = window.location.protocol === 'https:' || window.location.protocol === 'http:'
+      ? window.location.origin
+      : undefined;
     const shareData = {
       title: 'Al-Quran Al-Kareem',
-      text: 'কুরআন পড়ুন, বুঝুন ও আমল করুন।',
-      url: window.location.origin
+      text: 'Read and reflect on the Quran with Al-Quran Al-Kareem.',
+      ...(shareUrl ? { url: shareUrl } : {}),
     };
     onClose();
     try {
@@ -37,8 +40,10 @@ export const SideMenu: React.FC<SideMenuProps> = ({
         await Share.share({ ...shareData, dialogTitle: 'Share Al-Quran Al-Kareem' });
       } else if (navigator.share) {
         await navigator.share(shareData);
-      } else {
-        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareData.url)}`, '_blank', 'noopener,noreferrer');
+      } else if (shareUrl) {
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank', 'noopener,noreferrer');
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(shareData.text);
       }
     } catch (error) {
       console.warn('Share was cancelled or unavailable:', error);
