@@ -195,7 +195,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
   const langMeta = QURAN_LANGUAGES.find((l) => l.code === currentLanguage) || QURAN_LANGUAGES[0];
 
   return (
-    <div className="min-h-screen pb-32 pt-2 px-2 sm:px-4 max-w-5xl mx-auto font-bangla">
+    <div className="min-h-screen w-full min-w-0 pb-32 pt-2 px-3 sm:px-5 max-w-7xl mx-auto font-bangla">
       <audio
         ref={audioRef}
         onEnded={handleAyahAudioEnded}
