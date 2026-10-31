@@ -336,6 +336,11 @@ export function getWaqtsStatus(times: PrayerTimesResult, now: Date = new Date())
     { key: 'isha', nameBn: 'ইশা', nameEn: 'Isha', nameAr: 'العشاء', time: times.isha },
   ];
 
+  // After Isha, the next Fajr belongs to the following local day.
+  if (nowMs >= mainWaqts[5].time.getTime()) {
+    mainWaqts[0].time = new Date(mainWaqts[0].time.getTime() + 24 * 60 * 60 * 1000);
+  }
+
   // Determine current active prayer
   let currentIndex = -1;
   for (let i = 0; i < mainWaqts.length; i++) {
