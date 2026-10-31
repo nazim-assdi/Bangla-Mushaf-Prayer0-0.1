@@ -61,90 +61,30 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   onClick={onOpenSurahSearch}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-800/80 hover:bg-emerald-700/80 text-emerald-100 border border-emerald-700/60 text-xs font-bangla transition-colors shadow-inner"
-                  aria-label="সূরা পরিবর্তন করুন"
+                  aria-label={translateUi(uiLanguage, 'chooseSurah')}
                 >
                   <Search className="w-3.5 h-3.5 text-amber-300" />
-                  <span>সূরা {toBanglaNumber(currentSurahId)}: {currentSurahNameBn}</span>
-                  <span className="text-[10px] bg-emerald-950/60 px-1 rounded text-amber-200">বদলান</span>
+                  <span>{translateUi(uiLanguage, 'surahLabel')} {uiLanguage === 'bn' ? toBanglaNumber(currentSurahId) : currentSurahId}: {currentSurahNameBn}</span>
+                  <span className="text-[10px] bg-emerald-950/60 px-1 rounded text-amber-200">{translateUi(uiLanguage, 'change')}</span>
                 </button>
 
                 <button
                   onClick={onOpenGlobalSearch}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-emerald-950 font-bold text-xs font-bangla transition-colors shadow-sm"
-                  aria-label="সার্চ বা খোঁজ করুন"
-                  title="কুরআনে অনুসন্ধান"
+                  aria-label={translateUi(uiLanguage, 'searchQuran')}
+                  title={translateUi(uiLanguage, 'searchQuran')}
                 >
                   <Search className="w-3.5 h-3.5" />
-                  <span>খোঁজ করুন</span>
+                  <span>{translateUi(uiLanguage, 'search')}</span>
                 </button>
               </div>
             )}
           </div>
 
-          {/* Navigation Tabs (Desktop & Tablet) */}
-          <nav className="hidden sm:flex items-center gap-1 sm:gap-1.5" aria-label="প্রধান নেভিগেশন">
-            <button
-              onClick={() => setActiveTab('mushaf')}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
-                activeTab === 'mushaf'
-                  ? 'bg-amber-400 text-emerald-950 font-bold shadow-sm'
-                  : 'text-emerald-100 hover:bg-emerald-800/60'
-              }`}
-              aria-label="মুসহাফ পাঠ"
-            >
-              <BookOpen className="w-4 h-4" />
-              <span className="hidden sm:inline font-bangla">{translateUi(uiLanguage, 'mushaf')}</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('prayer')}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
-                activeTab === 'prayer'
-                  ? 'bg-amber-400 text-emerald-950 font-bold shadow-sm'
-                  : 'text-emerald-100 hover:bg-emerald-800/60'
-              }`}
-              aria-label="নামাজের সময়সূচী"
-            >
-              <Clock className="w-4 h-4" />
-              <span className="hidden sm:inline font-bangla">{translateUi(uiLanguage, 'salatTimes')}</span>
-            </button>
-
-            
-
-            
-
-            <button
-              onClick={() => setActiveTab('bookmarks')}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
-                activeTab === 'bookmarks'
-                  ? 'bg-amber-400 text-emerald-950 font-bold shadow-sm'
-                  : 'text-emerald-100 hover:bg-emerald-800/60'
-              }`}
-              aria-label="সংরক্ষিত আয়াত ও দোয়া"
-            >
-              <Bookmark className="w-4 h-4" />
-              <span className="hidden md:inline font-bangla">{translateUi(uiLanguage, 'bookmarks')}</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('settings')}
-              className={`p-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
-                activeTab === 'settings'
-                  ? 'bg-amber-400 text-emerald-950 font-bold shadow-sm'
-                  : 'text-emerald-100 hover:bg-emerald-800/60'
-              }`}
-              aria-label={translateUi(uiLanguage, 'settings')}
-              title={translateUi(uiLanguage, 'settings')}
-            >
-              <Settings className="w-4 h-4" />
-            </button>
-
-            {/* PWA Install Action */}
+          <div className="hidden sm:flex items-center gap-2">
             <PWAInstallButton />
-
-            {/* Cloud Auth / Sync */}
             <AuthButton />
-          </nav>
+          </div>
 
           <button onClick={onOpenMenu} className="p-2 rounded-xl bg-amber-400 text-emerald-950 hover:bg-amber-300 shadow-sm" aria-label={translateUi(uiLanguage, 'menu')} title={translateUi(uiLanguage, 'menu')}><MoreVertical className="w-5 h-5" /></button>
 
