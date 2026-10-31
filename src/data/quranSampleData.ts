@@ -37,7 +37,9 @@ export interface QuranAyah {
 export interface TafsirContent {
   author: string;
   nameBn: string;
-  language: 'bn' | 'en' | 'ar' | 'ur' | 'hi' | 'tr';
+  nameEn?: string;
+  language: string;
+  resourceId?: number;
   text: string;
 }
 
