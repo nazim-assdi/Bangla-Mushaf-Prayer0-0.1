@@ -1,278 +1,95 @@
 import React from 'react';
-import { Type, Volume2, Eye, Info, Sparkles, Moon, Sun, Check } from 'lucide-react';
-import { RECITERS } from '../services/quranApi';
-import { toBanglaNumber } from '../utils/banglaNumbers';
-import { ThemeMode } from './Navbar';
+import {
+  X, UserRoundPlus, Heart, MapPin, Bell, Clock3, Languages, Settings,
+  Star, Share2, MessageCircle, MessageSquare, BarChart3, Search,
+  Compass, Sparkles, Bookmark, BookOpen, CalendarDays
+} from 'lucide-react';
 
-interface SettingsModalProps {
-  arabicFontSize: number;
-  setArabicFontSize: (size: number) => void;
-  banglaFontSize: number;
-  setBanglaFontSize: (size: number) => void;
-  showTransliteration: boolean;
-  setShowTransliteration: (show: boolean) => void;
-  showTranslation: boolean;
-  setShowTranslation: (show: boolean) => void;
-  selectedReciterId: string;
-  setSelectedReciterId: (id: string) => void;
-  theme: ThemeMode;
-  setTheme: (t: ThemeMode) => void;
+interface SideMenuProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSearch: () => void;
+  onSettings: () => void;
+  onPrayer: () => void;
+  onQibla: () => void;
+  onDhikr: () => void;
+  onBookmarks: () => void;
+  onGoToAyah: () => void;
 }
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({
-  arabicFontSize,
-  setArabicFontSize,
-  banglaFontSize,
-  setBanglaFontSize,
-  showTransliteration,
-  setShowTransliteration,
-  showTranslation,
-  setShowTranslation,
-  selectedReciterId,
-  setSelectedReciterId,
-  theme,
-  setTheme,
+export const SideMenu: React.FC<SideMenuProps> = ({
+  isOpen, onClose, onSearch, onSettings, onPrayer, onQibla,
+  onDhikr, onBookmarks, onGoToAyah
 }) => {
+  if (!isOpen) return null;
+
+  const shareApp = async () => {
+    const shareData = {
+      title: 'Al-Quran Al-Kareem',
+      text: 'কুরআন পড়ুন, বুঝুন ও আমল করুন।',
+      url: window.location.origin
+    };
+    try {
+      if (navigator.share) await navigator.share(shareData);
+      else if (navigator.clipboard) await navigator.clipboard.writeText(shareData.url);
+    } catch (error) {
+      console.warn('Share was cancelled or unavailable:', error);
+    }
+  };
+
+  const openWhatsApp = (message: string) => {
+    window.open('https://wa.me/8801602859957?text=' + encodeURIComponent(message), '_blank', 'noopener,noreferrer');
+    onClose();
+  };
+
+  const jumpToDonation = () => {
+    onClose();
+    window.setTimeout(() => document.getElementById('donation-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
+  };
+
+  const items = [
+    { label: 'সদস্য হন', icon: UserRoundPlus, action: () => { onClose(); document.querySelector<HTMLButtonElement>('[aria-label*="সাইন"], [aria-label*="Sign"], button[title*="Sign"]')?.click(); } },
+    { label: 'Donate করুন', icon: Heart, action: jumpToDonation },
+    { label: 'নির্দিষ্ট আয়াতে যান', icon: MapPin, action: onGoToAyah },
+    { label: 'Notification', icon: Bell, action: () => { onClose(); window.dispatchEvent(new CustomEvent('mushaf:open-notifications')); } },
+    { label: 'সালাতের সময়সূচি', icon: Clock3, action: onPrayer },
+    { label: 'আরবি অভিধান', icon: Languages, action: () => { onClose(); window.dispatchEvent(new CustomEvent('mushaf:open-dictionary')); } },
+    { label: 'Settings', icon: Settings, action: onSettings },
+    { label: 'App Rating', icon: Star, action: () => { window.open('https://play.google.com/store/search?q=Al-Quran%20Al-Kareem&c=apps', '_blank', 'noopener,noreferrer'); onClose(); } },
+    { label: 'App Share', icon: Share2, action: shareApp },
+    { label: 'আমাদের সাথে কথা বলুন', icon: MessageCircle, action: () => openWhatsApp('আসসালামু আলাইকুম। Al-Quran Al-Kareem অ্যাপ সম্পর্কে কথা বলতে চাই।') },
+    { label: 'Feedback', icon: MessageSquare, action: () => openWhatsApp('আসসালামু আলাইকুম। Al-Quran Al-Kareem অ্যাপ সম্পর্কে আমার মতামত: ') },
+    { label: 'Share পরিসংখ্যান', icon: BarChart3, action: onBookmarks },
+    { label: 'Search', icon: Search, action: onSearch },
+    { label: 'Qibla', icon: Compass, action: onQibla },
+    { label: 'Adhkar', icon: Sparkles, action: onDhikr },
+    { label: 'Planner', icon: CalendarDays, action: () => { onClose(); window.dispatchEvent(new CustomEvent('mushaf:open-planner')); } },
+    { label: 'Library', icon: BookOpen, action: onBookmarks }
+  ];
+
   return (
-    <div className="max-w-2xl mx-auto px-3 sm:px-6 py-6 pb-28 font-bangla space-y-6">
-      <div className="border-b border-stone-200 dark:border-stone-800 pb-3">
-        <h2 className="text-xl font-bold text-stone-900 dark:text-white">
-          অ্যাপ ও তিলাওয়াত সেটিংস
-        </h2>
-        <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
-          আপনার পছন্দমত ফন্ট সাইজ, অডিও তেলাওয়াতকারী ও ডিসপ্লে কাস্টমাইজ করুন
-        </p>
-      </div>
-
-      {/* Theme Selection */}
-      <div className="bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200 dark:border-stone-800 space-y-3">
-        <label className="text-sm font-bold text-stone-900 dark:text-white flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-amber-500" />
-          <span>কালার থিম (দৃশ্যরূপ)</span>
-        </label>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <button
-            onClick={() => setTheme('emerald')}
-            className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center gap-1.5 ${
-              theme === 'emerald'
-                ? 'border-emerald-600 bg-emerald-50 text-emerald-900 ring-2 ring-emerald-500 font-bold'
-                : 'border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300'
-            }`}
-          >
-            <div className="w-6 h-6 rounded-full bg-emerald-700 border border-emerald-500 shadow-xs" />
-            <span className="text-xs">সবুজ মুসহাফ</span>
-          </button>
-
-          <button
-            onClick={() => setTheme('dark')}
-            className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center gap-1.5 ${
-              theme === 'dark'
-                ? 'border-emerald-500 bg-stone-800 text-white ring-2 ring-emerald-500 font-bold'
-                : 'border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300'
-            }`}
-          >
-            <div className="w-6 h-6 rounded-full bg-stone-950 border border-stone-700 shadow-xs" />
-            <span className="text-xs">নাইট মোড</span>
-          </button>
-
-          <button
-            onClick={() => setTheme('sepia')}
-            className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center gap-1.5 ${
-              theme === 'sepia'
-                ? 'border-amber-600 bg-amber-50 text-amber-950 ring-2 ring-amber-500 font-bold'
-                : 'border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300'
-            }`}
-          >
-            <div className="w-6 h-6 rounded-full bg-[#f4ece1] border border-amber-300 shadow-xs" />
-            <span className="text-xs">সেপিয়া পাতা</span>
-          </button>
-
-          <button
-            onClick={() => setTheme('softblue')}
-            className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center gap-1.5 ${
-              theme === 'softblue'
-                ? 'border-cyan-500 bg-slate-800 text-cyan-200 ring-2 ring-cyan-400 font-bold'
-                : 'border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300'
-            }`}
-          >
-            <div className="w-6 h-6 rounded-full bg-slate-900 border border-cyan-500 shadow-xs" />
-            <span className="text-xs">নরম নীল (Soft Blue)</span>
-          </button>
-
-          <button
-            onClick={() => setTheme('eyecare')}
-            className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center gap-1.5 ${
-              theme === 'eyecare'
-                ? 'border-emerald-400 bg-[#1b2a22] text-[#d4ebd0] ring-2 ring-emerald-400 font-bold'
-                : 'border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300'
-            }`}
-          >
-            <div className="w-6 h-6 rounded-full bg-[#1b2a22] border border-emerald-400 shadow-xs" />
-            <span className="text-xs">আইকেয়ার (Eye Care)</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Font Size Adjusters */}
-      <div className="bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200 dark:border-stone-800 space-y-5">
-        <label className="text-sm font-bold text-stone-900 dark:text-white flex items-center gap-2">
-          <Type className="w-4 h-4 text-emerald-600" />
-          <span>ফন্ট সাইজ পরিবর্তন</span>
-        </label>
-
-        {/* Arabic Font Slider */}
-        <div className="space-y-2">
-          <div className="flex justify-between text-xs text-stone-600 dark:text-stone-400">
-            <span>আরবি ফন্ট সাইজ:</span>
-            <span className="font-bold text-emerald-700 dark:text-emerald-400">
-              {toBanglaNumber(arabicFontSize)} পিক্সেল
-            </span>
-          </div>
-          <input
-            type="range"
-            min="20"
-            max="42"
-            value={arabicFontSize}
-            onChange={(e) => setArabicFontSize(Number(e.target.value))}
-            className="w-full accent-emerald-600 cursor-pointer"
-            aria-label="আরবি ফন্ট সাইজ"
-          />
-          <div className="p-3 bg-stone-50 dark:bg-stone-800 rounded-xl text-center">
-            <span className="font-arabic text-emerald-950 dark:text-emerald-300" style={{ fontSize: `${arabicFontSize}px` }}>
-              بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
-            </span>
-          </div>
-        </div>
-
-        {/* Bengali Font Slider */}
-        <div className="space-y-2">
-          <div className="flex justify-between text-xs text-stone-600 dark:text-stone-400">
-            <span>বাংলা অনুবাদের ফন্ট সাইজ:</span>
-            <span className="font-bold text-emerald-700 dark:text-emerald-400">
-              {toBanglaNumber(banglaFontSize)} পিক্সেল
-            </span>
-          </div>
-          <input
-            type="range"
-            min="13"
-            max="26"
-            value={banglaFontSize}
-            onChange={(e) => setBanglaFontSize(Number(e.target.value))}
-            className="w-full accent-emerald-600 cursor-pointer"
-            aria-label="বাংলা ফন্ট সাইজ"
-          />
-          <div className="p-3 bg-stone-50 dark:bg-stone-800 rounded-xl text-center">
-            <span className="font-bangla text-stone-800 dark:text-stone-200" style={{ fontSize: `${banglaFontSize}px` }}>
-              সমস্ত প্রশংসা বিশ্বজগতের প্রতিপালক আল্লাহরই জন্য।
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Reciter Picker */}
-      <div className="bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200 dark:border-stone-800 space-y-4">
-        <label className="text-sm font-bold text-stone-900 dark:text-white flex items-center gap-2">
-          <Volume2 className="w-4 h-4 text-emerald-600" />
-          <span>পছন্দের ক্বারী (তেলাওয়াতকারী)</span>
-        </label>
-
-        <div className="space-y-2">
-          {RECITERS.map((r) => {
-            const isSelected = selectedReciterId === r.id;
-            return (
-              <button
-                key={r.id}
-                onClick={() => setSelectedReciterId(r.id)}
-                className={`w-full p-3.5 rounded-xl border flex items-center justify-between text-left transition-all ${
-                  isSelected
-                    ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 ring-1 ring-emerald-500'
-                    : 'border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-800/80 hover:border-emerald-400'
-                }`}
-              >
-                <div>
-                  <h4 className="font-bold text-stone-900 dark:text-white text-sm">
-                    {r.nameBn}
-                  </h4>
-                  <p className="text-xs text-stone-500 dark:text-stone-400">
-                    {r.nameEn} • {r.subtext}
-                  </p>
-                </div>
-                {isSelected && (
-                  <div className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center">
-                    <Check className="w-4 h-4" />
-                  </div>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Visibility Toggles */}
-      <div className="bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200 dark:border-stone-800 space-y-3">
-        <label className="text-sm font-bold text-stone-900 dark:text-white flex items-center gap-2">
-          <Eye className="w-4 h-4 text-emerald-600" />
-          <span>দৃশ্যমান অপশনসমূহ</span>
-        </label>
-
-        <div className="flex items-center justify-between p-3 rounded-xl bg-stone-50 dark:bg-stone-800">
+    <div className="fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-label="অ্যাপ মেনু">
+      <button className="absolute inset-0 bg-black/55 backdrop-blur-[2px]" onClick={onClose} aria-label="মেনু বন্ধ করুন" />
+      <aside className="absolute right-0 top-0 flex h-full w-[min(88vw,380px)] flex-col border-l border-amber-300/20 bg-gradient-to-b from-emerald-950 via-emerald-900 to-stone-950 text-white shadow-2xl animate-in slide-in-from-right duration-300">
+        <div className="flex items-center justify-between border-b border-white/10 px-5 py-5">
           <div>
-            <span className="font-semibold text-xs text-stone-900 dark:text-white">
-              বাংলা উচ্চারণ (Transliteration)
-            </span>
-            <p className="text-[11px] text-stone-500">শব্দে শব্দে বাংলা উচ্চারণ প্রদর্শন</p>
+            <p className="text-[10px] tracking-[0.22em] text-amber-300">AL-QURAN AL-KAREEM</p>
+            <h2 className="mt-1 text-xl font-bold">মেনু</h2>
+            <p className="mt-1 text-xs text-emerald-100/70">পড়ুন · বুঝুন · আমল করুন</p>
           </div>
-          <button
-            onClick={() => setShowTransliteration(!showTransliteration)}
-            className={`w-12 h-6 rounded-full p-0.5 transition-colors ${
-              showTransliteration ? 'bg-emerald-600' : 'bg-stone-300 dark:bg-stone-700'
-            }`}
-            aria-label="বাংলা উচ্চারণ টগল"
-          >
-            <div
-              className={`w-5 h-5 rounded-full bg-white transition-transform ${
-                showTransliteration ? 'translate-x-6' : 'translate-x-0'
-              }`}
-            />
-          </button>
+          <button onClick={onClose} className="rounded-xl border border-white/15 bg-white/10 p-2 hover:bg-white/20" aria-label="বন্ধ করুন"><X className="h-5 w-5" /></button>
         </div>
-
-        <div className="flex items-center justify-between p-3 rounded-xl bg-stone-50 dark:bg-stone-800">
-          <div>
-            <span className="font-semibold text-xs text-stone-900 dark:text-white">
-              বাংলা পূর্ণ অনুবাদ
-            </span>
-            <p className="text-[11px] text-stone-500">আয়াতের নিচে পূর্ণ অনুবাদ প্রদর্শন</p>
-          </div>
-          <button
-            onClick={() => setShowTranslation(!showTranslation)}
-            className={`w-12 h-6 rounded-full p-0.5 transition-colors ${
-              showTranslation ? 'bg-emerald-600' : 'bg-stone-300 dark:bg-stone-700'
-            }`}
-            aria-label="বাংলা অনুবাদ টগল"
-          >
-            <div
-              className={`w-5 h-5 rounded-full bg-white transition-transform ${
-                showTranslation ? 'translate-x-6' : 'translate-x-0'
-              }`}
-            />
-          </button>
-        </div>
-      </div>
-
-      {/* About Box */}
-      <div className="bg-emerald-50 dark:bg-stone-900 rounded-2xl p-5 border border-emerald-200 dark:border-stone-800 text-xs text-stone-600 dark:text-stone-300 space-y-2">
-        <h4 className="font-bold text-stone-900 dark:text-white text-sm">
-          কুরআনুল কারীম (বাংলা শব্দে শব্দে মুসহাফ)
-        </h4>
-        <p className="leading-relaxed">
-          এই অ্যাপ্লিকেশনটি বাংলাভাষী মুসলিমদের জন্য শব্দে শব্দে কুরআনের অর্থ ও উচ্চারণ শিক্ষা, উচ্চমানের অডিও তিলাওয়াত, বহুভাষিক প্রামাণ্য তাফসীর এবং বাংলাদেশের ৬৪ জেলার নির্ভুল নামাজের সময় ও কিবলা কম্পাস প্রদানের উদ্দেশ্যে তৈরি করা হয়েছে।
-        </p>
-        <p className="text-stone-400 pt-1">
-          কুরআন ডাটা: Quran.com API v4 এবং তাফসীর ইবনে কাসীর।
-        </p>
-      </div>
+        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+          {items.map(({ label, icon: Icon, action }, index) => (
+            <button key={label} onClick={action} className="group flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm text-emerald-50 transition hover:bg-white/10 hover:text-amber-200 focus:outline-none focus:ring-2 focus:ring-amber-300">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-amber-200/15 bg-emerald-800/80 text-amber-300 group-hover:bg-amber-300 group-hover:text-emerald-950"><Icon className="h-4 w-4" /></span>
+              <span className="flex-1">{label}</span>
+              <span className="text-xs text-emerald-300/40">{String(index + 1).padStart(2, '0')}</span>
+            </button>
+          ))}
+        </nav>
+        <div className="border-t border-white/10 px-5 py-4 text-center text-[10px] text-emerald-100/50">Made with care for the Qur’an reader</div>
+      </aside>
     </div>
   );
 };
