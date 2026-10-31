@@ -11,7 +11,12 @@ export const UI_LANGUAGES: { code: UiLanguage; name: string; nativeName: string;
 
 const messages: Record<UiLanguage, Record<string, string>> = {
   bn: {
-    translation:'অনুবাদ',
+    noteClose:'নোট বন্ধ করুন',
+    noteView:'নোট দেখুন / সম্পাদনা',
+    noteWrite:'নোট লিখুন',
+    notePlaceholder:'এই আয়াত সম্পর্কে আপনার ব্যক্তিগত নোট লিখুন...',
+    noteSavedLocally:'নোট এই ডিভাইসে স্বয়ংক্রিয়ভাবে সংরক্ষিত হয়',
+        translation:'অনুবাদ',
     wordByWord:'শব্দে শব্দে',
     fullVerse:'পূর্ণ আয়াত',
     mushafPage:'মুসহাফ পাতা',
@@ -61,7 +66,12 @@ const messages: Record<UiLanguage, Record<string, string>> = {
     salatTimes:'সালাতের সময়', bookmarks:'সংরক্ষিত আয়াত', appMenu:'অ্যাপ মেনু'
   },
   en: {
-    translation:'Translation',
+    noteClose:'Close note',
+    noteView:'View / edit note',
+    noteWrite:'Write a note',
+    notePlaceholder:'Write your personal note about this verse...',
+    noteSavedLocally:'Notes are saved automatically on this device',
+        translation:'Translation',
     wordByWord:'Word by word',
     fullVerse:'Full verse',
     mushafPage:'Mushaf page',
@@ -111,7 +121,12 @@ const messages: Record<UiLanguage, Record<string, string>> = {
     salatTimes:'Prayer times', bookmarks:'Saved verses', appMenu:'App menu'
   },
   ar: {
-    translation:'الترجمة',
+    noteClose:'إغلاق الملاحظة',
+    noteView:'عرض / تعديل الملاحظة',
+    noteWrite:'اكتب ملاحظة',
+    notePlaceholder:'اكتب ملاحظتك الشخصية حول هذه الآية...',
+    noteSavedLocally:'يتم حفظ الملاحظات تلقائيًا على هذا الجهاز',
+        translation:'الترجمة',
     wordByWord:'كلمة بكلمة',
     fullVerse:'الآية كاملة',
     mushafPage:'صفحة المصحف',
@@ -161,7 +176,12 @@ const messages: Record<UiLanguage, Record<string, string>> = {
     salatTimes:'مواقيت الصلاة', bookmarks:'الآيات المحفوظة', appMenu:'قائمة التطبيق'
   },
   hi: {
-    translation:'अनुवाद',
+    noteClose:'नोट बंद करें',
+    noteView:'नोट देखें / संपादित करें',
+    noteWrite:'नोट लिखें',
+    notePlaceholder:'इस आयत के बारे में अपना निजी नोट लिखें...',
+    noteSavedLocally:'नोट इस डिवाइस पर अपने आप सहेजे जाते हैं',
+        translation:'अनुवाद',
     wordByWord:'शब्द दर शब्द',
     fullVerse:'पूरी आयत',
     mushafPage:'मुसहफ़ पृष्ठ',
@@ -211,7 +231,12 @@ const messages: Record<UiLanguage, Record<string, string>> = {
     salatTimes:'नमाज़ का समय', bookmarks:'सहेजी गई आयतें', appMenu:'ऐप मेनू'
   },
   ur: {
-    translation:'ترجمہ',
+    noteClose:'نوٹ بند کریں',
+    noteView:'نوٹ دیکھیں / ترمیم کریں',
+    noteWrite:'نوٹ لکھیں',
+    notePlaceholder:'اس آیت کے بارے میں اپنا ذاتی نوٹ لکھیں...',
+    noteSavedLocally:'نوٹس خود بخود اسی ڈیوائس پر محفوظ ہوتے ہیں',
+        translation:'ترجمہ',
     wordByWord:'لفظ بہ لفظ',
     fullVerse:'مکمل آیت',
     mushafPage:'مصحف صفحہ',
@@ -261,7 +286,12 @@ const messages: Record<UiLanguage, Record<string, string>> = {
     salatTimes:'نماز کے اوقات', bookmarks:'محفوظ آیات', appMenu:'ایپ مینو'
   },
   tr: {
-    translation:'Çeviri',
+    noteClose:'Notu kapat',
+    noteView:'Notu görüntüle / düzenle',
+    noteWrite:'Not yaz',
+    notePlaceholder:'Bu ayet hakkındaki kişisel notunuzu yazın...',
+    noteSavedLocally:'Notlar bu cihaza otomatik kaydedilir',
+        translation:'Çeviri',
     wordByWord:'Kelime kelime',
     fullVerse:'Tam ayet',
     mushafPage:'Mushaf sayfası',
