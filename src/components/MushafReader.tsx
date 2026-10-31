@@ -471,6 +471,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
             const isPlayingThisAyah = playingAyahKey === ayah.verseKey && isPlaying;
             const isBookmarked = bookmarks.includes(ayah.verseKey);
             const translationText = getAyahTranslation(ayah);
+            const availableTafsirs = getBundledTafsir(ayah.verseKey);
 
             return (
               <div
@@ -512,17 +513,19 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
                       <span className="hidden sm:inline">{translateUi(uiLanguage, 'listen')}</span>
                     </button>
 
-                    <button
-                      onClick={() => {
-                        setTafsirAyah(ayah);
-                        setIsTafsirOpen(true);
-                      }}
-                      className="p-1.5 rounded-lg bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-200 hover:bg-emerald-600 hover:text-white transition-colors flex items-center gap-1"
-                      aria-label={translateUi(uiLanguage, 'tafsir')}
-                    >
-                      <BookOpen className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
-                      <span className="hidden sm:inline">{translateUi(uiLanguage, 'tafsir')}</span>
-                    </button>
+                    {availableTafsirs.length > 0 && (
+                      <button
+                        onClick={() => {
+                          setTafsirAyah(ayah);
+                          setIsTafsirOpen(true);
+                        }}
+                        className="p-1.5 rounded-lg bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-200 hover:bg-emerald-600 hover:text-white transition-colors flex items-center gap-1"
+                        aria-label={translateUi(uiLanguage, 'tafsir')}
+                      >
+                        <BookOpen className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
+                        <span className="hidden sm:inline">{translateUi(uiLanguage, 'tafsir')}</span>
+                      </button>
+                    )}
 
                     <button
                       onClick={() => onToggleBookmark(ayah.verseKey, currentSurah.nameBengali, ayah.verseNumber)}
@@ -632,6 +635,15 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
                     </div>
                   )}
                 </div>
+                  {availableTafsirs.length > 0 && (
+                    <section className="mx-4 mb-4 rounded-xl border border-amber-200/80 bg-amber-50/60 p-4 dark:border-amber-900/60 dark:bg-amber-950/20">
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <h4 className="text-sm font-bold text-amber-900 dark:text-amber-200">{translateUi(uiLanguage, 'tafsir')} · {availableTafsirs[0].nameBn}</h4>
+                        <button type="button" onClick={() => { setTafsirAyah(ayah); setIsTafsirOpen(true); }} className="text-xs font-bold text-emerald-700 underline dark:text-emerald-300">View</button>
+                      </div>
+                      <p className="whitespace-pre-line text-sm leading-relaxed text-stone-700 dark:text-stone-200">{availableTafsirs[0].text}</p>
+                    </section>
+                  )}
               </div>
             );
           })}
