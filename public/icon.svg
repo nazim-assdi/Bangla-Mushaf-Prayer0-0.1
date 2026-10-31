@@ -61,7 +61,7 @@
   </g>
 
   <!-- Islamic Calligraphy Motif Accent / Bengali Label -->
-  <text x="256" y="445" font-family="system-ui, -apple-system, sans-serif" font-weight="bold" font-size="28" fill="#fef08a" text-anchor="middle" letter-spacing="3">
-    কুরআন ও সালাত
+  <text x="256" y="445" font-family="system-ui, -apple-system, sans-serif" font-weight="bold" font-size="24" fill="#fef08a" text-anchor="middle" letter-spacing="2">
+    AL-QURAN AL-KAREEM
   </text>
 </svg>
