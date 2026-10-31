@@ -2,6 +2,7 @@
  * Multi-language Quran Service supporting Bengali, English, Arabic, Hindi, Urdu, and Turkish translations and tafsirs
  */
 import { QuranAyah, QuranWord, TafsirContent } from '../data/quranSampleData';
+import { SURAH_LIST } from '../data/quranMetadata';
 import { padNumber, getAyahAudioUrl } from './quranApi';
 import { toArabicNumber } from '../utils/banglaNumbers';
 import { getOfflineSurah, saveOfflineSurah, getOfflineSurahCount } from './offlineQuranStore';
@@ -31,11 +32,14 @@ export async function downloadFullQuranOffline(
   onProgress?: (completed: number, total: number) => void
 ): Promise<void> {
   const total = 114;
-  let completed = await getOfflineSurahCount(lang);
+  let completed = 0;
   onProgress?.(completed, total);
   for (let surahId = 1; surahId <= total; surahId += 1) {
+    const expected = SURAH_LIST.find((surah) => surah.id === surahId)?.versesCount;
     const cached = await getOfflineSurah(surahId, lang);
-    if (!cached || cached.length === 0) {
+    if (cached && expected && cached.length === expected) {
+      completed += 1;
+    } else {
       await fetchVersesByLanguage(surahId, lang);
       completed += 1;
     }
@@ -52,13 +56,14 @@ export async function fetchVersesByLanguage(
   reciterId: string = 'alafasy'
 ): Promise<QuranAyah[]> {
   const cacheKey = `${surahId}_${lang}`;
-  if (multiLangCache[cacheKey] && multiLangCache[cacheKey].length > 0) {
+  const expectedVerseCount = SURAH_LIST.find((surah) => surah.id === surahId)?.versesCount;
+  if (multiLangCache[cacheKey] && multiLangCache[cacheKey].length === expectedVerseCount) {
     return multiLangCache[cacheKey];
   }
 
   // IndexedDB has enough room for the complete Quran and is preferred over localStorage.
   const offlineItem = await getOfflineSurah(surahId, lang).catch(() => null);
-  if (offlineItem && offlineItem.length > 0) {
+  if (offlineItem && offlineItem.length === expectedVerseCount) {
     multiLangCache[cacheKey] = offlineItem;
     return offlineItem;
   }
@@ -126,7 +131,9 @@ export async function fetchVersesByLanguage(
         } as any;
       });
 
-      if (parsedAyahs.length === 0) throw new Error('The Quran API returned no verses.');
+      if (!expectedVerseCount || parsedAyahs.length !== expectedVerseCount) {
+        throw new Error(`সূরা ${surahId}-এর সম্পূর্ণ আয়াত পাওয়া যায়নি (${parsedAyahs.length}/${expectedVerseCount ?? 'unknown'}).`);
+      }
       multiLangCache[cacheKey] = parsedAyahs;
       await saveOfflineSurah(surahId, lang, parsedAyahs);
       return parsedAyahs;
