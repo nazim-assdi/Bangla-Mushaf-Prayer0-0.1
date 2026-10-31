@@ -5,6 +5,7 @@ import { toBanglaNumber } from '../utils/banglaNumbers';
 import { ThemeMode } from './Navbar';
 import { OfflineNotesAccount } from './OfflineNotesAccount';
 import { OfflineQuranDownload } from './OfflineQuranDownload';
+import { UI_LANGUAGES, UiLanguage, translateUi } from '../services/i18n';
 
 interface SettingsModalProps {
   arabicFontSize: number;
@@ -19,6 +20,8 @@ interface SettingsModalProps {
   setSelectedReciterId: (id: string) => void;
   theme: ThemeMode;
   setTheme: (t: ThemeMode) => void;
+  uiLanguage: UiLanguage;
+  onUiLanguageChange: (language: UiLanguage) => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -34,6 +37,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   setSelectedReciterId,
   theme,
   setTheme,
+  uiLanguage,
+  onUiLanguageChange,
 }) => {
   const [keepScreenAwake, setKeepScreenAwake] = useState<boolean>(() => localStorage.getItem('mushaf_keep_screen_awake') === 'true');
   const [wakeLockError, setWakeLockError] = useState<string>('');
@@ -78,6 +83,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </p>
       </div>
 
+      <section className="rounded-2xl border border-emerald-200 bg-white p-5 shadow-sm dark:border-stone-800 dark:bg-stone-900 space-y-3">
+        <h3 className="font-bold text-stone-900 dark:text-white">{translateUi(uiLanguage, 'language')}</h3>
+        <p className="text-xs text-stone-500 dark:text-stone-400">{translateUi(uiLanguage, 'languageHelp')}</p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {UI_LANGUAGES.map((language) => (
+            <button key={language.code} type="button" onClick={() => onUiLanguageChange(language.code)}
+              aria-pressed={uiLanguage === language.code}
+              className={`rounded-xl border px-3 py-3 text-left transition ${uiLanguage === language.code ? 'border-emerald-600 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-100' : 'border-stone-200 text-stone-700 dark:border-stone-700 dark:text-stone-200'}`}>
+              <span className="block font-bold">{language.nativeName}</span>
+              <span className="text-[11px] opacity-70">{language.name}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
       <OfflineNotesAccount />
 
       <OfflineQuranDownload />
@@ -86,7 +106,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       <div className="bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200 dark:border-stone-800 space-y-3">
         <label className="text-sm font-bold text-stone-900 dark:text-white flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-amber-500" />
-          <span>কালার থিম (দৃশ্যরূপ)</span>
+          <span>{translateUi(uiLanguage, 'theme')} (Display)</span>
         </label>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
