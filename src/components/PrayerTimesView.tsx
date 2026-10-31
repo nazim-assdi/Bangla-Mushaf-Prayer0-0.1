@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   MapPin,
   Clock,
@@ -33,11 +33,18 @@ export const PrayerTimesView: React.FC = () => {
   const [asrJuristic, setAsrJuristic] = useState<'hanafi' | 'shafii'>('hanafi');
   const [calculationMethod, setCalculationMethod] = useState<string>('Karachi');
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
+  const [gpsLive, setGpsLive] = useState(false);
+  const [lastGpsUpdate, setLastGpsUpdate] = useState<Date | null>(null);
+  const watchIdRef = useRef<number | null>(null);
 
   // Update clock every 30 seconds for live countdown
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 30000);
-    return () => clearInterval(timer);
+    const timer = window.setInterval(() => setCurrentTime(new Date()), 10000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => () => {
+    if (watchIdRef.current !== null && navigator.geolocation) navigator.geolocation.clearWatch(watchIdRef.current);
   }, []);
 
   const currentDistrict = useMemo(() => {
@@ -69,31 +76,54 @@ export const PrayerTimesView: React.FC = () => {
   const nextWaqt = waqts.find((w) => w.isNext) || waqts[0];
   const minutesUntilNext = Math.max(0, Math.round((nextWaqt.time.getTime() - currentTime.getTime()) / 60000));
 
-  // Geolocation trigger
+  // Start continuous GPS updates only after the user grants permission.
   const handleUseGPS = () => {
     if (!navigator.geolocation) {
-      alert('আপনার ব্রাউজারে জিপিএস উপলব্ধ নেই।');
+      setGeoError('আপনার ব্রাউজারে GPS উপলব্ধ নেই।');
       return;
     }
+    if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
     setGeoLoading(true);
     setGeoError('');
-    navigator.geolocation.getCurrentPosition(
+    watchIdRef.current = navigator.geolocation.watchPosition(
       (pos) => {
-        setCustomCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy, nameBn: 'আমার বর্তমান GPS অবস্থান' });
+        setCustomCoords({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+          nameBn: 'আমার বর্তমান GPS অবস্থান',
+        });
+        setLastGpsUpdate(new Date(pos.timestamp));
+        setGpsLive(true);
         setGeoLoading(false);
       },
       (err) => {
-        console.warn('GPS error:', err);
         const messages: Record<number, string> = {
-          1: 'Location permission বন্ধ আছে। ফোনের Settings থেকে অনুমতি দিন।',
+          1: 'Location permission বন্ধ আছে। ফোন/ব্রাউজারের Settings থেকে অনুমতি দিন।',
           2: 'GPS অবস্থান পাওয়া যায়নি। Location চালু করে আবার চেষ্টা করুন।',
           3: 'GPS পেতে সময় শেষ হয়েছে। খোলা জায়গায় আবার চেষ্টা করুন।',
         };
         setGeoError(messages[err.code] || 'GPS অবস্থান পাওয়া যায়নি।');
         setGeoLoading(false);
+        setGpsLive(false);
+        if (watchIdRef.current !== null) {
+          navigator.geolocation.clearWatch(watchIdRef.current);
+          watchIdRef.current = null;
+        }
       },
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
+      { enableHighAccuracy: true, maximumAge: 10000, timeout: 30000 }
     );
+  };
+
+  const handleSelectDistrict = (districtId: string) => {
+    if (watchIdRef.current !== null && navigator.geolocation) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+    setGpsLive(false);
+    setLastGpsUpdate(null);
+    setCustomCoords(null);
+    setSelectedDistrictId(districtId);
   };
 
   // Group districts by division for tidy dropdown
@@ -112,7 +142,7 @@ export const PrayerTimesView: React.FC = () => {
               {locationLabel}
             </h2>
             <p className="text-xs text-stone-500 dark:text-stone-400">
-              অক্ষাংশ: {toBanglaNumber(activeLat.toFixed(4))}°, দ্রাঘিমাংশ: {toBanglaNumber(activeLng.toFixed(4))}° ({timezoneLabel}){customCoords?.accuracy ? ` · GPS ±${Math.round(customCoords.accuracy)}m` : ''}
+              অক্ষাংশ: {toBanglaNumber(activeLat.toFixed(4))}°, দ্রাঘিমাংশ: {toBanglaNumber(activeLng.toFixed(4))}° ({timezoneLabel}){customCoords?.accuracy ? ` · GPS ±${Math.round(customCoords.accuracy)}m` : ''}{lastGpsUpdate ? ` · আপডেট ${lastGpsUpdate.toLocaleTimeString('bn-BD')}` : ''}
             </p>
           </div>
         </div>
@@ -121,10 +151,7 @@ export const PrayerTimesView: React.FC = () => {
           {/* 64 Districts Dropdown */}
           <select
             value={customCoords ? '' : selectedDistrictId}
-            onChange={(e) => {
-              setCustomCoords(null);
-              setSelectedDistrictId(e.target.value);
-            }}
+            onChange={(e) => handleSelectDistrict(e.target.value)}
             className="px-3 py-2 rounded-xl bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-800 dark:text-stone-200 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500"
             aria-label="জেলা নির্বাচন করুন"
           >
@@ -147,10 +174,12 @@ export const PrayerTimesView: React.FC = () => {
             aria-label="আমার জিপিএস লোকেশন ব্যবহার করুন"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${geoLoading ? 'animate-spin' : ''}`} />
-            <span>{geoLoading ? 'খোঁজা হচ্ছে...' : 'আমার জিপিএস'}</span>
+            <span>{geoLoading ? 'খোঁজা হচ্ছে...' : gpsLive ? 'GPS Live চালু' : 'লাইভ GPS চালু করুন'}</span>
           </button>
         </div>
       </div>
+
+      {gpsLive && <p className="-mt-3 text-xs text-emerald-700 dark:text-emerald-300">আপনার অবস্থান পরিবর্তন হলে নামাজের সময় স্বয়ংক্রিয়ভাবে পুনরায় হিসাব হবে। লাইভ GPS বন্ধ করতে জেলা নির্বাচন করুন।</p>}
 
       {geoError && <div role="status" className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">{geoError}</div>}
 
