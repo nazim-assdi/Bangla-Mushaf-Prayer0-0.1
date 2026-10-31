@@ -86,3 +86,27 @@ test('Next prayer after Isha is tomorrow Fajr, not a passed Fajr today', () => {
   assert.equal(next?.key, 'fajr');
   assert.ok(next!.time.getTime() > afterIsha.getTime(), 'Next Fajr must be in the future');
 });
+
+test('Next prayer after Fajr skips sunrise and current Fajr ends at sunrise', () => {
+  const today = new Date(2026, 9, 26, 12, 0, 0);
+  const dhaka = BANGLADESH_DISTRICTS.find((d) => d.id === 'dhaka')!;
+  const times = calculatePrayerTimes(today, dhaka.lat, dhaka.lng, 6);
+
+  const duringFajr = getWaqtsStatus(times, new Date(times.fajr.getTime() + 30 * 60000));
+  assert.equal(duringFajr.find((waqt) => waqt.isCurrent)?.key, 'fajr');
+  assert.equal(duringFajr.find((waqt) => waqt.isNext)?.key, 'dhuhr');
+
+  const afterSunrise = getWaqtsStatus(times, new Date(times.sunrise.getTime() + 30 * 60000));
+  assert.equal(afterSunrise.find((waqt) => waqt.isNext)?.key, 'dhuhr');
+  assert.equal(afterSunrise.some((waqt) => waqt.isCurrent), false);
+});
+
+test('Isha remains the current night interval before Fajr', () => {
+  const today = new Date(2026, 9, 26, 12, 0, 0);
+  const dhaka = BANGLADESH_DISTRICTS.find((d) => d.id === 'dhaka')!;
+  const times = calculatePrayerTimes(today, dhaka.lat, dhaka.lng, 6);
+  const beforeFajr = new Date(times.fajr.getTime() - 30 * 60000);
+  const waqts = getWaqtsStatus(times, beforeFajr);
+  assert.equal(waqts.find((waqt) => waqt.isCurrent)?.key, 'isha');
+  assert.equal(waqts.find((waqt) => waqt.isNext)?.key, 'fajr');
+});
