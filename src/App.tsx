@@ -16,6 +16,8 @@ import { GlobalSearchModal } from './components/GlobalSearchModal';
 import { SideMenu } from './components/SideMenu';
 import { SURAH_LIST } from './data/quranMetadata';
 import { QuranLanguage } from './services/multiLangQuran';
+import { UiLanguage, translateUi } from './services/i18n';
+import { LanguageSelectionScreen } from './components/LanguageSelectionScreen';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import {
@@ -55,6 +57,11 @@ function AppContent() {
   const [showTranslation, setShowTranslation] = useState<boolean>(true);
   const [selectedReciterId, setSelectedReciterId] = useState<string>('alafasy');
   const [currentLanguage, setCurrentLanguage] = useState<QuranLanguage>('bn');
+  const [uiLanguage, setUiLanguage] = useState<UiLanguage | null>(() => {
+    const saved = localStorage.getItem('mushaf_ui_language');
+    return saved === 'bn' || saved === 'en' || saved === 'ar' || saved === 'hi' || saved === 'ur' || saved === 'tr' ? saved : null;
+  });
+  const [languageDraft, setLanguageDraft] = useState<UiLanguage>('en');
   const { user } = useAuth();
 
   // Bookmarks & last read state with localStorage sync
@@ -150,6 +157,20 @@ function AppContent() {
       } catch (e) {}
     }
   }, [lastRead]);
+
+  useEffect(() => {
+    if (!uiLanguage) return;
+    const root = document.documentElement;
+    root.lang = uiLanguage;
+    root.dir = uiLanguage === 'ar' || uiLanguage === 'ur' ? 'rtl' : 'ltr';
+    localStorage.setItem('mushaf_ui_language', uiLanguage);
+  }, [uiLanguage]);
+
+  const handleUiLanguageChange = (language: UiLanguage) => {
+    setUiLanguage(language);
+    setLanguageDraft(language);
+    localStorage.setItem('mushaf_ui_language', language);
+  };
 
   // Handle theme classes on html
   useEffect(() => {
@@ -348,13 +369,13 @@ function AppContent() {
       {/* Primary mobile navigation: seven destinations */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-emerald-900/10 bg-white/95 px-1 py-2 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur-md dark:border-stone-700 dark:bg-stone-950/95" aria-label="Main navigation">
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-1 overflow-x-auto">
-          <button onClick={() => setActiveTab('mushaf')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'mushaf' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">📖</span><span>Home</span></button>
-          <button onClick={() => setActiveTab('qibla')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'qibla' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">🕋</span><span>Qibla</span></button>
-          <button onClick={() => setActiveTab('prayer')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'prayer' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">🕌</span><span>Salat</span></button>
-          <button onClick={() => setActiveTab('dhikr')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'dhikr' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">📿</span><span>Adhkar</span></button>
-          <button onClick={() => window.dispatchEvent(new CustomEvent('mushaf:open-planner'))} className="flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] text-stone-500"><span className="text-lg">🗓️</span><span>Planner</span></button>
-          <button onClick={() => setIsGlobalSearchOpen(true)} className="flex min-w-[64px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] text-stone-500"><span className="text-lg">🔎</span><span>Topic Ayah</span></button>
-          <button onClick={() => setActiveTab('bookmarks')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'bookmarks' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">📚</span><span>Library</span></button>
+          <button onClick={() => setActiveTab('mushaf')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'mushaf' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">📖</span><span>{translateUi(uiLanguage, 'home')}</span></button>
+          <button onClick={() => setActiveTab('qibla')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'qibla' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">🕋</span><span>{translateUi(uiLanguage, 'qibla')}</span></button>
+          <button onClick={() => setActiveTab('prayer')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'prayer' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">🕌</span><span>{translateUi(uiLanguage, 'salat')}</span></button>
+          <button onClick={() => setActiveTab('dhikr')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'dhikr' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">📿</span><span>{translateUi(uiLanguage, 'adhkar')}</span></button>
+          <button onClick={() => window.dispatchEvent(new CustomEvent('mushaf:open-planner'))} className="flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] text-stone-500"><span className="text-lg">🗓️</span><span>{translateUi(uiLanguage, 'planner')}</span></button>
+          <button onClick={() => setIsGlobalSearchOpen(true)} className="flex min-w-[64px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] text-stone-500"><span className="text-lg">🔎</span><span>{translateUi(uiLanguage, 'topicAyah')}</span></button>
+          <button onClick={() => setActiveTab('bookmarks')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'bookmarks' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">📚</span><span>{translateUi(uiLanguage, 'library')}</span></button>
         </div>
       </nav>
     </div>
