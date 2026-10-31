@@ -72,7 +72,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       }
     };
     void acquire();
-    const onVisibility = () => { if (document.visibilityState === 'visible' && !lock) void acquire(); };
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden' && lock) {
+        const previousLock = lock;
+        lock = null;
+        void previousLock.release();
+      } else if (document.visibilityState === 'visible' && !lock) {
+        void acquire();
+      }
+    };
     document.addEventListener('visibilitychange', onVisibility);
     return () => {
       cancelled = true;
