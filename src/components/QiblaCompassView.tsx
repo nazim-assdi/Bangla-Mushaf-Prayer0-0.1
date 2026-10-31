@@ -147,9 +147,9 @@ export const QiblaCompassView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangu
 
       <div className="rounded-3xl border border-emerald-800/50 bg-gradient-to-b from-stone-950 via-emerald-950 to-stone-950 px-4 py-6 text-white shadow-xl sm:px-8">
         <div className="mb-5 flex flex-wrap items-center justify-center gap-2 text-xs">
-          <span className="rounded-full border border-emerald-700 bg-emerald-900/70 px-3 py-1.5 text-amber-200">কিবলা {formatUiNumber(qiblaBearing)}°</span>
+          <span className="rounded-full border border-emerald-700 bg-emerald-900/70 px-3 py-1.5 text-amber-200">কিবলা {formatUiNumber(qiblaBearing, uiLanguage)}°</span>
           <span className="rounded-full border border-emerald-700 bg-emerald-900/70 px-3 py-1.5 text-emerald-100">
-            {deviceHeading === null ? 'কম্পাস সেন্সর অপেক্ষমাণ' : `ফোনের দিক ${formatUiNumber(Math.round(deviceHeading))}°`}
+            {deviceHeading === null ? 'কম্পাস সেন্সর অপেক্ষমাণ' : `ফোনের দিক ${formatUiNumber(Math.round(deviceHeading), uiLanguage)}°`}
           </span>
         </div>
 
@@ -177,7 +177,7 @@ export const QiblaCompassView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangu
           ) : isAligned ? (
             <p className="flex items-center justify-center gap-2 font-bold text-emerald-300"><CheckCircle2 className="h-5 w-5" /> কিবলার দিকে প্রায় সোজা</p>
           ) : (
-            <p className="font-semibold text-amber-200">{deviation > 0 ? 'ডানে' : 'বামে'} আরও {formatUiNumber(Math.abs(Math.round(deviation)))}° ঘোরান</p>
+            <p className="font-semibold text-amber-200">{deviation > 0 ? 'ডানে' : 'বামে'} আরও {formatUiNumber(Math.abs(Math.round(deviation)), uiLanguage)}° ঘোরান</p>
           )}
           <p className="mt-2 text-xs text-emerald-100/70">ফোন সমতল রাখুন এবং ধাতব বস্তু, চুম্বক ও বৈদ্যুতিক যন্ত্র থেকে দূরে থাকুন।</p>
         </div>
