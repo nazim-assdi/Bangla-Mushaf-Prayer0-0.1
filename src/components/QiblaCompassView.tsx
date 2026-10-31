@@ -3,10 +3,11 @@ import { Compass, MapPin, RefreshCw, CheckCircle2, AlertTriangle, Info, Smartpho
 import { BANGLADESH_DISTRICTS } from '../utils/prayerTimes';
 import { calculateQiblaDirection, calculateDistanceToKaaba, getHeadingDeviation } from '../utils/qibla';
 import { toBanglaNumber } from '../utils/banglaNumbers';
+import { UiLanguage, translateUi } from '../services/i18n';
 
 type Coordinates = { lat: number; lng: number; nameBn: string; accuracy?: number };
 
-export const QiblaCompassView: React.FC = () => {
+export const QiblaCompassView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLanguage }) => {
   const [selectedDistrictId, setSelectedDistrictId] = useState('dhaka');
   const [customCoords, setCustomCoords] = useState<Coordinates | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
@@ -88,7 +89,7 @@ export const QiblaCompassView: React.FC = () => {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
           accuracy: position.coords.accuracy,
-          nameBn: 'বর্তমান GPS অবস্থান',
+          nameBn: 'Current GPS location',
         });
         setGeoLoading(false);
       },
@@ -115,11 +116,11 @@ export const QiblaCompassView: React.FC = () => {
             <Compass className="h-5 w-5" />
           </div>
           <div className="min-w-0">
-            <h2 className="font-bold text-stone-900 dark:text-white">{locationLabel} থেকে কিবলার দিক</h2>
+            <h2 className="font-bold text-stone-900 dark:text-white">{locationLabel} · {translateUi(uiLanguage, 'qiblaDirection')}</h2>
             <p className="text-xs text-stone-500 dark:text-stone-400">
               উত্তর থেকে ঘড়ির কাঁটার দিকে {toBanglaNumber(qiblaBearing)}° · কাবা পর্যন্ত {toBanglaNumber(distanceKm.toLocaleString())} কিমি
             </p>
-            {customCoords?.accuracy && <p className="text-[11px] text-stone-500">GPS নির্ভুলতা: প্রায় {Math.round(customCoords.accuracy)} মিটার</p>}
+            {customCoords?.accuracy && <p className="text-[11px] text-stone-500">{translateUi(uiLanguage, 'gpsAccuracy')}: {Math.round(customCoords.accuracy)} মিটার</p>}
           </div>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
@@ -127,7 +128,7 @@ export const QiblaCompassView: React.FC = () => {
             value={customCoords ? '' : selectedDistrictId}
             onChange={(event) => { setCustomCoords(null); setSelectedDistrictId(event.target.value); }}
             className="min-h-10 min-w-0 rounded-xl border border-stone-200 bg-stone-100 px-3 text-sm text-stone-800 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100"
-            aria-label="জেলা নির্বাচন করুন"
+            aria-label={translateUi(uiLanguage, 'districtFallback')}
           >
             {BANGLADESH_DISTRICTS.map((district) => <option key={district.id} value={district.id}>{district.nameBn}</option>)}
           </select>
