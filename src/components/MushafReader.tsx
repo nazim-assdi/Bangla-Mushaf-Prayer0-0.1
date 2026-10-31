@@ -17,7 +17,7 @@ import { QuranAyah, QuranWord } from '../data/quranSampleData';
 import { SURAH_LIST } from '../data/quranMetadata';
 import { RECITERS, getBundledTafsir } from '../services/quranApi';
 import { QURAN_LANGUAGES, QuranLanguage, fetchVersesByLanguage } from '../services/multiLangQuran';
-import { toBanglaNumber, toArabicNumber } from '../utils/banglaNumbers';
+import { toArabicNumber } from '../utils/banglaNumbers';
 import { TafsirModal } from './TafsirModal';
 import { AyahStudyTools } from './AyahStudyTools';
 import { UiLanguage, formatUiNumber, translateUi } from '../services/i18n';
@@ -301,11 +301,11 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
           <div className="text-center">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/70 border border-amber-400/30 text-amber-300 text-xs mb-2 shadow-xs">
               <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              <span>{translateUi(uiLanguage, 'surahNumber')}: {formatUiNumber(currentSurah.id)}</span>
+              <span>{translateUi(uiLanguage, 'surahNumber')}: {formatUiNumber(currentSurah.id, uiLanguage)}</span>
               <span>•</span>
               <span>{currentSurah.revelationPlace === 'makkah' ? translateUi(uiLanguage, 'revelationMakkah') : translateUi(uiLanguage, 'revelationMadinah')}</span>
               <span>•</span>
-              <span>{formatUiNumber(currentSurah.versesCount)} {translateUi(uiLanguage, 'verses')}</span>
+              <span>{formatUiNumber(currentSurah.versesCount, uiLanguage)} {translateUi(uiLanguage, 'verses')}</span>
             </div>
 
             <div className="flex flex-col items-center">
