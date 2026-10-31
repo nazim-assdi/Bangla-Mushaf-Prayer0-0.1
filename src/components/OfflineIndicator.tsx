@@ -27,8 +27,8 @@ export const OfflineIndicator: React.FC = () => {
         <div className="flex items-center gap-2 bg-stone-900/95 dark:bg-stone-800/95 text-amber-300 px-3.5 py-2 rounded-2xl shadow-xl border border-amber-500/40 text-xs font-bangla backdrop-blur-md">
           <WifiOff className="w-4 h-4 text-amber-400 animate-pulse shrink-0" />
           <div>
-            <span className="font-bold block text-white text-[11px]">সম্পূর্ণ অফলাইন মোড সক্রিয়</span>
-            <span className="text-[10px] text-stone-300">কুরআন, সালাত ও আযকার অফলাইনে ব্যবহারযোগ্য</span>
+            <span className="font-bold block text-white text-[11px]">ইন্টারনেট সংযোগ নেই</span>
+            <span className="text-[10px] text-stone-300">আগে সংরক্ষিত সূরা ও আযকার ব্যবহার করুন</span>
           </div>
         </div>
       </div>
