@@ -620,6 +620,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
                           </p>
                         </div>
                       )}
+                      {showTranslation && !translationText && <p className="mt-3 text-xs text-amber-700 dark:text-amber-300">{translateUi(uiLanguage, 'noTranslationAvailable')}</p>}
                     </div>
                   ) : (
                     <div className="space-y-4">
@@ -645,6 +646,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
                           {translationText}
                         </p>
                       )}
+                      {showTranslation && !translationText && <p className="text-xs text-amber-700 dark:text-amber-300">{translateUi(uiLanguage, 'noTranslationAvailable')}</p>}
                     </div>
                   )}
                 </div>
