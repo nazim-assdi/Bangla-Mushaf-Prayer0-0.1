@@ -1,6 +1,9 @@
 @import "tailwindcss";
 
 @layer base {
+  html, body, #root { width: 100%; min-height: 100%; margin: 0; }
+  body { overflow-x: hidden; }
+  #root { min-height: 100dvh; }
   :root {
     --font-arabic: 'Scheherazade New', 'Amiri', 'Traditional Arabic', serif;
     --font-amiri: 'Amiri', serif;
