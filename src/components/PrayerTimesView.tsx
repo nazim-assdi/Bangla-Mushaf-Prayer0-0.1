@@ -23,7 +23,7 @@ import {
   PrayerTimeConfig,
   CALCULATION_METHODS,
 } from '../utils/prayerTimes';
-import { toBanglaNumber, formatDurationToBangla } from '../utils/banglaNumbers';
+import { formatDurationToBangla } from '../utils/banglaNumbers';
 import { schedulePrayerAlerts, cancelPrayerAlerts, refreshPrayerAlertsIfPermitted } from '../services/prayerNotifications';
 import { UiLanguage, formatUiNumber, translateUi } from '../services/i18n';
 
@@ -187,7 +187,7 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
               {locationLabel} {gpsLive && <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />LIVE GPS</span>}
             </h2>
             <p className="text-xs text-stone-500 dark:text-stone-400">
-              অক্ষাংশ: {formatUiNumber(activeLat.toFixed(4))}°, দ্রাঘিমাংশ: {formatUiNumber(activeLng.toFixed(4))}° ({timezoneLabel}){customCoords?.accuracy ? ` · GPS ±${Math.round(customCoords.accuracy)}m` : ''}{lastGpsUpdate ? ` · আপডেট ${lastGpsUpdate.toLocaleTimeString('bn-BD')}` : ''}
+              অক্ষাংশ: {formatUiNumber(Number(activeLat.toFixed(4)), uiLanguage)}°, দ্রাঘিমাংশ: {formatUiNumber(Number(activeLng.toFixed(4)), uiLanguage)}° ({timezoneLabel}){customCoords?.accuracy ? ` · GPS ±${Math.round(customCoords.accuracy)}m` : ''}{lastGpsUpdate ? ` · আপডেট ${lastGpsUpdate.toLocaleTimeString('bn-BD')}` : ''}
             </p>
           </div>
         </div>
