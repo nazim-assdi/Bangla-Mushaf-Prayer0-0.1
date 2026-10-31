@@ -4,6 +4,7 @@
 import { QuranAyah, QuranWord, SAMPLE_AYAHS, TafsirContent } from '../data/quranSampleData';
 import { padNumber, getAyahAudioUrl } from './quranApi';
 import { toArabicNumber } from '../utils/banglaNumbers';
+import { getOfflineSurah, saveOfflineSurah, getOfflineSurahCount } from './offlineQuranStore';
 
 export type QuranLanguage = 'bn' | 'en' | 'ar' | 'hi' | 'ur' | 'tr';
 
@@ -25,6 +26,23 @@ export const QURAN_LANGUAGES: LanguageMeta[] = [
 
 const multiLangCache: { [key: string]: QuranAyah[] } = {};
 
+export async function downloadFullQuranOffline(
+  lang: QuranLanguage,
+  onProgress?: (completed: number, total: number) => void
+): Promise<void> {
+  const total = 114;
+  let completed = await getOfflineSurahCount(lang);
+  onProgress?.(completed, total);
+  for (let surahId = 1; surahId <= total; surahId += 1) {
+    const cached = await getOfflineSurah(surahId, lang);
+    if (!cached || cached.length === 0) {
+      await fetchVersesByLanguage(surahId, lang);
+    }
+    completed += 1;
+    onProgress?.(completed, total);
+  }
+}
+
 /**
  * Fetch verses with translation in the specified language
  */
@@ -38,20 +56,11 @@ export async function fetchVersesByLanguage(
     return multiLangCache[cacheKey];
   }
 
-  // Check persistent offline storage
-  if (typeof window !== 'undefined' && window.localStorage) {
-    try {
-      const offlineItem = localStorage.getItem(`quran_offline_${cacheKey}`);
-      if (offlineItem) {
-        const parsed = JSON.parse(offlineItem);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          multiLangCache[cacheKey] = parsed;
-          return parsed;
-        }
-      }
-    } catch (e) {
-      // ignore JSON or quota errors
-    }
+  // IndexedDB has enough room for the complete Quran and is preferred over localStorage.
+  const offlineItem = await getOfflineSurah(surahId, lang).catch(() => null);
+  if (offlineItem && offlineItem.length > 0) {
+    multiLangCache[cacheKey] = offlineItem;
+    return offlineItem;
   }
 
   const langMeta = QURAN_LANGUAGES.find((l) => l.code === lang) || QURAN_LANGUAGES[0];
@@ -61,7 +70,7 @@ export async function fetchVersesByLanguage(
     const timeoutId = setTimeout(() => controller.abort(), 8000);
 
     const res = await fetch(
-      `https://api.quran.com/api/v4/verses/by_chapter/${surahId}?language=${lang}&words=true&translations=${langMeta.translationId}&word_fields=text_uthmani,location,audio_url&per_page=150`,
+      `https://api.quran.com/api/v4/verses/by_chapter/${surahId}?language=${lang}&words=true&translations=${langMeta.translationId}&word_fields=text_uthmani,location,audio_url&per_page=300`,
       { signal: controller.signal }
     );
     clearTimeout(timeoutId);
@@ -117,27 +126,16 @@ export async function fetchVersesByLanguage(
         } as any;
       });
 
+      if (parsedAyahs.length === 0) throw new Error('The Quran API returned no verses.');
       multiLangCache[cacheKey] = parsedAyahs;
-      // Persist in localStorage for permanent offline use
-      if (typeof window !== 'undefined' && window.localStorage) {
-        try {
-          localStorage.setItem(`quran_offline_${cacheKey}`, JSON.stringify(parsedAyahs));
-        } catch (e) {
-          // ignore quota limits
-        }
-      }
+      await saveOfflineSurah(surahId, lang, parsedAyahs);
       return parsedAyahs;
     }
   } catch (err) {
     console.warn(`Could not fetch multi-lang verses for Surah ${surahId} in ${lang}:`, err);
   }
 
-  // Offline fallback to SAMPLE_AYAHS if available
-  if (SAMPLE_AYAHS[surahId]) {
-    return SAMPLE_AYAHS[surahId];
-  }
-
-  // Generic fallback via quranApi
-  const baseAyahs = await import('../services/quranApi').then((m) => m.fetchSurahVerses(surahId, reciterId));
-  return baseAyahs;
+  // Never substitute partial/sample text for a complete Quran chapter.
+  // The reader can now show a clear unavailable state instead of misleading content.
+  throw new Error(`সূরা ${surahId} লোড করা যায়নি। ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।`);
 }
