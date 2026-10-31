@@ -64,6 +64,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
   // Tafsir modal state
   const [tafsirAyah, setTafsirAyah] = useState<QuranAyah | null>(null);
   const [isTafsirOpen, setIsTafsirOpen] = useState(false);
+  const [offlineTafsirRecords, setOfflineTafsirRecords] = useState<OfflineTafsirRecord[]>([]);
 
   // Audio player state
   const [playingAyahKey, setPlayingAyahKey] = useState<string | null>(null);
@@ -146,6 +147,32 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
       isMounted = false;
     };
   }, [surahId, currentLanguage, selectedReciterId]);
+
+  useEffect(() => {
+    let active = true;
+    getOfflineTafsirForSurah(surahId)
+      .then((records) => { if (active) setOfflineTafsirRecords(records); })
+      .catch((error) => console.warn('Could not load offline tafsir:', error));
+    return () => { active = false; };
+  }, [surahId]);
+
+  const getTafsirsForAyah = (verseKey: string): TafsirContent[] => {
+    const bundled = getBundledTafsir(verseKey);
+    const downloaded = offlineTafsirRecords
+      .filter((record) => record.verseKey === verseKey)
+      .map((record) => ({
+        author: record.authorName,
+        nameBn: record.resourceName,
+        nameEn: record.resourceName,
+        language: record.languageCode,
+        resourceId: record.resourceId,
+        text: record.text,
+      }));
+    const unique = new Map<number | string, TafsirContent>();
+    bundled.forEach((item, index) => unique.set(item.resourceId ?? `bundled-${index}-${item.nameBn}`, item));
+    downloaded.forEach((item) => unique.set(item.resourceId ?? item.nameEn ?? item.nameBn, item));
+    return Array.from(unique.values());
+  };
 
   // Handle play/pause of full Ayah audio
   const handlePlayAyah = (ayah: QuranAyah) => {
@@ -489,7 +516,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
             const isPlayingThisAyah = playingAyahKey === ayah.verseKey && isPlaying;
             const isBookmarked = bookmarks.includes(ayah.verseKey);
             const translationText = getAyahTranslation(ayah);
-            const availableTafsirs = getBundledTafsir(ayah.verseKey);
+            const availableTafsirs = getTafsirsForAyah(ayah.verseKey);
 
             return (
               <div
@@ -657,7 +684,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
                   {availableTafsirs.length > 0 && (
                     <section className="mx-4 mb-4 rounded-xl border border-amber-200/80 bg-amber-50/60 p-4 dark:border-amber-900/60 dark:bg-amber-950/20">
                       <div className="mb-2 flex items-center justify-between gap-2">
-                        <h4 className="text-sm font-bold text-amber-900 dark:text-amber-200">{translateUi(uiLanguage, 'tafsir')} · {availableTafsirs[0].nameBn}</h4>
+                        <h4 className="text-sm font-bold text-amber-900 dark:text-amber-200">{translateUi(uiLanguage, 'tafsir')} · {availableTafsirs[0].nameEn || availableTafsirs[0].nameBn}</h4>
                         <button type="button" onClick={() => { setTafsirAyah(ayah); setIsTafsirOpen(true); }} className="text-xs font-bold text-emerald-700 underline dark:text-emerald-300">View</button>
                       </div>
                       <p className="whitespace-pre-line text-sm leading-relaxed text-stone-700 dark:text-stone-200">{availableTafsirs[0].text}</p>
@@ -721,6 +748,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
         surahNameBn={currentSurah.nameEnglish}
         translationText={tafsirAyah ? getAyahTranslation(tafsirAyah) : ''}
         translationLanguage={langMeta.nativeName}
+        preloadedTafsirs={tafsirAyah ? getTafsirsForAyah(tafsirAyah.verseKey) : []}
       />
     </div>
   );
