@@ -1,0 +1,89 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidUser(data) {
+      return data.userId is string &&
+        data.userId == request.auth.uid &&
+        (!('theme' in data) || (data.theme is string && data.theme.size() <= 32)) &&
+        (!('arabicFontSize' in data) || data.arabicFontSize is number) &&
+        (!('banglaFontSize' in data) || data.banglaFontSize is number) &&
+        (!('selectedReciterId' in data) || (data.selectedReciterId is string && data.selectedReciterId.size() <= 64)) &&
+        (!('currentLanguage' in data) || (data.currentLanguage is string && data.currentLanguage.size() <= 16)) &&
+        (!('selectedDistrict' in data) || (data.selectedDistrict is string && data.selectedDistrict.size() <= 64)) &&
+        (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 128));
+    }
+
+    function isValidBookmark(data) {
+      return data.id is string && data.id.size() <= 128 &&
+        data.userId is string && data.userId == request.auth.uid &&
+        data.verseKey is string && data.verseKey.size() <= 32 &&
+        data.surahNameBn is string && data.surahNameBn.size() <= 128 &&
+        data.ayahNumber is number &&
+        data.addedAt is string && data.addedAt.size() <= 64;
+    }
+
+    function isValidDhikr(data) {
+      return data.id is string && data.id.size() <= 128 &&
+        data.userId is string && data.userId == request.auth.uid &&
+        data.dhikrId is number &&
+        data.count is number &&
+        data.target is number &&
+        data.completed is bool &&
+        data.updatedAt is string && data.updatedAt.size() <= 64;
+    }
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Connectivity test collection
+    match /test/{docId} {
+      allow get: if true;
+    }
+
+    // User profile and settings
+    match /users/{userId} {
+      allow get: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn() && request.auth.uid == userId && isValidUser(incoming());
+      allow update: if isSignedIn() && request.auth.uid == userId && isValidUser(incoming()) && incoming().userId == existing().userId;
+      allow delete: if isSignedIn() && request.auth.uid == userId;
+
+      // User bookmarks subcollection
+      match /bookmarks/{bookmarkId} {
+        allow get: if isSignedIn() && request.auth.uid == userId;
+        allow list: if isSignedIn() && request.auth.uid == userId;
+        allow create: if isSignedIn() && request.auth.uid == userId && isValidId(bookmarkId) && isValidBookmark(incoming());
+        allow update: if isSignedIn() && request.auth.uid == userId && isValidId(bookmarkId) && isValidBookmark(incoming()) && incoming().userId == existing().userId && incoming().id == existing().id;
+        allow delete: if isSignedIn() && request.auth.uid == userId;
+      }
+
+      // User dhikr progress subcollection
+      match /dhikr_progress/{dhikrId} {
+        allow get: if isSignedIn() && request.auth.uid == userId;
+        allow list: if isSignedIn() && request.auth.uid == userId;
+        allow create: if isSignedIn() && request.auth.uid == userId && isValidId(dhikrId) && isValidDhikr(incoming());
+        allow update: if isSignedIn() && request.auth.uid == userId && isValidId(dhikrId) && isValidDhikr(incoming()) && incoming().userId == existing().userId && incoming().id == existing().id;
+        allow delete: if isSignedIn() && request.auth.uid == userId;
+      }
+    }
+  }
+}

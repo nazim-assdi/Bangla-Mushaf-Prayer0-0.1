@@ -1,0 +1,143 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile, reading settings, and last read position",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The Firebase Auth UID"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User display name"
+        },
+        "theme": {
+          "type": "string",
+          "enum": ["emerald", "dark", "sepia", "softblue", "eyecare"],
+          "description": "Active UI theme"
+        },
+        "arabicFontSize": {
+          "type": "number",
+          "description": "Arabic font size in pixels"
+        },
+        "banglaFontSize": {
+          "type": "number",
+          "description": "Bangla font size in pixels"
+        },
+        "selectedReciterId": {
+          "type": "string",
+          "description": "Preferred Quran reciter ID"
+        },
+        "currentLanguage": {
+          "type": "string",
+          "description": "Selected Quran translation language code"
+        },
+        "selectedDistrict": {
+          "type": "string",
+          "description": "Selected district for prayer times"
+        },
+        "lastRead": {
+          "type": "object",
+          "description": "Last read ayah in the Quran reader",
+          "properties": {
+            "surahId": { "type": "number" },
+            "ayahNumber": { "type": "number" },
+            "surahNameBn": { "type": "string" }
+          }
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO timestamp of last update"
+        }
+      },
+      "required": ["userId"]
+    },
+    "Bookmark": {
+      "title": "Bookmark",
+      "description": "Saved Quran ayah bookmark",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique bookmark ID"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner user UID"
+        },
+        "verseKey": {
+          "type": "string",
+          "description": "Verse key, e.g. 1:1"
+        },
+        "surahNameBn": {
+          "type": "string",
+          "description": "Surah name in Bengali"
+        },
+        "ayahNumber": {
+          "type": "number",
+          "description": "Ayah number in the Surah"
+        },
+        "addedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO timestamp when bookmarked"
+        }
+      },
+      "required": ["id", "userId", "verseKey", "surahNameBn", "ayahNumber", "addedAt"]
+    },
+    "DhikrProgress": {
+      "title": "DhikrProgress",
+      "description": "User daily tasbih and dhikr counter progress",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Dhikr record ID"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner user UID"
+        },
+        "dhikrId": {
+          "type": "number",
+          "description": "ID of the adhkar item"
+        },
+        "count": {
+          "type": "number",
+          "description": "Current counter value"
+        },
+        "target": {
+          "type": "number",
+          "description": "Target completion count"
+        },
+        "completed": {
+          "type": "boolean",
+          "description": "Whether the target count has been reached"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO timestamp of last counter update"
+        }
+      },
+      "required": ["id", "userId", "dhikrId", "count", "target", "completed", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "#/entities/UserProfile",
+      "description": "User profile and reader settings"
+    },
+    "/users/{userId}/bookmarks/{bookmarkId}": {
+      "schema": "#/entities/Bookmark",
+      "description": "User saved bookmarks"
+    },
+    "/users/{userId}/dhikr_progress/{dhikrId}": {
+      "schema": "#/entities/DhikrProgress",
+      "description": "User dhikr click counts"
+    }
+  }
+}

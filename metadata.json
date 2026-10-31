@@ -1,0 +1,6 @@
+{
+  "name": "Bangla Mushaf & Prayer",
+  "description": "বাংলা শব্দে শব্দে কুরআনুল কারীম, অডিও তিলাওয়াত, বহুভাষিক তাফসীর, নামাজের সময়সূচী ও কিবলা কম্পাস",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

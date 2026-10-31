@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-arabic: 'Scheherazade New', 'Amiri', 'Traditional Arabic', serif;
+    --font-amiri: 'Amiri', serif;
+    --font-bangla: 'Hind Siliguri', 'Noto Serif Bengali', sans-serif;
+    --font-bangla-serif: 'Noto Serif Bengali', serif;
+  }
+
+  body {
+    font-family: var(--font-bangla);
+  }
+}
+
+.font-arabic {
+  font-family: var(--font-arabic);
+}
+
+.font-amiri {
+  font-family: var(--font-amiri);
+}
+
+.font-bangla {
+  font-family: var(--font-bangla);
+}
+
+.font-bangla-serif {
+  font-family: var(--font-bangla-serif);
+}
+
+/* Islamic arabesque pattern overlay */
+.bg-islamic-pattern {
+  background-color: #064e3b;
+  background-image: radial-gradient(#10b981 0.75px, transparent 0.75px), radial-gradient(#059669 0.75px, #064e3b 0.75px);
+  background-size: 30px 30px;
+  background-position: 0 0, 15px 15px;
+}
+
+.bg-mushaf-light {
+  background-color: #faf8f2;
+}
+
+.bg-mushaf-sepia {
+  background-color: #f4ece1;
+}
+
+.bg-mushaf-softblue {
+  background-color: #0f172a;
+}
+
+.bg-mushaf-eyecare {
+  background-color: #16241c;
+}
+
+html.eyecare {
+  color-scheme: dark;
+}
+
+html.softblue {
+  color-scheme: dark;
+}
+
+/* Custom scrollbar for Quran reader */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(16, 185, 129, 0.25);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(16, 185, 129, 0.45);
+}
