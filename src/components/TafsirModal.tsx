@@ -9,6 +9,8 @@ interface TafsirModalProps {
   onClose: () => void;
   ayah: QuranAyah | null;
   surahNameBn: string;
+  translationText?: string;
+  translationLanguage?: string;
 }
 
 export const TafsirModal: React.FC<TafsirModalProps> = ({
@@ -16,6 +18,8 @@ export const TafsirModal: React.FC<TafsirModalProps> = ({
   onClose,
   ayah,
   surahNameBn,
+  translationText,
+  translationLanguage,
 }) => {
   const [tafsirs, setTafsirs] = useState<TafsirContent[]>([]);
   const [loading, setLoading] = useState(false);
@@ -133,8 +137,8 @@ export const TafsirModal: React.FC<TafsirModalProps> = ({
             {ayah.textUthmani}
           </p>
           <p className="font-bangla text-xs sm:text-sm text-stone-700 dark:text-stone-300 leading-relaxed">
-            <span className="font-semibold text-emerald-800 dark:text-emerald-400 mr-1.5">বঙ্গানুবাদ:</span>
-            {ayah.translationBn}
+            <span className="font-semibold text-emerald-800 dark:text-emerald-400 mr-1.5">{translationLanguage || 'Translation'}:</span>
+            {translationText || ayah.translationBn}
           </p>
         </div>
 
