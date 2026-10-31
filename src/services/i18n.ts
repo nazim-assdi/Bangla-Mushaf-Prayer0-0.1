@@ -591,3 +591,8 @@ const messages: Record<UiLanguage, Record<string, string>> = {
 export function translateUi(language: UiLanguage, key: string): string {
   return messages[language]?.[key] ?? messages.en[key] ?? key;
 }
+
+
+export function formatUiNumber(value: number, language: UiLanguage): string {
+  return new Intl.NumberFormat(language).format(value);
+}
