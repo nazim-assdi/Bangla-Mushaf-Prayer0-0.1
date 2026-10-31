@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Navbar, ActiveTab, ThemeMode } from './components/Navbar';
 import { MushafReader } from './components/MushafReader';
 import { SurahDrawer } from './components/SurahDrawer';
@@ -59,12 +59,15 @@ function AppContent() {
   const [bookmarks, setBookmarks] = useState<BookmarkItem[]>(() => {
     try {
       const saved = localStorage.getItem('bangla_mushaf_bookmarks');
-      if (saved) return JSON.parse(saved);
-    } catch (e) {}
-    return [
-      { id: '1_1', verseKey: '1:1', surahNameBn: 'আল-ফাতিহা', ayahNumber: 1, addedAt: new Date().toISOString() },
-      { id: '112_1', verseKey: '112:1', surahNameBn: 'আল-ইখলাস', ayahNumber: 1, addedAt: new Date().toISOString() },
-    ];
+      if (saved) {
+        const parsed: unknown = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed as BookmarkItem[];
+      }
+    } catch (e) {
+      console.warn('Could not restore saved bookmarks:', e);
+    }
+    // Start with an empty list. Demo bookmarks must never appear as real user data.
+    return [];
   });
 
   const [lastRead, setLastRead] = useState<{
@@ -79,15 +82,37 @@ function AppContent() {
     return { surahId: 1, ayahNumber: 1, surahNameBn: 'আল-ফাতিহা' };
   });
 
-  // Real-time Firestore sync and Cloud SQL sync when user is signed in
+  // Real-time Firestore sync and Cloud SQL sync when user is signed in.
+  // On the first snapshot only, migrate existing local bookmarks if the account is empty.
+  const receivedInitialBookmarksSnapshot = useRef(false);
   useEffect(() => {
+    receivedInitialBookmarksSnapshot.current = false;
     if (!user) return;
-    syncUserToCloudSQL(user);
+
+    void syncUserToCloudSQL(user);
     const unsubscribe = subscribeToBookmarks(user.uid, (remoteBookmarks) => {
-      if (remoteBookmarks && remoteBookmarks.length > 0) {
-        setBookmarks(remoteBookmarks);
+      if (!receivedInitialBookmarksSnapshot.current) {
+        receivedInitialBookmarksSnapshot.current = true;
+
+        if (remoteBookmarks.length === 0 && bookmarks.length > 0) {
+          // Preserve a user's existing local bookmarks when linking a new account.
+          bookmarks.forEach((bookmark) => {
+            const id = bookmark.id || bookmark.verseKey.replace(':', '_');
+            void saveBookmarkToFirestore(user.uid, {
+              ...bookmark,
+              id,
+              userId: user.uid,
+            });
+            void addBookmarkToCloudSQL(user, bookmark);
+          });
+          return;
+        }
       }
+
+      // An empty remote list is meaningful: it must clear stale local/demo entries.
+      setBookmarks(remoteBookmarks);
     });
+
     return () => unsubscribe();
   }, [user]);
 
