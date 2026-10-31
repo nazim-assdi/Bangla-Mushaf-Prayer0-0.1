@@ -23,7 +23,7 @@ export const ARABIC_FONTS: ArabicFontOption[] = [
   { id: 'lateef', name: 'Lateef', family: '"Lateef"', style: 'naskh' },
   { id: 'noto-sans', name: 'Noto Sans Arabic', family: '"Noto Sans Arabic"', style: 'sans' },
   { id: 'noto-kufi', name: 'Noto Kufi Arabic', family: '"Noto Kufi Arabic"', style: 'kufi' },
-  { id: 'reem-kufi', name: 'Reem Kufi', family: '"Reem Kufi"', style: 'kufi' },
+  { id: 'reem-kufi', name: 'Reem Kufi', family: '"Reem Kufi Variable"', style: 'kufi' },
   { id: 'cairo', name: 'Cairo', family: '"Cairo"', style: 'sans' },
   { id: 'tajawal', name: 'Tajawal', family: '"Tajawal"', style: 'sans' },
   { id: 'aref-ruqaa', name: 'Aref Ruqaa', family: '"Aref Ruqaa"', style: 'ruqah' },
