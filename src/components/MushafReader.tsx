@@ -21,7 +21,6 @@ import { toBanglaNumber, toArabicNumber } from '../utils/banglaNumbers';
 import { TafsirModal } from './TafsirModal';
 import { OfflineQuranDownload } from './OfflineQuranDownload';
 import { AyahStudyTools } from './AyahStudyTools';
-import { getOfflineNoteUser } from '../services/offlineNotesAuth';
 
 export type ViewMode = 'wbw' | 'verse' | 'mushaf';
 
@@ -72,14 +71,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
   const [currentRepeat, setCurrentRepeat] = useState<number>(1);
   const [copiedAyahKey, setCopiedAyahKey] = useState<string | null>(null);
   const [studyRecords, setStudyRecords] = useState<Record<string, { read: boolean; note: string }>>({});
-  const [noteAccount, setNoteAccount] = useState<string>(() => getOfflineNoteUser() || 'guest');
-  const studyStorageKey = `mushaf_ayah_study_v1:${noteAccount}`;
-
-  useEffect(() => {
-    const refreshAccount = () => setNoteAccount(getOfflineNoteUser() || 'guest');
-    window.addEventListener('mushaf-offline-note-account-change', refreshAccount);
-    return () => window.removeEventListener('mushaf-offline-note-account-change', refreshAccount);
-  }, []);
+  const studyStorageKey = 'mushaf_ayah_study_v1';
 
   useEffect(() => {
     try {
