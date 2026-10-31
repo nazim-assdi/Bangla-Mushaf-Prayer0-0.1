@@ -24,7 +24,7 @@ import {
   CALCULATION_METHODS,
 } from '../utils/prayerTimes';
 import { toBanglaNumber, formatDurationToBangla } from '../utils/banglaNumbers';
-import { schedulePrayerAlerts, cancelPrayerAlerts } from '../services/prayerNotifications';
+import { schedulePrayerAlerts, cancelPrayerAlerts, refreshPrayerAlertsIfPermitted } from '../services/prayerNotifications';
 
 export const PrayerTimesView: React.FC = () => {
   const [selectedDistrictId, setSelectedDistrictId] = useState<string>('dhaka');
@@ -82,6 +82,22 @@ export const PrayerTimesView: React.FC = () => {
   const activeLng = customCoords ? customCoords.lng : currentDistrict.lng;
   const locationLabel = customCoords ? customCoords.nameBn : `${currentDistrict.nameBn} জেলা (${currentDistrict.divisionBn} বিভাগ)`;
 
+  // Keep already-authorized background alerts in sync with saved preferences,
+  // GPS changes and calculation settings. This never prompts unexpectedly.
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void refreshPrayerAlertsIfPermitted({
+        prayerAlerts,
+        makruhAlerts,
+        latitude: activeLat,
+        longitude: activeLng,
+        calculationMethod,
+        asrJuristic,
+      }).catch((error) => console.warn('Could not refresh prayer alerts:', error));
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [prayerAlerts, makruhAlerts, activeLat, activeLng, calculationMethod, asrJuristic]);
+
   const timezoneOffsetHours = -currentTime.getTimezoneOffset() / 60;
   const timezoneLabel = 'UTC' + (timezoneOffsetHours >= 0 ? '+' : '') + timezoneOffsetHours;
 
@@ -101,6 +117,7 @@ export const PrayerTimesView: React.FC = () => {
 
   // Find next waqt and countdown
   const nextWaqt = waqts.find((w) => w.isNext) || waqts[0];
+  const currentWaqt = waqts.find((w) => w.isCurrent);
   const minutesUntilNext = Math.max(0, Math.round((nextWaqt.time.getTime() - currentTime.getTime()) / 60000));
 
   // Start continuous GPS updates only after the user grants permission.
@@ -245,6 +262,9 @@ export const PrayerTimesView: React.FC = () => {
             </h1>
             <p className="text-xl sm:text-2xl text-emerald-100 font-medium">
               শুরুর সময়: {nextWaqt.timeFormattedBn}
+            </p>
+            <p className="mt-2 text-sm text-emerald-100/80">
+              {currentWaqt ? `বর্তমান ওয়াক্ত: ${currentWaqt.nameBn}` : 'বর্তমানে দুই ওয়াক্তের মধ্যবর্তী সময়'}
             </p>
 
             <div className="mt-4 flex items-center gap-2 bg-emerald-950/60 px-4 py-2 rounded-xl border border-emerald-700/50 w-fit">
@@ -393,6 +413,37 @@ export const PrayerTimesView: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Solar caution times: informational markers, not a personal fatwa. */}
+      <section className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 dark:border-amber-900/60 dark:bg-amber-950/20">
+        <div className="mb-3 flex items-center gap-2">
+          <AlertCircle className="h-5 w-5 text-amber-700 dark:text-amber-300" />
+          <div>
+            <h3 className="font-bold text-stone-900 dark:text-white">মাকরুহ/নিষিদ্ধ সময়ের সতর্কতা</h3>
+            <p className="text-[11px] text-stone-600 dark:text-stone-400">সূর্যের অবস্থানভিত্তিক গুরুত্বপূর্ণ সময়</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <div className="rounded-xl border border-amber-200/80 bg-white p-3 dark:border-amber-900/50 dark:bg-stone-900">
+            <p className="text-xs text-stone-500 dark:text-stone-400">সূর্যোদয়</p>
+            <p className="mt-1 text-lg font-bold text-stone-900 dark:text-white">{formatTimeBn(prayerTimes.sunrise)}</p>
+            <p className="text-[10px] text-amber-700 dark:text-amber-300">সূর্য ওঠার সময় সতর্কতা</p>
+          </div>
+          <div className="rounded-xl border border-amber-200/80 bg-white p-3 dark:border-amber-900/50 dark:bg-stone-900">
+            <p className="text-xs text-stone-500 dark:text-stone-400">মধ্যাহ্ন / যাওয়াল</p>
+            <p className="mt-1 text-lg font-bold text-stone-900 dark:text-white">{formatTimeBn(prayerTimes.dhuhr)}</p>
+            <p className="text-[10px] text-amber-700 dark:text-amber-300">স্থানীয় সময়সূচি মিলিয়ে নিন</p>
+          </div>
+          <div className="rounded-xl border border-amber-200/80 bg-white p-3 dark:border-amber-900/50 dark:bg-stone-900">
+            <p className="text-xs text-stone-500 dark:text-stone-400">সূর্যাস্ত</p>
+            <p className="mt-1 text-lg font-bold text-stone-900 dark:text-white">{formatTimeBn(prayerTimes.sunset)}</p>
+            <p className="text-[10px] text-amber-700 dark:text-amber-300">সূর্য ডোবার সময় সতর্কতা</p>
+          </div>
+        </div>
+        <p className="mt-3 text-[11px] leading-relaxed text-stone-600 dark:text-stone-400">
+          এগুলো জ্যোতির্বৈজ্ঞানিক সতর্ক সময়; নিষিদ্ধ সময়ের সুনির্দিষ্ট শুরু/শেষ মাযহাব ও স্থানীয় নির্ভরযোগ্য সময়সূচি অনুযায়ী যাচাই করুন। অ্যাপের হিসাবকে একমাত্র ধর্মীয় সিদ্ধান্তের ভিত্তি করবেন না।
+        </p>
+      </section>
 
       {/* Calculation Settings Options */}
       <div className="bg-white dark:bg-stone-900 rounded-2xl p-4 border border-stone-200 dark:border-stone-800 flex flex-wrap items-center justify-between gap-3 text-xs">
