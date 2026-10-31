@@ -13,6 +13,7 @@ import { BookmarksView } from './components/BookmarksView';
 import { SettingsModal } from './components/SettingsModal';
 import { DailyDhikrView } from './components/DailyDhikrView';
 import { GlobalSearchModal } from './components/GlobalSearchModal';
+import { SideMenu } from './components/SideMenu';
 import { SURAH_LIST } from './data/quranMetadata';
 import { QuranLanguage } from './services/multiLangQuran';
 import { OfflineIndicator } from './components/OfflineIndicator';
@@ -44,6 +45,7 @@ function AppContent() {
   const [currentSurahId, setCurrentSurahId] = useState<number>(1);
   const [isSurahDrawerOpen, setIsSurahDrawerOpen] = useState<boolean>(false);
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState<boolean>(false);
+  const [isSideMenuOpen, setIsSideMenuOpen] = useState<boolean>(false);
 
   // Settings & display state
   const [theme, setTheme] = useState<ThemeMode>('emerald');
@@ -256,6 +258,7 @@ function AppContent() {
         setActiveTab={setActiveTab}
         onOpenSurahSearch={() => setIsSurahDrawerOpen(true)}
         onOpenGlobalSearch={() => setIsGlobalSearchOpen(true)}
+        onOpenMenu={() => setIsSideMenuOpen(true)}
         currentSurahNameBn={currentSurah.nameBengali}
         currentSurahId={currentSurahId}
         theme={theme}
@@ -317,6 +320,19 @@ function AppContent() {
           />
         )}
       </main>
+
+      {/* Main side menu */}
+      <SideMenu
+        isOpen={isSideMenuOpen}
+        onClose={() => setIsSideMenuOpen(false)}
+        onSearch={() => { setIsSideMenuOpen(false); setIsGlobalSearchOpen(true); }}
+        onSettings={() => { setIsSideMenuOpen(false); setActiveTab('settings'); }}
+        onPrayer={() => { setIsSideMenuOpen(false); setActiveTab('prayer'); }}
+        onQibla={() => { setIsSideMenuOpen(false); setActiveTab('qibla'); }}
+        onDhikr={() => { setIsSideMenuOpen(false); setActiveTab('dhikr'); }}
+        onBookmarks={() => { setIsSideMenuOpen(false); setActiveTab('bookmarks'); }}
+        onGoToAyah={() => { setIsSideMenuOpen(false); setIsSurahDrawerOpen(true); }}
+      />
 
       {/* Surah & Juz Selection Drawer Modal */}
       <SurahDrawer
