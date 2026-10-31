@@ -51,7 +51,19 @@ jobs:
         run: npx cap add android
 
       - name: Add exact alarm permission for Android
-        run: sed -i 's#<manifest#<manifest\\n    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />#' android/app/src/main/AndroidManifest.xml
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          manifest = Path("android/app/src/main/AndroidManifest.xml")
+          source = manifest.read_text()
+          permission = '    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />'
+          if "android.permission.SCHEDULE_EXACT_ALARM" not in source:
+              opening_tag_end = source.find(">", source.find("<manifest"))
+              if opening_tag_end < 0:
+                  raise SystemExit("Android manifest opening tag was not found")
+              source = source[:opening_tag_end + 1] + "\\n" + permission + source[opening_tag_end + 1:]
+              manifest.write_text(source)
+          PY
 
       - name: Copy web build into Android project
         run: npx cap sync android
