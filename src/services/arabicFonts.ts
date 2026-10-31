@@ -17,12 +17,12 @@ export interface ArabicFontOption {
 }
 
 export const ARABIC_FONTS: ArabicFontOption[] = [
-  { id: 'noto-naskh', name: 'Noto Naskh Arabic', family: '"Noto Naskh Arabic"', style: 'naskh' },
+  { id: 'noto-naskh', name: 'Noto Naskh Arabic', family: '"Noto Naskh Arabic Variable"', style: 'naskh' },
   { id: 'amiri', name: 'Amiri', family: '"Amiri"', style: 'naskh' },
   { id: 'scheherazade', name: 'Scheherazade New', family: '"Scheherazade New"', style: 'naskh' },
   { id: 'lateef', name: 'Lateef', family: '"Lateef"', style: 'naskh' },
-  { id: 'noto-sans', name: 'Noto Sans Arabic', family: '"Noto Sans Arabic"', style: 'sans' },
-  { id: 'noto-kufi', name: 'Noto Kufi Arabic', family: '"Noto Kufi Arabic"', style: 'kufi' },
+  { id: 'noto-sans', name: 'Noto Sans Arabic', family: '"Noto Sans Arabic Variable"', style: 'sans' },
+  { id: 'noto-kufi', name: 'Noto Kufi Arabic', family: '"Noto Kufi Arabic Variable"', style: 'kufi' },
   { id: 'reem-kufi', name: 'Reem Kufi', family: '"Reem Kufi Variable"', style: 'kufi' },
   { id: 'cairo', name: 'Cairo', family: '"Cairo"', style: 'sans' },
   { id: 'tajawal', name: 'Tajawal', family: '"Tajawal"', style: 'sans' },
