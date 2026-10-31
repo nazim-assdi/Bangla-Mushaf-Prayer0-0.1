@@ -3,7 +3,7 @@ import { Compass, MapPin, RefreshCw, CheckCircle2, AlertTriangle, Info, Smartpho
 import { BANGLADESH_DISTRICTS } from '../utils/prayerTimes';
 import { calculateQiblaDirection, calculateDistanceToKaaba, getHeadingDeviation } from '../utils/qibla';
 import { toBanglaNumber } from '../utils/banglaNumbers';
-import { UiLanguage, translateUi } from '../services/i18n';
+import { UiLanguage, formatUiNumber, translateUi } from '../services/i18n';
 
 type Coordinates = { lat: number; lng: number; nameBn: string; accuracy?: number };
 
@@ -21,7 +21,7 @@ export const QiblaCompassView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangu
   );
   const activeLat = customCoords?.lat ?? currentDistrict.lat;
   const activeLng = customCoords?.lng ?? currentDistrict.lng;
-  const locationLabel = customCoords?.nameBn ?? `${currentDistrict.nameBn} জেলা`;
+  const locationLabel = customCoords?.nameBn ?? (uiLanguage === 'bn' ? `${currentDistrict.nameBn} জেলা` : `${currentDistrict.nameEn} · ${translateUi(uiLanguage, 'districtFallback')}`);
   const qiblaBearing = useMemo(() => calculateQiblaDirection(activeLat, activeLng), [activeLat, activeLng]);
   const distanceKm = useMemo(() => calculateDistanceToKaaba(activeLat, activeLng), [activeLat, activeLng]);
   const deviation = deviceHeading === null ? null : getHeadingDeviation(deviceHeading, qiblaBearing);
@@ -89,7 +89,7 @@ export const QiblaCompassView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangu
           lat: position.coords.latitude,
           lng: position.coords.longitude,
           accuracy: position.coords.accuracy,
-          nameBn: 'Current GPS location',
+          nameBn: uiLanguage === 'bn' ? 'বর্তমান GPS অবস্থান' : 'Current GPS location',
         });
         setGeoLoading(false);
       },
@@ -118,7 +118,7 @@ export const QiblaCompassView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangu
           <div className="min-w-0">
             <h2 className="font-bold text-stone-900 dark:text-white">{locationLabel} · {translateUi(uiLanguage, 'qiblaDirection')}</h2>
             <p className="text-xs text-stone-500 dark:text-stone-400">
-              উত্তর থেকে ঘড়ির কাঁটার দিকে {toBanglaNumber(qiblaBearing)}° · কাবা পর্যন্ত {toBanglaNumber(distanceKm.toLocaleString())} কিমি
+              উত্তর থেকে ঘড়ির কাঁটার দিকে {formatUiNumber(qiblaBearing, uiLanguage)}° · কাবা পর্যন্ত {toBanglaNumber(distanceKm.toLocaleString())} কিমি
             </p>
             {customCoords?.accuracy && <p className="text-[11px] text-stone-500">{translateUi(uiLanguage, 'gpsAccuracy')}: {Math.round(customCoords.accuracy)} মিটার</p>}
           </div>
