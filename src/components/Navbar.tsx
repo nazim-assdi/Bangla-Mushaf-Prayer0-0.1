@@ -106,31 +106,9 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="hidden sm:inline font-bangla">নামাজের সময়</span>
             </button>
 
-            <button
-              onClick={() => setActiveTab('qibla')}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
-                activeTab === 'qibla'
-                  ? 'bg-amber-400 text-emerald-950 font-bold shadow-sm'
-                  : 'text-emerald-100 hover:bg-emerald-800/60'
-              }`}
-              aria-label="কিবলা কম্পাস"
-            >
-              <Compass className="w-4 h-4" />
-              <span className="hidden sm:inline font-bangla">কিবলা</span>
-            </button>
+            
 
-            <button
-              onClick={() => setActiveTab('dhikr')}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
-                activeTab === 'dhikr'
-                  ? 'bg-amber-400 text-emerald-950 font-bold shadow-sm'
-                  : 'text-emerald-100 hover:bg-emerald-800/60'
-              }`}
-              aria-label="দৈনিক যিকির ও তাসবীহ"
-            >
-              <Sparkles className="w-4 h-4 text-amber-300" />
-              <span className="hidden sm:inline font-bangla">যিকির</span>
-            </button>
+            
 
             <button
               onClick={() => setActiveTab('bookmarks')}
