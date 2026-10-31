@@ -239,7 +239,6 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
     if (currentLanguage === 'hi') return ayah.translationHi || ayah.translationBn;
     if (currentLanguage === 'ur') return ayah.translationUr || ayah.translationBn;
     if (currentLanguage === 'tr') return ayah.translationTr || ayah.translationBn;
-    if (currentLanguage === 'ar') return ayah.tafsirAr || ayah.textUthmani;
     return ayah.translationBn;
   };
 
@@ -249,7 +248,6 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
     if (currentLanguage === 'hi') return word.translationHi || word.translationEn || word.translationBn;
     if (currentLanguage === 'ur') return word.translationUr || word.translationEn || word.translationBn;
     if (currentLanguage === 'tr') return word.translationTr || word.translationEn || word.translationBn;
-    if (currentLanguage === 'ar') return word.translationBn || word.translationEn;
     return word.translationBn || word.translationEn;
   };
 
