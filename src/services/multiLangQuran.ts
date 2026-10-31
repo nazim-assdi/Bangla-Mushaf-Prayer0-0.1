@@ -154,7 +154,7 @@ export async function fetchVersesByLanguage(
       let response: Response;
       try {
         response = await fetch(
-          `https://api.quran.com/api/v4/verses/by_chapter/${surahId}?language=${lang}&words=true&translations=${langMeta.translationId}&word_fields=text_uthmani,location,audio_url&per_page=50&page=${page}`,
+          `https://api.quran.com/api/v4/verses/by_chapter/${surahId}?language=${lang}&words=true&translations=${langMeta.translationId}&word_fields=text_uthmani,translation,transliteration,location,audio_url&per_page=50&page=${page}`,
           { signal: controller.signal }
         );
       } finally {
