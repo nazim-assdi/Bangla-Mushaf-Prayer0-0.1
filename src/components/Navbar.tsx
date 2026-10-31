@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Clock, Compass, Bookmark, Settings, Search, Moon, Sun, Sparkles } from 'lucide-react';
+import { BookOpen, Clock, Compass, Bookmark, Settings, Search, Moon, Sun, Sparkles, MoreVertical } from 'lucide-react';
 import { toBanglaNumber } from '../utils/banglaNumbers';
 import { PWAInstallButton } from './PWAInstallButton';
 import { AuthButton } from './AuthButton';
@@ -12,6 +12,7 @@ interface NavbarProps {
   setActiveTab: (tab: ActiveTab) => void;
   onOpenSurahSearch: () => void;
   onOpenGlobalSearch: () => void;
+  onOpenMenu: () => void;
   currentSurahNameBn: string;
   currentSurahId: number;
   theme: ThemeMode;
@@ -23,6 +24,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   setActiveTab,
   onOpenSurahSearch,
   onOpenGlobalSearch,
+  onOpenMenu,
   currentSurahNameBn,
   currentSurahId,
   theme,
@@ -205,6 +207,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Cloud Auth / Sync */}
             <AuthButton />
           </nav>
+
+          <button onClick={onOpenMenu} className="p-2 rounded-xl bg-amber-400 text-emerald-950 hover:bg-amber-300 shadow-sm" aria-label="আরও অপশন" title="আরও অপশন"><MoreVertical className="w-5 h-5" /></button>
 
           {/* Mobile Quick Action Buttons (PWA Install, Auth, Search & Theme) */}
           <div className="flex sm:hidden items-center gap-1">
