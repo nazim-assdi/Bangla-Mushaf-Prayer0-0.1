@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Clock, Compass, Bookmark, Settings, Search, Moon, Sun, Sparkles, MoreVertical } from 'lucide-react';
+import { BookOpen, Clock, Compass, Bookmark, Settings, Search, MoreVertical } from 'lucide-react';
 import { toBanglaNumber } from '../utils/banglaNumbers';
 import { PWAInstallButton } from './PWAInstallButton';
 import { AuthButton } from './AuthButton';
@@ -15,8 +15,6 @@ interface NavbarProps {
   onOpenMenu: () => void;
   currentSurahNameBn: string;
   currentSurahId: number;
-  theme: ThemeMode;
-  setTheme: (t: ThemeMode) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -27,28 +25,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenMenu,
   currentSurahNameBn,
   currentSurahId,
-  theme,
-  setTheme,
 }) => {
-  const toggleTheme = () => {
-    if (theme === 'emerald') setTheme('dark');
-    else if (theme === 'dark') setTheme('sepia');
-    else if (theme === 'sepia') setTheme('softblue');
-    else if (theme === 'softblue') setTheme('eyecare');
-    else setTheme('emerald');
-  };
-
-  const themeLabel =
-    theme === 'emerald'
-      ? 'সবুজ মোড'
-      : theme === 'dark'
-      ? 'নাইট মোড'
-      : theme === 'sepia'
-      ? 'সেপিয়া মোড'
-      : theme === 'softblue'
-      ? 'নরম নীল (Soft Blue)'
-      : 'আইকেয়ার (Eye Care)';
-
   return (
     <header className="sticky top-0 z-40 bg-emerald-900/95 dark:bg-stone-900/95 backdrop-blur-md text-white border-b border-emerald-800/60 dark:border-stone-800 shadow-md transition-colors">
       <div className="max-w-7xl mx-auto px-3 sm:px-6">
@@ -181,26 +158,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Settings className="w-4 h-4" />
             </button>
 
-            {/* Quick theme cycle button */}
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-lg text-amber-200 hover:bg-emerald-800/60 transition-colors ml-0.5"
-              aria-label={`থিম পরিবর্তন করুন (বর্তমান: ${themeLabel})`}
-              title={`থিম পরিবর্তন (${themeLabel})`}
-            >
-              {theme === 'emerald' ? (
-                <Sun className="w-4 h-4 text-amber-300" />
-              ) : theme === 'dark' ? (
-                <Moon className="w-4 h-4 text-cyan-300" />
-              ) : theme === 'sepia' ? (
-                <span className="text-[11px] font-bold font-bangla px-1.5 py-0.5 bg-amber-800/80 text-amber-200 rounded">সেপিয়া</span>
-              ) : theme === 'softblue' ? (
-                <span className="text-[11px] font-bold font-bangla px-1.5 py-0.5 bg-cyan-900/80 text-cyan-200 rounded">নরম নীল</span>
-              ) : (
-                <span className="text-[11px] font-bold font-bangla px-1.5 py-0.5 bg-[#1b2a22] text-[#a7f3d0] border border-emerald-500/50 rounded">আইকেয়ার</span>
-              )}
-            </button>
-
             {/* PWA Install Action */}
             <PWAInstallButton />
 
@@ -223,20 +180,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Search className="w-4 h-4" />
             </button>
 
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-lg bg-emerald-800/80 text-amber-200 hover:bg-emerald-700 transition-colors"
-              aria-label={`থিম পরিবর্তন (${themeLabel})`}
-              title={`থিম: ${themeLabel}`}
-            >
-              {theme === 'emerald' ? (
-                <Sun className="w-4 h-4 text-amber-300" />
-              ) : theme === 'dark' ? (
-                <Moon className="w-4 h-4 text-cyan-300" />
-              ) : (
-                <Sparkles className="w-4 h-4 text-emerald-300" />
-              )}
-            </button>
+
           </div>
         </div>
       </div>
