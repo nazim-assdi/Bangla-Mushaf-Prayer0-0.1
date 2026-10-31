@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Bookmark, BookOpen, Heart, Sparkles, ChevronRight, Share2, Trash2 } from 'lucide-react';
-import { toBanglaNumber, toArabicNumber } from '../utils/banglaNumbers';
+import { toArabicNumber } from '../utils/banglaNumbers';
 import { SURAH_LIST } from '../data/quranMetadata';
 import { UiLanguage, formatUiNumber, translateUi } from '../services/i18n';
 
@@ -117,7 +117,7 @@ export const BookmarksView: React.FC<BookmarksViewProps> = ({
           }`}
         >
           <Bookmark className="w-4 h-4" />
-          <span>বুকমার্ক করা আয়াত ({formatUiNumber(bookmarks.length)})</span>
+          <span>বুকমার্ক করা আয়াত ({formatUiNumber(bookmarks.length, uiLanguage)})</span>
         </button>
 
         <button
@@ -218,7 +218,7 @@ export const BookmarksView: React.FC<BookmarksViewProps> = ({
               className="p-5 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 shadow-xs space-y-3"
             >
               <div className="flex items-center justify-between text-xs text-emerald-800 dark:text-emerald-400 font-semibold border-b border-stone-100 dark:border-stone-800 pb-2">
-                <span>দোয়া নম্বর: {formatUiNumber(dua.id)}</span>
+                <span>দোয়া নম্বর: {formatUiNumber(dua.id, uiLanguage)}</span>
                 <span className="text-stone-500 dark:text-stone-400">{dua.reference}</span>
               </div>
 
@@ -256,7 +256,7 @@ export const BookmarksView: React.FC<BookmarksViewProps> = ({
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 text-xs font-bold">
-                      সূরা {formatUiNumber(rec.id)}
+                      সূরা {formatUiNumber(rec.id, uiLanguage)}
                     </span>
                     <span className="font-arabic text-xl text-emerald-800 dark:text-emerald-300">
                       {surah.nameArabic}
@@ -267,7 +267,7 @@ export const BookmarksView: React.FC<BookmarksViewProps> = ({
                     {uiLanguage === 'bn' ? rec.nameBn : surah.nameEnglish}
                   </h4>
                   <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
-                    {surah.bengaliMeaning} • {formatUiNumber(surah.versesCount)} আয়াত
+                    {surah.bengaliMeaning} • {formatUiNumber(surah.versesCount, uiLanguage)} আয়াত
                   </p>
                 </div>
 
