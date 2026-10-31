@@ -1,5 +1,5 @@
 /**
- * Multi-language Quran Service supporting Bengali, English, Arabic, Hindi, Urdu, and Turkish translations and tafsirs
+ * Multi-language Quran Service supporting verified Bengali, English, Hindi, Urdu, and Turkish translation resources
  */
 import { QuranAyah, QuranWord, TafsirContent } from '../data/quranSampleData';
 import { SURAH_LIST } from '../data/quranMetadata';
@@ -7,7 +7,7 @@ import { padNumber, getAyahAudioUrl } from './quranApi';
 import { toArabicNumber } from '../utils/banglaNumbers';
 import { getOfflineSurah, saveOfflineSurah } from './offlineQuranStore';
 
-export type QuranLanguage = 'bn' | 'en' | 'ar' | 'hi' | 'ur' | 'tr';
+export type QuranLanguage = 'bn' | 'en' | 'hi' | 'ur' | 'tr';
 
 export interface LanguageMeta {
   code: QuranLanguage;
@@ -19,7 +19,6 @@ export interface LanguageMeta {
 export const QURAN_LANGUAGES: LanguageMeta[] = [
   { code: 'bn', name: 'Bengali', nativeName: 'বাংলা', translationId: 163 },
   { code: 'en', name: 'English', nativeName: 'English', translationId: 131 }, // Sahih International
-  { code: 'ar', name: 'Arabic', nativeName: 'العربية (التفسير الميسر)', translationId: 16 }, // Tafsir Al-Muyassar
   { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', translationId: 122 }, // Suhel Farooq Khan
   { code: 'ur', name: 'Urdu', nativeName: 'اردو', translationId: 97 }, // Jalandhry
   { code: 'tr', name: 'Turkish', nativeName: 'Türkçe', translationId: 77 }, // Diyanet İşleri
@@ -133,7 +132,6 @@ export async function fetchVersesByLanguage(
           ...(lang === 'hi' ? { translationHi: translatedText } : {}),
           ...(lang === 'ur' ? { translationUr: translatedText } : {}),
           ...(lang === 'tr' ? { translationTr: translatedText } : {}),
-          ...(lang === 'ar' ? { tafsirAr: translatedText } : {}),
         } as any;
       });
 
