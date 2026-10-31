@@ -55,6 +55,7 @@ function AppContent() {
   const [theme, setTheme] = useState<ThemeMode>('emerald');
   const [arabicFontSize, setArabicFontSize] = useState<number>(28);
   const [arabicFontId, setArabicFontId] = useState<string>(() => localStorage.getItem('mushaf_arabic_font') || 'noto-naskh');
+  const [mushafPageStyle, setMushafPageStyle] = useState<string>(() => localStorage.getItem('mushaf_page_style') || 'classic');
   const [banglaFontSize, setBanglaFontSize] = useState<number>(15);
   const [showTransliteration, setShowTransliteration] = useState<boolean>(() => localStorage.getItem('mushaf_ui_language') === 'bn');
   const [showTranslation, setShowTranslation] = useState<boolean>(true);
@@ -190,6 +191,11 @@ function AppContent() {
     document.documentElement.style.setProperty('--font-arabic', `${font.family}, serif`);
     localStorage.setItem('mushaf_arabic_font', font.id);
   }, [arabicFontId]);
+
+  useEffect(() => {
+    document.documentElement.dataset.mushafStyle = mushafPageStyle;
+    localStorage.setItem('mushaf_page_style', mushafPageStyle);
+  }, [mushafPageStyle]);
 
   // Handle theme classes on html
   useEffect(() => {
@@ -354,6 +360,8 @@ function AppContent() {
             setArabicFontSize={setArabicFontSize}
             arabicFontId={arabicFontId}
             setArabicFontId={setArabicFontId}
+            mushafPageStyle={mushafPageStyle}
+            setMushafPageStyle={setMushafPageStyle}
             banglaFontSize={banglaFontSize}
             setBanglaFontSize={setBanglaFontSize}
             showTransliteration={showTransliteration}
