@@ -136,7 +136,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             }`}
           >
             <div className="w-6 h-6 rounded-full bg-emerald-700 border border-emerald-500 shadow-xs" />
-            <span className="text-xs">সবুজ মুসহাফ</span>
+            <span className="text-xs">{translateUi(uiLanguage, 'greenMushaf')}</span>
           </button>
 
           <button
@@ -148,7 +148,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             }`}
           >
             <div className="w-6 h-6 rounded-full bg-stone-950 border border-stone-700 shadow-xs" />
-            <span className="text-xs">নাইট মোড</span>
+            <span className="text-xs">{translateUi(uiLanguage, 'nightMode')}</span>
           </button>
 
           <button
@@ -160,7 +160,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             }`}
           >
             <div className="w-6 h-6 rounded-full bg-[#f4ece1] border border-amber-300 shadow-xs" />
-            <span className="text-xs">সেপিয়া পাতা</span>
+            <span className="text-xs">{translateUi(uiLanguage, 'sepiaPage')}</span>
           </button>
 
           <button
@@ -172,7 +172,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             }`}
           >
             <div className="w-6 h-6 rounded-full bg-slate-900 border border-cyan-500 shadow-xs" />
-            <span className="text-xs">নরম নীল (Soft Blue)</span>
+            <span className="text-xs">{translateUi(uiLanguage, 'softBlue')}</span>
           </button>
 
           <button
@@ -184,7 +184,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             }`}
           >
             <div className="w-6 h-6 rounded-full bg-[#1b2a22] border border-emerald-400 shadow-xs" />
-            <span className="text-xs">আইকেয়ার (Eye Care)</span>
+            <span className="text-xs">{translateUi(uiLanguage, 'eyeCare')}</span>
           </button>
         </div>
       </div>
@@ -193,7 +193,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       <div className="bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200 dark:border-stone-800 space-y-5">
         <label className="text-sm font-bold text-stone-900 dark:text-white flex items-center gap-2">
           <Type className="w-4 h-4 text-emerald-600" />
-          <span>ফন্ট সাইজ পরিবর্তন</span>
+          <span>{translateUi(uiLanguage, 'fontSizeSettings')}</span>
         </label>
 
         {/* Arabic Font Slider */}
@@ -239,7 +239,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           />
           <div className="p-3 bg-stone-50 dark:bg-stone-800 rounded-xl text-center">
             <span className="font-bangla text-stone-800 dark:text-stone-200" style={{ fontSize: `${banglaFontSize}px` }}>
-              সমস্ত প্রশংসা বিশ্বজগতের প্রতিপালক আল্লাহরই জন্য।
+              {translateUi(uiLanguage, 'translationPreview')}
             </span>
           </div>
         </div>
@@ -280,7 +280,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       <div className="bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200 dark:border-stone-800 space-y-4">
         <label className="text-sm font-bold text-stone-900 dark:text-white flex items-center gap-2">
           <Volume2 className="w-4 h-4 text-emerald-600" />
-          <span>পছন্দের ক্বারী (তেলাওয়াতকারী)</span>
+          <span>{translateUi(uiLanguage, 'reciter')}</span>
         </label>
 
         <div className="space-y-2">
@@ -298,7 +298,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               >
                 <div>
                   <h4 className="font-bold text-stone-900 dark:text-white text-sm">
-                    {r.nameBn}
+                    {uiLanguage === 'bn' ? r.nameBn : r.nameEn}
                   </h4>
                   <p className="text-xs text-stone-500 dark:text-stone-400">
                     {r.nameEn} • {r.subtext}
@@ -319,7 +319,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       <div className="bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200 dark:border-stone-800 space-y-3">
         <label className="text-sm font-bold text-stone-900 dark:text-white flex items-center gap-2">
           <Eye className="w-4 h-4 text-emerald-600" />
-          <span>দৃশ্যমান অপশনসমূহ</span>
+          <span>{translateUi(uiLanguage, 'visibilityOptions')}</span>
         </label>
 
         <div className="flex items-center justify-between p-3 rounded-xl bg-stone-50 dark:bg-stone-800">
@@ -371,8 +371,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       <div className="rounded-2xl border border-amber-200/70 bg-gradient-to-br from-white via-amber-50/70 to-emerald-50/80 p-5 shadow-sm dark:border-emerald-900 dark:from-stone-900 dark:via-stone-900 dark:to-emerald-950/50 space-y-2">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-sm font-bold text-stone-900 dark:text-white">স্ক্রিন সবসময় চালু রাখুন</p>
-            <p className="mt-1 text-xs text-stone-600 dark:text-stone-400">চালু করলে কুরআন পড়ার সময় স্ক্রিন ঘুমাবে না। বন্ধ করলে স্বাভাবিক নিয়মে স্ক্রিন বন্ধ হবে।</p>
+            <p className="text-sm font-bold text-stone-900 dark:text-white">{translateUi(uiLanguage, 'screenAwake')}</p>
+            <p className="mt-1 text-xs text-stone-600 dark:text-stone-400">{translateUi(uiLanguage, 'screenAwakeDescription')}</p>
           </div>
           <button type="button" role="switch" aria-checked={keepScreenAwake} onClick={() => setKeepScreenAwake((value) => !value)} className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${keepScreenAwake ? 'bg-emerald-600' : 'bg-stone-300 dark:bg-stone-700'}`}>
             <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-transform ${keepScreenAwake ? 'translate-x-6' : 'translate-x-1'}`} />
