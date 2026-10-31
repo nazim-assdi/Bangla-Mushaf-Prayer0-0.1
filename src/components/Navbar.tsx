@@ -5,7 +5,7 @@ import { toBanglaNumber } from '../utils/banglaNumbers';
 import { PWAInstallButton } from './PWAInstallButton';
 import { AuthButton } from './AuthButton';
 
-export type ActiveTab = 'mushaf' | 'prayer' | 'qibla' | 'dhikr' | 'bookmarks' | 'settings';
+export type ActiveTab = 'mushaf' | 'prayer' | 'qibla' | 'dhikr' | 'bookmarks' | 'settings' | 'planner';
 export type ThemeMode = 'emerald' | 'dark' | 'sepia' | 'softblue' | 'eyecare';
 
 interface NavbarProps {
