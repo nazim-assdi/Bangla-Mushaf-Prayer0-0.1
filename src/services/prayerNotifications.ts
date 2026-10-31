@@ -16,20 +16,20 @@ export interface PrayerAlertOptions {
 }
 
 /** Schedules the next seven days on Android/iOS; native alarms survive app closure. */
-export async function schedulePrayerAlerts(options: PrayerAlertOptions): Promise<{ scheduled: number; exactAlarm: string }> {
+export async function schedulePrayerAlerts(options: PrayerAlertOptions, requestPermission = true, openExactAlarmSettings = true): Promise<{ scheduled: number; exactAlarm: string }> {
   if (!Capacitor.isNativePlatform()) {
     throw new Error('অ্যাপের ব্যাকগ্রাউন্ড অ্যালার্ম Android/iOS APK-তে ব্যবহার করতে হবে।');
   }
 
   let permission = await LocalNotifications.checkPermissions();
-  if (permission.display !== 'granted') permission = await LocalNotifications.requestPermissions();
+  if (permission.display !== 'granted' && requestPermission) permission = await LocalNotifications.requestPermissions();
   if (permission.display !== 'granted') throw new Error('নোটিফিকেশন অনুমতি দেওয়া হয়নি।');
 
   let exactAlarm = 'not-applicable';
   try {
     const exact = await LocalNotifications.checkExactNotificationSetting();
     exactAlarm = exact.exact_alarm;
-    if (exact.exact_alarm !== 'granted') {
+    if (exact.exact_alarm !== 'granted' && openExactAlarmSettings) {
       await LocalNotifications.changeExactNotificationSetting();
       const after = await LocalNotifications.checkExactNotificationSetting();
       exactAlarm = after.exact_alarm;
@@ -106,4 +106,21 @@ export async function cancelPrayerAlerts(): Promise<void> {
   const pending = await LocalNotifications.getPending();
   const managed = pending.notifications.filter(n => n.id >= ID_START && n.id < ID_END);
   if (managed.length) await LocalNotifications.cancel({ notifications: managed.map(n => ({ id: n.id })) });
+}
+
+
+/**
+ * Refreshes saved alerts after app relaunch or a location/method change,
+ * but never prompts for permissions or opens Android settings automatically.
+ */
+export async function refreshPrayerAlertsIfPermitted(options: PrayerAlertOptions): Promise<boolean> {
+  if (!Capacitor.isNativePlatform()) return false;
+  if (!options.prayerAlerts && !options.makruhAlerts) {
+    await cancelPrayerAlerts();
+    return true;
+  }
+  const permission = await LocalNotifications.checkPermissions();
+  if (permission.display !== 'granted') return false;
+  await schedulePrayerAlerts(options, false, false);
+  return true;
 }
