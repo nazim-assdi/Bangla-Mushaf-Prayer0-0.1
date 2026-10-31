@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { toBanglaNumber, toEnglishNumber, toArabicNumber, formatDurationToBangla } from './banglaNumbers';
 import { calculateQiblaDirection, calculateDistanceToKaaba, getHeadingDeviation } from './qibla';
-import { calculatePrayerTimes, BANGLADESH_DISTRICTS } from './prayerTimes';
+import { calculatePrayerTimes, BANGLADESH_DISTRICTS, getWaqtsStatus } from './prayerTimes';
 
 test('Bengali number conversion works correctly', () => {
   assert.equal(toBanglaNumber(12345), '১২৩৪৫');
@@ -74,4 +74,15 @@ test('Prayer times calculate valid chronological order for Dhaka', () => {
   assert.ok(times.dhuhr.getTime() < times.asr.getTime(), 'Dhuhr must be before Asr');
   assert.ok(times.asr.getTime() < times.maghrib.getTime(), 'Asr must be before Maghrib');
   assert.ok(times.maghrib.getTime() < times.isha.getTime(), 'Maghrib must be before Isha');
+});
+
+test('Next prayer after Isha is tomorrow Fajr, not a passed Fajr today', () => {
+  const today = new Date(2026, 9, 26, 12, 0, 0);
+  const dhaka = BANGLADESH_DISTRICTS.find((d) => d.id === 'dhaka')!;
+  const times = calculatePrayerTimes(today, dhaka.lat, dhaka.lng, 6);
+  const afterIsha = new Date(times.isha.getTime() + 30 * 60000);
+  const waqts = getWaqtsStatus(times, afterIsha);
+  const next = waqts.find((waqt) => waqt.isNext);
+  assert.equal(next?.key, 'fajr');
+  assert.ok(next!.time.getTime() > afterIsha.getTime(), 'Next Fajr must be in the future');
 });
