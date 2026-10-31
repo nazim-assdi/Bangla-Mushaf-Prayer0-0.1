@@ -30,6 +30,7 @@ export const OfflineTafsirDownload: React.FC<{ uiLanguage: UiLanguage }> = ({ ui
       const count = await downloadTafsirResource(resourceId, setProgress);
       setCounts((current) => ({ ...current, [resourceId]: count }));
       setMessage(translateUi(uiLanguage, 'tafsirDownloadDone'));
+      window.dispatchEvent(new Event('mushaf:tafsir-updated'));
     } catch (error) {
       console.error('Offline tafsir download failed:', error);
       setMessage(translateUi(uiLanguage, 'tafsirDownloadError'));
@@ -45,6 +46,7 @@ export const OfflineTafsirDownload: React.FC<{ uiLanguage: UiLanguage }> = ({ ui
     if (!confirmed) return;
     try {
       await clearOfflineTafsirResource(resourceId);
+      window.dispatchEvent(new Event('mushaf:tafsir-updated'));
       await refreshCounts();
     } catch (error) {
       console.error('Could not clear offline tafsir:', error);
