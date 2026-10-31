@@ -1,4 +1,5 @@
 import React from 'react';
+import { UiLanguage, translateUi } from '../services/i18n';
 import { BookOpen, Clock, Compass, Bookmark, Settings, Search, MoreVertical } from 'lucide-react';
 import { toBanglaNumber } from '../utils/banglaNumbers';
 import { PWAInstallButton } from './PWAInstallButton';
@@ -15,6 +16,7 @@ interface NavbarProps {
   onOpenMenu: () => void;
   currentSurahNameBn: string;
   currentSurahId: number;
+  uiLanguage: UiLanguage;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -25,6 +27,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenMenu,
   currentSurahNameBn,
   currentSurahId,
+  uiLanguage,
 }) => {
   return (
     <header className="sticky top-0 z-40 bg-emerald-900/95 dark:bg-stone-900/95 backdrop-blur-md text-white border-b border-emerald-800/60 dark:border-stone-800 shadow-md transition-colors">
@@ -90,7 +93,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               aria-label="মুসহাফ পাঠ"
             >
               <BookOpen className="w-4 h-4" />
-              <span className="hidden sm:inline font-bangla">মুসহাফ</span>
+              <span className="hidden sm:inline font-bangla">{translateUi(uiLanguage, 'mushaf')}</span>
             </button>
 
             <button
@@ -103,7 +106,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               aria-label="নামাজের সময়সূচী"
             >
               <Clock className="w-4 h-4" />
-              <span className="hidden sm:inline font-bangla">নামাজের সময়</span>
+              <span className="hidden sm:inline font-bangla">{translateUi(uiLanguage, 'salatTimes')}</span>
             </button>
 
             
@@ -120,7 +123,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               aria-label="সংরক্ষিত আয়াত ও দোয়া"
             >
               <Bookmark className="w-4 h-4" />
-              <span className="hidden md:inline font-bangla">সংরক্ষিত</span>
+              <span className="hidden md:inline font-bangla">{translateUi(uiLanguage, 'bookmarks')}</span>
             </button>
 
             <button
@@ -130,8 +133,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                   ? 'bg-amber-400 text-emerald-950 font-bold shadow-sm'
                   : 'text-emerald-100 hover:bg-emerald-800/60'
               }`}
-              aria-label="অ্যাপ সেটিংস"
-              title="সেটিংস"
+              aria-label={translateUi(uiLanguage, 'settings')}
+              title={translateUi(uiLanguage, 'settings')}
             >
               <Settings className="w-4 h-4" />
             </button>
@@ -143,7 +146,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <AuthButton />
           </nav>
 
-          <button onClick={onOpenMenu} className="p-2 rounded-xl bg-amber-400 text-emerald-950 hover:bg-amber-300 shadow-sm" aria-label="আরও অপশন" title="আরও অপশন"><MoreVertical className="w-5 h-5" /></button>
+          <button onClick={onOpenMenu} className="p-2 rounded-xl bg-amber-400 text-emerald-950 hover:bg-amber-300 shadow-sm" aria-label={translateUi(uiLanguage, 'menu')} title={translateUi(uiLanguage, 'menu')}><MoreVertical className="w-5 h-5" /></button>
 
           {/* Mobile Quick Action Buttons (PWA Install, Auth, Search & Theme) */}
           <div className="flex sm:hidden items-center gap-1">
@@ -152,7 +155,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               onClick={onOpenGlobalSearch}
               className="p-2 rounded-lg bg-emerald-800/80 text-amber-300 hover:bg-emerald-700 transition-colors"
-              aria-label="খোঁজ করুন"
+              aria-label={translateUi(uiLanguage, 'search')}
               title="খোঁজ করুন"
             >
               <Search className="w-4 h-4" />
