@@ -11,7 +11,10 @@ export const UI_LANGUAGES: { code: UiLanguage; name: string; nativeName: string;
 
 const messages: Record<UiLanguage, Record<string, string>> = {
   bn: {
-    fontSizeSettings:'ফন্ট সাইজ পরিবর্তন',
+    surahLabel:'সূরা',
+    change:'বদলান',
+    searchQuran:'কুরআনে খুঁজুন',
+        fontSizeSettings:'ফন্ট সাইজ পরিবর্তন',
     greenMushaf:'সবুজ মুসহাফ',
     nightMode:'নাইট মোড',
     sepiaPage:'সেপিয়া পাতা',
@@ -104,7 +107,10 @@ const messages: Record<UiLanguage, Record<string, string>> = {
     salatTimes:'সালাতের সময়', bookmarks:'সংরক্ষিত আয়াত', appMenu:'অ্যাপ মেনু'
   },
   en: {
-    fontSizeSettings:'Font size',
+    surahLabel:'Surah',
+    change:'Change',
+    searchQuran:'Search Quran',
+        fontSizeSettings:'Font size',
     greenMushaf:'Emerald Mushaf',
     nightMode:'Night mode',
     sepiaPage:'Sepia page',
@@ -197,7 +203,10 @@ const messages: Record<UiLanguage, Record<string, string>> = {
     salatTimes:'Prayer times', bookmarks:'Saved verses', appMenu:'App menu'
   },
   ar: {
-    fontSizeSettings:'حجم الخط',
+    surahLabel:'سورة',
+    change:'تغيير',
+    searchQuran:'ابحث في القرآن',
+        fontSizeSettings:'حجم الخط',
     greenMushaf:'المصحف الأخضر',
     nightMode:'الوضع الليلي',
     sepiaPage:'صفحة سيبيا',
@@ -290,7 +299,10 @@ const messages: Record<UiLanguage, Record<string, string>> = {
     salatTimes:'مواقيت الصلاة', bookmarks:'الآيات المحفوظة', appMenu:'قائمة التطبيق'
   },
   hi: {
-    fontSizeSettings:'फ़ॉन्ट आकार',
+    surahLabel:'सूरह',
+    change:'बदलें',
+    searchQuran:'कुरआन खोजें',
+        fontSizeSettings:'फ़ॉन्ट आकार',
     greenMushaf:'हरा मुसहफ़',
     nightMode:'नाइट मोड',
     sepiaPage:'सेपिया पृष्ठ',
@@ -383,7 +395,10 @@ const messages: Record<UiLanguage, Record<string, string>> = {
     salatTimes:'नमाज़ का समय', bookmarks:'सहेजी गई आयतें', appMenu:'ऐप मेनू'
   },
   ur: {
-    fontSizeSettings:'فونٹ سائز',
+    surahLabel:'سورت',
+    change:'تبدیل کریں',
+    searchQuran:'قرآن میں تلاش کریں',
+        fontSizeSettings:'فونٹ سائز',
     greenMushaf:'سبز مصحف',
     nightMode:'نائٹ موڈ',
     sepiaPage:'سیپیا صفحہ',
@@ -476,7 +491,10 @@ const messages: Record<UiLanguage, Record<string, string>> = {
     salatTimes:'نماز کے اوقات', bookmarks:'محفوظ آیات', appMenu:'ایپ مینو'
   },
   tr: {
-    fontSizeSettings:'Yazı boyutu',
+    surahLabel:'Sure',
+    change:'Değiştir',
+    searchQuran:'Kur’an’da ara',
+        fontSizeSettings:'Yazı boyutu',
     greenMushaf:'Zümrüt Mushaf',
     nightMode:'Gece modu',
     sepiaPage:'Sepya sayfa',
