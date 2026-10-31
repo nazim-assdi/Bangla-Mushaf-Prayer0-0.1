@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { UiLanguage, translateUi } from '../services/i18n';
 import {
   Sparkles,
   RotateCcw,
@@ -34,7 +35,7 @@ import { useAuth } from '../context/AuthContext';
 import { saveDhikrProgress } from '../services/firebase';
 import { saveDhikrToCloudSQL } from '../services/apiSync';
 
-export const DailyDhikrView: React.FC = () => {
+export const DailyDhikrView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLanguage }) => {
   const [selectedCategory, setSelectedCategory] = useState<AdhkarCategory>('morning');
   const [selectedId, setSelectedId] = useState<string>(() => {
     const morningFirst = MASNUN_ADHKAAR.find((d) => d.categoryId === 'morning');
@@ -195,7 +196,7 @@ export const DailyDhikrView: React.FC = () => {
 
   const handleCopy = (dhikr: MasnunDhikr, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    const text = `${dhikr.titleBn} (${dhikr.categoryBn})\n\n${dhikr.arabic}\n\nউচ্চারণ: ${dhikr.transliterationBn}\n\nঅর্থ: ${dhikr.meaningBn}\n\nফজিলত: ${dhikr.virtueBn}`;
+    const text = `${dhikr.titleBn} (${dhikr.categoryBn})\n\n${dhikr.arabic}\n\nউচ্চারণ: ${dhikr.transliterationBn}\n\nঅর্থ: ${uiLanguage === 'bn' ? dhikr.meaningBn : translateUi(uiLanguage, 'noTranslationAvailable')}\n\nফজিলত: ${uiLanguage === 'bn' ? dhikr.virtueBn : ''}`;
     navigator.clipboard.writeText(text);
     setCopiedId(dhikr.id);
     setTimeout(() => setCopiedId(null), 2000);
@@ -486,7 +487,7 @@ export const DailyDhikrView: React.FC = () => {
               </div>
 
               {/* Transliteration */}
-              {currentDhikr.transliterationBn && (
+              {uiLanguage === 'bn' && currentDhikr.transliterationBn && (
                 <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400 italic text-left bg-stone-50 dark:bg-stone-800/40 p-2.5 rounded-xl border border-stone-200/60 dark:border-stone-800/60">
                   <span className="font-semibold text-emerald-800 dark:text-emerald-400 mr-1 not-italic">
                     উচ্চারণ:
@@ -498,7 +499,7 @@ export const DailyDhikrView: React.FC = () => {
               {/* Meaning */}
               <p className="text-xs sm:text-sm font-medium text-emerald-900 dark:text-emerald-300 text-left leading-relaxed">
                 <span className="font-bold text-stone-800 dark:text-stone-200 mr-1">অর্থ:</span>
-                {currentDhikr.meaningBn}
+                {uiLanguage === 'bn' ? currentDhikr.meaningBn : translateUi(uiLanguage, 'noTranslationAvailable')}
               </p>
             </div>
 
@@ -655,7 +656,7 @@ export const DailyDhikrView: React.FC = () => {
                   </div>
 
                   {/* Transliteration & Meaning */}
-                  {dhikr.transliterationBn && (
+                  {uiLanguage === 'bn' && dhikr.transliterationBn && (
                     <p className="text-xs text-stone-500 dark:text-stone-400 italic mb-2 leading-relaxed">
                       <strong>উচ্চারণ: </strong>
                       {dhikr.transliterationBn}
