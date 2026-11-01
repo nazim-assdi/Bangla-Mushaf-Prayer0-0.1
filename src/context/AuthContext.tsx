@@ -49,7 +49,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         'auth/invalid-api-key': 'Firebase API key সঠিক নয়। Firebase configuration পরীক্ষা করুন।',
         'auth/invalid-oauth-client-id': 'Google OAuth client configuration সঠিক নয়।',
       };
-      setAuthError(messages[code] || 'Google sign-in ব্যর্থ হয়েছে (' + code + ')। Firebase Console-এর Authentication settings পরীক্ষা করুন।');
+      const detail = error instanceof Error ? error.message : String(error);
+      const friendly = messages[code] || 'Google sign-in ব্যর্থ হয়েছে। Firebase Android configuration, SHA-1 এবং Google provider পরীক্ষা করুন।';
+      setAuthError(friendly + ' [Code: ' + code + '] ' + detail);
     }
   };
 
