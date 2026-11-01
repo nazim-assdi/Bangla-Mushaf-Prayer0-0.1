@@ -255,7 +255,12 @@ export function calculatePrayerTimes(
       // Convert local wall-clock prayer time to a real UTC instant. This keeps
       // alarms/countdowns correct even when device zone differs from GPS zone.
       const localMidnightUtc = Date.UTC(year, month - 1, day);
-      return new Date(localMidnightUtc + totalMinutes * 60000 - effectiveOffsetHours * 3600000);
+      const wallClockUtc = localMidnightUtc + totalMinutes * 60000;
+      const firstInstant = new Date(wallClockUtc - effectiveOffsetHours * 3600000);
+      // Re-check the offset at the actual prayer instant so a DST switch
+      // near Fajr/Isha uses the correct side of the transition.
+      const prayerOffset = getTimeZoneOffsetHours(firstInstant, timeZoneId);
+      return new Date(wallClockUtc - prayerOffset * 3600000);
     }
     const result = new Date(date);
     result.setHours(0, 0, 0, 0);
