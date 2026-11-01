@@ -221,11 +221,27 @@ export function calculatePrayerTimes(
 
   // Hour angle for twilight / angles
   const hourAngle = (angle: number): number => {
-    const cosHA =
-      (-Math.sin(rad(angle)) - Math.sin(rad(lat)) * Math.sin(rad(declination))) /
-      (Math.cos(rad(lat)) * Math.cos(rad(declination)));
-    if (cosHA > 1) return 0; // Sun never rises
-    if (cosHA < -1) return 180; // Sun never sets
+    const cosForLatitude = (latitude: number) =>
+      (-Math.sin(rad(angle)) - Math.sin(rad(latitude)) * Math.sin(rad(declination))) /
+      (Math.cos(rad(latitude)) * Math.cos(rad(declination)));
+    let cosHA = cosForLatitude(lat);
+    if (cosHA < -1 || cosHA > 1) {
+      // High-latitude fallback: when the sun does not reach a required
+      // twilight/horizon angle, use the nearest latitude where that angle
+      // occurs, stepping toward the equator. This avoids midnight/ noon
+      // placeholder prayer times in polar summer/winter.
+      const sign = lat < 0 ? -1 : 1;
+      const candidates = [Math.min(Math.abs(lat), 48.5), 45, 40, 35, 30];
+      for (const candidate of [...new Set(candidates)]) {
+        const fallbackCos = cosForLatitude(sign * candidate);
+        if (fallbackCos >= -1 && fallbackCos <= 1) {
+          cosHA = fallbackCos;
+          break;
+        }
+      }
+    }
+    if (cosHA > 1) return 0;
+    if (cosHA < -1) return 180;
     return deg(Math.acos(cosHA));
   };
 
