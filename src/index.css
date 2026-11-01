@@ -131,7 +131,7 @@ body {
   background-attachment: fixed;
 }
 .app-shell main { min-height: calc(100dvh - 4rem); }
-.app-shell :where(.bg-white, .dark\\:bg-stone-900, .dark\\:bg-\\[\\#102235\\]) {
+.app-shell :where(.bg-white) {
   border-radius: var(--ui-radius);
 }
 .app-shell :where(.bg-white) {
@@ -169,9 +169,10 @@ body {
 .app-shell :where(.rounded-2xl, .rounded-3xl) {
   box-shadow: 0 9px 30px rgba(17, 48, 53, .055);
 }
-.app-shell :where(.border-stone-200, .dark\\:border-stone-800) {
+.app-shell :where(.border-stone-200) {
   border-color: rgba(148, 163, 184, .24);
 }
+html.dark .app-shell :where(.border-stone-800) { border-color: rgba(148,163,184,.18); }
 .app-shell :where(.bg-gradient-to-r.from-emerald-800, .bg-gradient-to-br.from-emerald-900) {
   box-shadow: 0 18px 42px rgba(4, 65, 57, .18);
 }
