@@ -122,75 +122,65 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
       <OfflineTafsirDownload uiLanguage={uiLanguage} />
 
-      {/* Theme Selection */}
-      <div className="bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200 dark:border-stone-800 space-y-3">
-        <label className="text-sm font-bold text-stone-900 dark:text-white flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-amber-500" />
-          <span>{translateUi(uiLanguage, 'theme')} (Display)</span>
-        </label>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <button
-            onClick={() => setTheme('emerald')}
-            className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center gap-1.5 ${
-              theme === 'emerald'
-                ? 'border-emerald-600 bg-emerald-50 text-emerald-900 ring-2 ring-emerald-500 font-bold'
-                : 'border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300'
-            }`}
-          >
-            <div className="w-6 h-6 rounded-full bg-emerald-700 border border-emerald-500 shadow-xs" />
-            <span className="text-xs">{translateUi(uiLanguage, 'greenMushaf')}</span>
-          </button>
-
-          <button
-            onClick={() => setTheme('dark')}
-            className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center gap-1.5 ${
-              theme === 'dark'
-                ? 'border-emerald-500 bg-stone-800 text-white ring-2 ring-emerald-500 font-bold'
-                : 'border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300'
-            }`}
-          >
-            <div className="w-6 h-6 rounded-full bg-stone-950 border border-stone-700 shadow-xs" />
-            <span className="text-xs">{translateUi(uiLanguage, 'nightMode')}</span>
-          </button>
-
-          <button
-            onClick={() => setTheme('sepia')}
-            className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center gap-1.5 ${
-              theme === 'sepia'
-                ? 'border-amber-600 bg-amber-50 text-amber-950 ring-2 ring-amber-500 font-bold'
-                : 'border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300'
-            }`}
-          >
-            <div className="w-6 h-6 rounded-full bg-[#f4ece1] border border-amber-300 shadow-xs" />
-            <span className="text-xs">{translateUi(uiLanguage, 'sepiaPage')}</span>
-          </button>
-
-          <button
-            onClick={() => setTheme('softblue')}
-            className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center gap-1.5 ${
-              theme === 'softblue'
-                ? 'border-cyan-500 bg-slate-800 text-cyan-200 ring-2 ring-cyan-400 font-bold'
-                : 'border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300'
-            }`}
-          >
-            <div className="w-6 h-6 rounded-full bg-slate-900 border border-cyan-500 shadow-xs" />
-            <span className="text-xs">{translateUi(uiLanguage, 'softBlue')}</span>
-          </button>
-
-          <button
-            onClick={() => setTheme('eyecare')}
-            className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center gap-1.5 ${
-              theme === 'eyecare'
-                ? 'border-emerald-400 bg-[#1b2a22] text-[#d4ebd0] ring-2 ring-emerald-400 font-bold'
-                : 'border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300'
-            }`}
-          >
-            <div className="w-6 h-6 rounded-full bg-[#1b2a22] border border-emerald-400 shadow-xs" />
-            <span className="text-xs">{translateUi(uiLanguage, 'eyeCare')}</span>
-          </button>
+      {/* Premium theme gallery */}
+      <section className="relative overflow-hidden rounded-3xl border border-amber-200/70 bg-gradient-to-br from-white via-stone-50 to-amber-50 p-4 shadow-lg shadow-stone-900/5 dark:border-stone-700 dark:from-stone-950 dark:via-stone-900 dark:to-stone-950 sm:p-5 space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="flex items-center gap-2 text-base font-extrabold text-stone-900 dark:text-white">
+              <Sparkles className="h-5 w-5 text-amber-500" />
+              {translateUi(uiLanguage, 'theme')}
+            </h3>
+            <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">পছন্দের রঙ ও পড়ার পরিবেশ বেছে নিন</p>
+          </div>
+          <span className="rounded-full border border-amber-300/70 bg-amber-100/70 px-3 py-1 text-[10px] font-bold tracking-wide text-amber-900 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-200">5 THEMES</span>
         </div>
-      </div>
+
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {([
+            { id: 'emerald', name: translateUi(uiLanguage, 'greenMushaf'), note: 'Classic Islamic', outer: 'bg-[#f7f5eb]', header: 'bg-[#075b45]', panel: 'bg-white', accent: 'bg-[#d9ad55]', ink: 'text-[#174b3c]', border: 'border-[#c9d9c9]' },
+            { id: 'dark', name: translateUi(uiLanguage, 'nightMode'), note: 'Midnight · Gold', outer: 'bg-[#171511]', header: 'bg-[#29231b]', panel: 'bg-[#332c22]', accent: 'bg-[#d9b66e]', ink: 'text-[#f7e7bd]', border: 'border-[#66543a]' },
+            { id: 'sepia', name: translateUi(uiLanguage, 'sepiaPage'), note: 'Warm parchment', outer: 'bg-[#eee1ca]', header: 'bg-[#8a7354]', panel: 'bg-[#f8efdE]', accent: 'bg-[#b58a4d]', ink: 'text-[#59452f]', border: 'border-[#c9ad82]' },
+            { id: 'softblue', name: translateUi(uiLanguage, 'softBlue'), note: 'Ocean · Calm', outer: 'bg-[#101d32]', header: 'bg-[#1c3555]', panel: 'bg-[#233c5c]', accent: 'bg-[#82c9dc]', ink: 'text-[#e0f3ff]', border: 'border-[#476987]' },
+            { id: 'eyecare', name: translateUi(uiLanguage, 'eyeCare'), note: 'Forest · Eye care', outer: 'bg-[#17271f]', header: 'bg-[#294637]', panel: 'bg-[#22392d]', accent: 'bg-[#a7c58e]', ink: 'text-[#e0efd9]', border: 'border-[#55765d]' },
+          ] as const).map((item) => {
+            const selected = theme === item.id;
+            return (
+              <button key={item.id} type="button" onClick={() => setTheme(item.id)} aria-pressed={selected}
+                className={`group relative overflow-hidden rounded-2xl border-2 p-2 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-amber-400 ${selected ? 'border-amber-500 shadow-md ring-2 ring-amber-400/30' : 'border-stone-200 dark:border-stone-700'}`}>
+                <div className={`overflow-hidden rounded-xl border ${item.border} ${item.outer}`}>
+                  <div className={`flex h-7 items-center justify-between px-2 ${item.header}`}>
+                    <span className="h-1.5 w-10 rounded-full bg-white/70" />
+                    <span className={`h-2 w-2 rounded-full ${item.accent}`} />
+                  </div>
+                  <div className="space-y-2 p-2">
+                    <div className={`rounded-lg p-2 ${item.panel}`}>
+                      <div className={`mb-1 h-1.5 w-2/3 rounded-full opacity-80 ${item.accent}`} />
+                      <div className={`h-1 w-full rounded-full opacity-30 ${item.ink} bg-current`} />
+                      <div className={`mt-1 h-1 w-4/5 rounded-full opacity-20 ${item.ink} bg-current`} />
+                    </div>
+                    <div className="flex items-center justify-center gap-1.5 py-0.5">
+                      <span className={`font-arabic text-lg ${item.ink}`} dir="rtl">بِسْمِ اللَّهِ</span>
+                    </div>
+                    <div className="flex gap-1">
+                      <span className={`h-1.5 flex-1 rounded-full ${item.accent}`} />
+                      <span className={`h-1.5 flex-1 rounded-full opacity-30 ${item.ink} bg-current`} />
+                      <span className={`h-1.5 flex-1 rounded-full opacity-30 ${item.ink} bg-current`} />
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between gap-1 px-1 pt-2">
+                  <span className="min-w-0">
+                    <span className="block truncate text-xs font-extrabold text-stone-900 dark:text-stone-100">{item.name}</span>
+                    <span className="block truncate text-[9px] text-stone-500 dark:text-stone-400">{item.note}</span>
+                  </span>
+                  {selected && <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-500 text-white"><Check className="h-3.5 w-3.5" /></span>}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-[11px] leading-relaxed text-stone-500 dark:text-stone-400">থিম পরিবর্তন করলে অ্যাপের রঙের পরিবেশ বদলাবে। আপনার পছন্দ এই ডিভাইসে সংরক্ষিত থাকবে।</p>
+      </section>
 
       {/* Font Size Adjusters */}
       <div className="bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200 dark:border-stone-800 space-y-5">
