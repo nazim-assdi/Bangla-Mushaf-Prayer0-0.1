@@ -214,11 +214,11 @@ html.eyecare .app-shell { background-color: #13251e; }
 .app-shell main[data-active-screen="prayer"] > div > div:nth-child(2) {
   border-radius: 1.35rem; border-color: rgba(15,118,110,.2);
 }
-.app-shell main[data-active-screen="qibla"] > div > div:nth-child(3) {
+.app-shell main[data-active-screen="qibla"] .qibla-screen > div.rounded-3xl {
   min-height: 34rem; display: flex; flex-direction: column; justify-content: center;
   border-radius: 2rem; background-image: radial-gradient(circle at 50% 48%, rgba(20,184,166,.17), transparent 48%), linear-gradient(145deg,#071b25,#073c3a 58%,#101d2b);
 }
-.app-shell main[data-active-screen="qibla"] > div > div:nth-child(3) > div:nth-child(2) { max-width: 340px; }
+.app-shell main[data-active-screen="qibla"] .qibla-screen > div.rounded-3xl > div:nth-child(2) { max-width: 340px; }
 .app-shell main[data-active-screen="dhikr"] > div > div:first-child {
   border-radius: 1.8rem; padding: clamp(1.35rem, 3vw, 2.25rem);
   box-shadow: 0 22px 55px rgba(5, 55, 45, .2);
@@ -250,15 +250,15 @@ html.eyecare .app-shell { background-color: #13251e; }
   border-radius: 1.5rem; box-shadow: 0 18px 48px rgba(57,45,25,.10);
 }
 @media (min-width: 900px) {
-  .app-shell main[data-active-screen="qibla"] > div { display: grid; grid-template-columns: minmax(0,1fr) minmax(360px,.9fr); gap: 1.25rem; align-items: start; }
-  .app-shell main[data-active-screen="qibla"] > div > div:nth-child(1),
-  .app-shell main[data-active-screen="qibla"] > div > div:nth-child(2) { grid-column: 1 / -1; }
-  .app-shell main[data-active-screen="qibla"] > div > div:nth-child(3) { grid-column: 1; grid-row: 3 / span 2; }
-  .app-shell main[data-active-screen="qibla"] > div > div:nth-child(4) { grid-column: 2; }
-  .app-shell main[data-active-screen="qibla"] > div > div:nth-child(5) { grid-column: 2; }
+  .app-shell main[data-active-screen="qibla"] .qibla-screen { display: grid; grid-template-columns: minmax(0,1fr) minmax(360px,.9fr); gap: 1.25rem; align-items: start; }
+  .app-shell main[data-active-screen="qibla"] .qibla-screen > div:first-child,
+  .app-shell main[data-active-screen="qibla"] .qibla-screen > div:nth-child(2) { grid-column: 1 / -1; }
+  .app-shell main[data-active-screen="qibla"] .qibla-screen > div.rounded-3xl { grid-column: 1; grid-row: 3 / span 2; }
+  .app-shell main[data-active-screen="qibla"] .qibla-screen > div.rounded-2xl { grid-column: 2; }
+  .app-shell main[data-active-screen="qibla"] .qibla-screen > div:last-child { grid-column: 2; }
 }
 @media (max-width: 640px) {
   .app-shell main[data-active-screen] { padding-bottom: 6.5rem; }
-  .app-shell main[data-active-screen="qibla"] > div > div:nth-child(3) { min-height: 0; padding-block: 1.5rem; }
+  .app-shell main[data-active-screen="qibla"] .qibla-screen > div.rounded-3xl { min-height: 0; padding-block: 1.5rem; }
   .app-shell main[data-active-screen="dhikr"] > div > div:nth-child(2) { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }
