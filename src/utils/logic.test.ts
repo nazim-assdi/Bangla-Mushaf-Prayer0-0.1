@@ -109,6 +109,18 @@ test('GPS world time zones apply local date, local clock and daylight saving rul
   assert.ok(newYork.sunrise.getTime() < newYork.dhuhr.getTime());
 });
 
+test('High-latitude GPS locations receive finite prayer times during polar season', () => {
+  const summerInstant = new Date('2026-06-21T10:00:00.000Z');
+  const tromso = calculatePrayerTimes(
+    summerInstant, 69.6492, 18.9553, 2,
+    { fajrAngle: 18, ishaAngle: 18, asrJuristic: 'hanafi' },
+    'Europe/Oslo',
+  );
+  const ordered = [tromso.fajr, tromso.sunrise, tromso.dhuhr, tromso.asr, tromso.maghrib, tromso.isha];
+  assert.ok(ordered.every((value) => Number.isFinite(value.getTime())));
+  assert.ok(ordered.every((value, index) => index === 0 || value.getTime() > ordered[index - 1].getTime()));
+});
+
 test('Next prayer after Isha is tomorrow Fajr, not a passed Fajr today', () => {
   const today = new Date(2026, 9, 26, 12, 0, 0);
   const dhaka = BANGLADESH_DISTRICTS.find((d) => d.id === 'dhaka')!;
