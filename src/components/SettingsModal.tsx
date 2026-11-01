@@ -123,63 +123,76 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       <OfflineTafsirDownload uiLanguage={uiLanguage} />
 
       {/* Premium theme gallery */}
-      <section className="relative overflow-hidden rounded-3xl border border-amber-200/70 bg-gradient-to-br from-white via-stone-50 to-amber-50 p-4 shadow-lg shadow-stone-900/5 dark:border-stone-700 dark:from-stone-950 dark:via-stone-900 dark:to-stone-950 sm:p-5 space-y-4">
-        <div className="flex items-center justify-between gap-3">
+      <section className="relative isolate overflow-hidden rounded-[1.75rem] border border-amber-300/50 bg-gradient-to-br from-[#fffdf7] via-[#f8f4e9] to-[#efe6d2] p-4 shadow-xl shadow-stone-900/10 dark:border-stone-700 dark:from-[#211e19] dark:via-[#191713] dark:to-[#12110f] sm:p-5 space-y-5">
+        <div className="pointer-events-none absolute -right-12 -top-14 h-40 w-40 rounded-full border border-amber-500/15" />
+        <div className="pointer-events-none absolute -right-6 -top-8 h-28 w-28 rounded-full border border-amber-500/15" />
+        <div className="relative flex items-start justify-between gap-3">
           <div>
-            <h3 className="flex items-center gap-2 text-base font-extrabold text-stone-900 dark:text-white">
-              <Sparkles className="h-5 w-5 text-amber-500" />
-              {translateUi(uiLanguage, 'theme')}
-            </h3>
-            <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">পছন্দের রঙ ও পড়ার পরিবেশ বেছে নিন</p>
+            <span className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-100/60 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+              <Sparkles className="h-3 w-3" /> Reading atmosphere
+            </span>
+            <h3 className="text-lg font-extrabold tracking-tight text-stone-900 dark:text-stone-50">{translateUi(uiLanguage, 'theme')}</h3>
+            <p className="mt-1 max-w-xs text-xs leading-relaxed text-stone-600 dark:text-stone-400">প্রতিটি থিমে রঙ, কনট্রাস্ট ও পড়ার পরিবেশের আলাদা সমন্বয়</p>
           </div>
-          <span className="rounded-full border border-amber-300/70 bg-amber-100/70 px-3 py-1 text-[10px] font-bold tracking-wide text-amber-900 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-200">5 THEMES</span>
+          <span className="shrink-0 rounded-xl border border-stone-300/70 bg-white/70 px-3 py-2 text-center shadow-sm dark:border-stone-700 dark:bg-stone-900/70">
+            <span className="block text-lg font-black leading-none text-stone-900 dark:text-white">05</span>
+            <span className="mt-1 block text-[9px] font-bold uppercase tracking-wider text-stone-500">Themes</span>
+          </span>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <div className="relative grid grid-cols-2 gap-3 sm:grid-cols-3">
           {([
-            { id: 'emerald', name: translateUi(uiLanguage, 'greenMushaf'), note: 'Classic Islamic', outer: 'bg-[#f7f5eb]', header: 'bg-[#075b45]', panel: 'bg-white', accent: 'bg-[#d9ad55]', ink: 'text-[#174b3c]', border: 'border-[#c9d9c9]' },
-            { id: 'dark', name: translateUi(uiLanguage, 'nightMode'), note: 'Midnight · Gold', outer: 'bg-[#171511]', header: 'bg-[#29231b]', panel: 'bg-[#332c22]', accent: 'bg-[#d9b66e]', ink: 'text-[#f7e7bd]', border: 'border-[#66543a]' },
-            { id: 'sepia', name: translateUi(uiLanguage, 'sepiaPage'), note: 'Warm parchment', outer: 'bg-[#eee1ca]', header: 'bg-[#8a7354]', panel: 'bg-[#f8efdE]', accent: 'bg-[#b58a4d]', ink: 'text-[#59452f]', border: 'border-[#c9ad82]' },
-            { id: 'softblue', name: translateUi(uiLanguage, 'softBlue'), note: 'Ocean · Calm', outer: 'bg-[#101d32]', header: 'bg-[#1c3555]', panel: 'bg-[#233c5c]', accent: 'bg-[#82c9dc]', ink: 'text-[#e0f3ff]', border: 'border-[#476987]' },
-            { id: 'eyecare', name: translateUi(uiLanguage, 'eyeCare'), note: 'Forest · Eye care', outer: 'bg-[#17271f]', header: 'bg-[#294637]', panel: 'bg-[#22392d]', accent: 'bg-[#a7c58e]', ink: 'text-[#e0efd9]', border: 'border-[#55765d]' },
+            { id: 'emerald', name: translateUi(uiLanguage, 'greenMushaf'), note: 'Classic Islamic', outer: 'bg-[#f7f5eb]', header: 'bg-[#075b45]', panel: 'bg-white', accent: 'bg-[#d9ad55]', ink: 'text-[#174b3c]', border: 'border-[#c9d9c9]', swatches: ['#075b45','#f7f5eb','#d9ad55'], caption: 'Balanced · Traditional' },
+            { id: 'dark', name: translateUi(uiLanguage, 'nightMode'), note: 'Midnight · Gold', outer: 'bg-[#171511]', header: 'bg-[#29231b]', panel: 'bg-[#332c22]', accent: 'bg-[#d9b66e]', ink: 'text-[#f7e7bd]', border: 'border-[#66543a]', swatches: ['#171511','#332c22','#d9b66e'], caption: 'Low light · Warm' },
+            { id: 'sepia', name: translateUi(uiLanguage, 'sepiaPage'), note: 'Warm parchment', outer: 'bg-[#eee1ca]', header: 'bg-[#8a7354]', panel: 'bg-[#f8efde]', accent: 'bg-[#b58a4d]', ink: 'text-[#59452f]', border: 'border-[#c9ad82]', swatches: ['#8a7354','#eee1ca','#b58a4d'], caption: 'Paper · Heritage' },
+            { id: 'softblue', name: translateUi(uiLanguage, 'softBlue'), note: 'Ocean · Calm', outer: 'bg-[#101d32]', header: 'bg-[#1c3555]', panel: 'bg-[#233c5c]', accent: 'bg-[#82c9dc]', ink: 'text-[#e0f3ff]', border: 'border-[#476987]', swatches: ['#101d32','#233c5c','#82c9dc'], caption: 'Cool · Focus' },
+            { id: 'eyecare', name: translateUi(uiLanguage, 'eyeCare'), note: 'Forest · Eye care', outer: 'bg-[#17271f]', header: 'bg-[#294637]', panel: 'bg-[#22392d]', accent: 'bg-[#a7c58e]', ink: 'text-[#e0efd9]', border: 'border-[#55765d]', swatches: ['#17271f','#22392d','#a7c58e'], caption: 'Nature · Calm' },
           ] as const).map((item) => {
             const selected = theme === item.id;
             return (
               <button key={item.id} type="button" onClick={() => setTheme(item.id)} aria-pressed={selected}
-                className={`group relative overflow-hidden rounded-2xl border-2 p-2 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-amber-400 ${selected ? 'border-amber-500 shadow-md ring-2 ring-amber-400/30' : 'border-stone-200 dark:border-stone-700'}`}>
-                <div className={`overflow-hidden rounded-xl border ${item.border} ${item.outer}`}>
-                  <div className={`flex h-7 items-center justify-between px-2 ${item.header}`}>
-                    <span className="h-1.5 w-10 rounded-full bg-white/70" />
-                    <span className={`h-2 w-2 rounded-full ${item.accent}`} />
+                className={`group relative rounded-2xl border p-2 text-left transition-all duration-200 hover:-translate-y-1 hover:shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-stone-950 ${selected ? 'border-amber-500 bg-amber-50/80 shadow-lg shadow-amber-900/10 ring-2 ring-amber-400/40 dark:bg-amber-950/20' : 'border-stone-200/90 bg-white/70 hover:border-amber-300 dark:border-stone-700 dark:bg-stone-900/60 dark:hover:border-amber-700'}`}>
+                <div className={`overflow-hidden rounded-xl border shadow-inner ${item.border} ${item.outer}`}>
+                  <div className={`flex h-6 items-center justify-between px-2.5 ${item.header}`}>
+                    <span className="flex items-center gap-1"><span className="h-1 w-1 rounded-full bg-white/80"/><span className="h-1 w-1 rounded-full bg-white/50"/><span className="h-1 w-1 rounded-full bg-white/30"/></span>
+                    <span className="h-1 w-8 rounded-full bg-white/50"/>
                   </div>
-                  <div className="space-y-2 p-2">
-                    <div className={`rounded-lg p-2 ${item.panel}`}>
-                      <div className={`mb-1 h-1.5 w-2/3 rounded-full opacity-80 ${item.accent}`} />
-                      <div className={`h-1 w-full rounded-full opacity-30 ${item.ink} bg-current`} />
-                      <div className={`mt-1 h-1 w-4/5 rounded-full opacity-20 ${item.ink} bg-current`} />
+                  <div className="space-y-2 p-2.5">
+                    <div className={`rounded-lg border border-current/10 p-2 ${item.panel}`}>
+                      <div className="mb-1 flex items-center justify-between"><span className={`h-1.5 w-12 rounded-full ${item.accent}`}/><span className={`h-1.5 w-1.5 rounded-full ${item.accent}`}/></div>
+                      <div className={`h-1 w-full rounded-full opacity-30 ${item.ink} bg-current`}/>
+                      <div className={`mt-1 h-1 w-4/5 rounded-full opacity-20 ${item.ink} bg-current`}/>
                     </div>
-                    <div className="flex items-center justify-center gap-1.5 py-0.5">
-                      <span className={`font-arabic text-lg ${item.ink}`} dir="rtl">بِسْمِ اللَّهِ</span>
+                    <div className="py-1 text-center">
+                      <span className={`font-arabic text-[22px] leading-none ${item.ink}`} dir="rtl">بِسْمِ اللَّهِ</span>
+                      <span className={`mt-1 block text-[8px] opacity-75 ${item.ink}`}>In the name of Allah</span>
                     </div>
-                    <div className="flex gap-1">
-                      <span className={`h-1.5 flex-1 rounded-full ${item.accent}`} />
-                      <span className={`h-1.5 flex-1 rounded-full opacity-30 ${item.ink} bg-current`} />
-                      <span className={`h-1.5 flex-1 rounded-full opacity-30 ${item.ink} bg-current`} />
+                    <div className="flex items-center gap-1.5">
+                      <span className={`h-1.5 flex-1 rounded-full ${item.accent}`}/>
+                      <span className={`h-1.5 flex-1 rounded-full opacity-30 ${item.ink} bg-current`}/>
+                      <span className={`h-1.5 flex-1 rounded-full opacity-30 ${item.ink} bg-current`}/>
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center justify-between gap-1 px-1 pt-2">
+                <div className="flex items-start justify-between gap-1 px-0.5 pt-2.5">
                   <span className="min-w-0">
                     <span className="block truncate text-xs font-extrabold text-stone-900 dark:text-stone-100">{item.name}</span>
-                    <span className="block truncate text-[9px] text-stone-500 dark:text-stone-400">{item.note}</span>
+                    <span className="mt-0.5 block truncate text-[9px] text-stone-500 dark:text-stone-400">{item.caption}</span>
                   </span>
-                  {selected && <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-500 text-white"><Check className="h-3.5 w-3.5" /></span>}
+                  {selected && <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-500 text-white shadow-sm"><Check className="h-3.5 w-3.5" /></span>}
                 </div>
+                <div className="mt-2 flex items-center gap-1 px-0.5">
+                  {item.swatches.map((color) => <span key={color} className="h-2.5 flex-1 rounded-full border border-black/5" style={{ backgroundColor: color }} />)}
+                </div>
+                {selected && <span className="absolute right-3 top-3 rounded-full bg-amber-500 px-2 py-0.5 text-[8px] font-extrabold uppercase tracking-wider text-white shadow">Active</span>}
               </button>
             );
           })}
         </div>
-        <p className="text-[11px] leading-relaxed text-stone-500 dark:text-stone-400">থিম পরিবর্তন করলে অ্যাপের রঙের পরিবেশ বদলাবে। আপনার পছন্দ এই ডিভাইসে সংরক্ষিত থাকবে।</p>
+        <div className="relative flex items-start gap-2 rounded-xl border border-emerald-900/10 bg-emerald-50/80 p-3 dark:border-emerald-800/40 dark:bg-emerald-950/30">
+          <Eye className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700 dark:text-emerald-300"/>
+          <p className="text-[11px] leading-relaxed text-emerald-950 dark:text-emerald-100">থিম নির্বাচন করলেই সঙ্গে সঙ্গে পরিবর্তন হবে এবং আপনার ডিভাইসে সংরক্ষিত থাকবে। আরবি কুরআনের মূল লেখা ও অনুবাদের বিষয়বস্তু অপরিবর্তিত থাকবে।</p>
+        </div>
       </section>
 
       {/* Font Size Adjusters */}
