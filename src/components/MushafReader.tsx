@@ -38,6 +38,8 @@ interface MushafReaderProps {
   showTranslation: boolean;
   selectedReciterId: string;
   onSelectReciter: (id: string) => void;
+  audioPlaybackSpeed: number;
+  autoPlayNextAyah: boolean;
   currentLanguage: QuranLanguage;
   onSelectLanguage: (lang: QuranLanguage) => void;
   uiLanguage: UiLanguage;
@@ -55,6 +57,8 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
   showTranslation,
   selectedReciterId,
   onSelectReciter,
+  audioPlaybackSpeed,
+  autoPlayNextAyah,
   currentLanguage,
   onSelectLanguage,
   uiLanguage,
@@ -121,6 +125,10 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const wordAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.playbackRate = audioPlaybackSpeed;
+  }, [audioPlaybackSpeed]);
 
   const currentSurah = SURAH_LIST.find((s) => s.id === surahId) || SURAH_LIST[0];
 
@@ -212,7 +220,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
     setCurrentRepeat(1);
     player.pause();
     player.src = ayah.audioUrl;
-    player.playbackRate = 1;
+    player.playbackRate = audioPlaybackSpeed;
     player.load();
     void player.play().catch((error) => {
       setIsPlaying(false);
@@ -228,7 +236,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
       return;
     }
 
-    if (playingAyahKey) {
+    if (playingAyahKey && autoPlayNextAyah) {
       const currentIndex = ayahs.findIndex((a) => a.verseKey === playingAyahKey);
       if (currentIndex >= 0 && currentIndex < ayahs.length - 1) {
         const nextAyah = ayahs[currentIndex + 1];
