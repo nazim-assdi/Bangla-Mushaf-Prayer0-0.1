@@ -15,6 +15,10 @@
     "desktop:dev": "npm run build && electron .",
     "desktop:dist": "npm run build && electron-builder"
   },
+  "author": {
+    "name": "Bangla Mushaf Prayer Team",
+    "email": "maintainer@example.com"
+  },
   "dependencies": {
     "@capacitor/android": "^7.0.0",
     "@capacitor/core": "^7.0.0",
@@ -64,7 +68,8 @@
     "typescript": "^7.0.2",
     "vite-plugin-pwa": "^2.0.0",
     "electron": "^37.2.6",
-    "electron-builder": "^26.0.12"
+    "electron-builder": "^26.0.12",
+    "sharp": "^0.34.5"
   },
   "main": "electron/main.cjs",
   "build": {
@@ -101,7 +106,8 @@
         "deb"
       ],
       "category": "Education",
-      "icon": "public"
+      "icon": "public",
+      "maintainer": "Bangla Mushaf Prayer Team"
     },
     "nsis": {
       "oneClick": false,
