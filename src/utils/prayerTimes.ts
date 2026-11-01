@@ -290,7 +290,6 @@ export function formatTimeBn(d: Date): string {
   else if (fullHour >= 18 && fullHour < 20) timeOfDayBn = 'সন্ধ্যা ';
   else timeOfDayBn = 'রাত ';
 
-  import('./banglaNumbers').then;
   // Use simple digit replacer
   const bnDigits: { [k: string]: string } = {
     '0': '০',
