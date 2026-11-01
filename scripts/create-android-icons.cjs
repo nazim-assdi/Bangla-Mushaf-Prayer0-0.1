@@ -1,13 +1,1 @@
-const sharp=require('sharp');
-const fs=require('node:fs');
-const path=require('node:path');
-(async()=>{
- const svg=fs.readFileSync(path.join(__dirname,'../public/icon.svg'));
- const root=path.join(__dirname,'../android/app/src/main/res');
- const sizes={'mipmap-mdpi':48,'mipmap-hdpi':72,'mipmap-xhdpi':96,'mipmap-xxhdpi':144,'mipmap-xxxhdpi':192};
- for(const [folder,size] of Object.entries(sizes)){const dir=path.join(root,folder);fs.mkdirSync(dir,{recursive:true});await sharp(svg).resize(size,size).png().toFile(path.join(dir,'ic_launcher.png'));await sharp(svg).resize(size,size).png().toFile(path.join(dir,'ic_launcher_round.png'));}
- const any=path.join(root,'mipmap-anydpi-v26');fs.mkdirSync(any,{recursive:true});
- const xml='<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android"><background android:drawable="@color/ic_launcher_background"/><foreground android:drawable="@mipmap/ic_launcher"/></adaptive-icon>';
- fs.writeFileSync(path.join(any,'ic_launcher.xml'),xml);fs.writeFileSync(path.join(any,'ic_launcher_round.xml'),xml);
- const values=path.join(root,'values');fs.mkdirSync(values,{recursive:true});fs.writeFileSync(path.join(values,'ic_launcher_background.xml'),'<resources><color name="ic_launcher_background">#064E3B</color></resources>');
-})();
+const sharp=require('sharp');const fs=require('node:fs');const path=require('node:path');(async()=>{const svg=fs.readFileSync(path.join(__dirname,'../public/icon.svg'));const root=path.join(__dirname,'../android/app/src/main/res');const sizes={'mipmap-mdpi':48,'mipmap-hdpi':72,'mipmap-xhdpi':96,'mipmap-xxhdpi':144,'mipmap-xxxhdpi':192};for(const [folder,size] of Object.entries(sizes)){const dir=path.join(root,folder);fs.mkdirSync(dir,{recursive:true});for(const name of ['ic_launcher.png','ic_launcher_round.png'])await sharp(svg).resize(size,size).png().toFile(path.join(dir,name));}const any=path.join(root,'mipmap-anydpi-v26');fs.mkdirSync(any,{recursive:true});const xml='<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android"><background android:drawable="@color/ic_launcher_background"/><foreground android:drawable="@mipmap/ic_launcher"/></adaptive-icon>';fs.writeFileSync(path.join(any,'ic_launcher.xml'),xml);fs.writeFileSync(path.join(any,'ic_launcher_round.xml'),xml);const values=path.join(root,'values');fs.mkdirSync(values,{recursive:true});fs.writeFileSync(path.join(values,'ic_launcher_background.xml'),'<resources><color name="ic_launcher_background">#075B43</color></resources>');})();
