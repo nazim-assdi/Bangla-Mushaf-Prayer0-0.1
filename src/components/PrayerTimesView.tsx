@@ -155,19 +155,32 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
     setGeoLoading(true);
     setGeoError('');
     let zoneResolved = false;
+    let zoneLookupInFlight = false;
+    let lastZoneLookup: { lat: number; lng: number } | null = null;
+    const distanceKm = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) => {
+      const rad = (value: number) => value * Math.PI / 180;
+      const dLat = rad(b.lat - a.lat);
+      const dLng = rad(b.lng - a.lng);
+      const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2;
+      return 6371 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+    };
     watchIdRef.current = navigator.geolocation.watchPosition(
       async (pos) => {
+        const point = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         setCustomCoords({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
+          ...point,
           accuracy: pos.coords.accuracy,
           nameBn: 'GPS · Global location',
         });
         setLastGpsUpdate(new Date(pos.timestamp));
-        if (!zoneResolved) {
+        // Re-resolve the world time zone after travelling 20 km or more.
+        if (lastZoneLookup && distanceKm(lastZoneLookup, point) >= 20) zoneResolved = false;
+        if (!zoneResolved && !zoneLookupInFlight) {
+          zoneLookupInFlight = true;
           try {
-            const detectedZone = await getTimeZoneForCoordinates(pos.coords.latitude, pos.coords.longitude);
+            const detectedZone = await getTimeZoneForCoordinates(point.lat, point.lng);
             setTimeZoneId(detectedZone);
+            lastZoneLookup = point;
             zoneResolved = true;
             setGpsLive(true);
             setGeoError('');
@@ -175,9 +188,10 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
             setGeoError('GPS পাওয়া গেছে, কিন্তু World Time Zone শনাক্ত করা যায়নি। ইন্টারনেট চালু করে আবার GPS চাপুন।');
             setGpsLive(false);
           } finally {
+            zoneLookupInFlight = false;
             setGeoLoading(false);
           }
-        } else {
+        } else if (zoneResolved) {
           setGpsLive(true);
           setGeoLoading(false);
         }
