@@ -202,3 +202,63 @@ html.eyecare .app-shell { background-color: #13251e; }
     animation-duration: .01ms !important;
   }
 }
+
+
+/* Screen-specific layout system */
+.app-shell main[data-active-screen] { padding-bottom: 5.75rem; }
+.app-shell main[data-active-screen="mushaf"] { background: transparent; }
+.app-shell main[data-active-screen="prayer"] > div > div:first-child {
+  border-radius: 1.75rem; padding: clamp(1.35rem, 3vw, 2.25rem);
+  box-shadow: 0 22px 55px rgba(5, 36, 51, .18);
+}
+.app-shell main[data-active-screen="prayer"] > div > div:nth-child(2) {
+  border-radius: 1.35rem; border-color: rgba(15,118,110,.2);
+}
+.app-shell main[data-active-screen="qibla"] > div > div:nth-child(3) {
+  min-height: 34rem; display: flex; flex-direction: column; justify-content: center;
+  border-radius: 2rem; background-image: radial-gradient(circle at 50% 48%, rgba(20,184,166,.17), transparent 48%), linear-gradient(145deg,#071b25,#073c3a 58%,#101d2b);
+}
+.app-shell main[data-active-screen="qibla"] > div > div:nth-child(3) > div:nth-child(2) { max-width: 340px; }
+.app-shell main[data-active-screen="dhikr"] > div > div:first-child {
+  border-radius: 1.8rem; padding: clamp(1.35rem, 3vw, 2.25rem);
+  box-shadow: 0 22px 55px rgba(5, 55, 45, .2);
+}
+.app-shell main[data-active-screen="dhikr"] > div > div:nth-child(2) {
+  display: grid; grid-template-columns: repeat(auto-fit,minmax(130px,1fr)); gap: .65rem;
+  overflow: visible;
+}
+.app-shell main[data-active-screen="dhikr"] > div > div:nth-child(2) > button {
+  justify-content: center; min-height: 3.25rem; white-space: normal;
+}
+.app-shell main[data-active-screen="planner"] > main { max-width: 62rem; }
+.app-shell main[data-active-screen="planner"] > main > section {
+  border-radius: 1.75rem; padding: clamp(1.25rem,3vw,2.25rem);
+}
+.app-shell main[data-active-screen="bookmarks"] > div { max-width: 68rem; }
+.app-shell main[data-active-screen="settings"] > div { max-width: 68rem; }
+.app-shell main[data-active-screen="settings"] > div > header {
+  border-radius: 1.8rem; padding: clamp(1.35rem,3vw,2.4rem);
+}
+.app-shell main[data-active-screen="settings"] > div > section,
+.app-shell main[data-active-screen="settings"] > div > div {
+  border-radius: 1.25rem;
+}
+.app-shell main[data-active-screen] :where(input,select,textarea) { min-height: 2.7rem; }
+.app-shell main[data-active-screen] :where(button) { min-height: 2.55rem; }
+.app-shell main[data-active-screen="mushaf"] .mushaf-page {
+  max-width: 58rem; margin-inline: auto; padding: clamp(1.1rem,3vw,2.25rem);
+  border-radius: 1.5rem; box-shadow: 0 18px 48px rgba(57,45,25,.10);
+}
+@media (min-width: 900px) {
+  .app-shell main[data-active-screen="qibla"] > div { display: grid; grid-template-columns: minmax(0,1fr) minmax(360px,.9fr); gap: 1.25rem; align-items: start; }
+  .app-shell main[data-active-screen="qibla"] > div > div:nth-child(1),
+  .app-shell main[data-active-screen="qibla"] > div > div:nth-child(2) { grid-column: 1 / -1; }
+  .app-shell main[data-active-screen="qibla"] > div > div:nth-child(3) { grid-column: 1; grid-row: 3 / span 2; }
+  .app-shell main[data-active-screen="qibla"] > div > div:nth-child(4) { grid-column: 2; }
+  .app-shell main[data-active-screen="qibla"] > div > div:nth-child(5) { grid-column: 2; }
+}
+@media (max-width: 640px) {
+  .app-shell main[data-active-screen] { padding-bottom: 6.5rem; }
+  .app-shell main[data-active-screen="qibla"] > div > div:nth-child(3) { min-height: 0; padding-block: 1.5rem; }
+  .app-shell main[data-active-screen="dhikr"] > div > div:nth-child(2) { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
