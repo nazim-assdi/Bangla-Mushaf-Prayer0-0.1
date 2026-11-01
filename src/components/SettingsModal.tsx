@@ -96,7 +96,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <div aria-hidden="true" className="pointer-events-none absolute -right-8 -top-12 h-40 w-40 rounded-full border border-white/10" />
         <div aria-hidden="true" className="pointer-events-none absolute -right-1 -top-5 h-28 w-28 rounded-full border border-amber-200/15" />
         <div className="relative flex items-start gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-2xl">⚙️</span>
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/10"><Eye className="h-5 w-5 text-amber-200" /></span>
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-100/80">PERSONALIZE YOUR MUSHAF</p>
             <h2 className="mt-1 text-2xl font-extrabold tracking-tight">{translateUi(uiLanguage, 'settings')}</h2>
