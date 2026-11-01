@@ -51,18 +51,30 @@ jobs:
       - name: Generate Android project
         run: npx cap add android
 
-      - name: Add exact alarm permission for Android
+      - name: Add runtime permissions for Android
         run: |
           python3 - <<'PY'
           from pathlib import Path
           manifest = Path("android/app/src/main/AndroidManifest.xml")
           source = manifest.read_text()
-          permission = '    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />'
-          if "android.permission.SCHEDULE_EXACT_ALARM" not in source:
-              opening_tag_end = source.find(">", source.find("<manifest"))
-              if opening_tag_end < 0:
-                  raise SystemExit("Android manifest opening tag was not found")
-              source = source[:opening_tag_end + 1] + "\n" + permission + source[opening_tag_end + 1:]
+          permissions = [
+              "android.permission.ACCESS_COARSE_LOCATION",
+              "android.permission.ACCESS_FINE_LOCATION",
+              "android.permission.POST_NOTIFICATIONS",
+              "android.permission.RECEIVE_BOOT_COMPLETED",
+              "android.permission.WAKE_LOCK",
+              "android.permission.SCHEDULE_EXACT_ALARM",
+          ]
+          opening_tag_end = source.find(">", source.find("<manifest"))
+          if opening_tag_end < 0:
+              raise SystemExit("Android manifest opening tag was not found")
+          missing = [
+              f'    <uses-permission android:name="{name}" />'
+              for name in permissions
+              if f'android:name="{name}"' not in source
+          ]
+          if missing:
+              source = source[:opening_tag_end + 1] + "\n" + "\n".join(missing) + source[opening_tag_end + 1:]
               manifest.write_text(source)
           PY
 
