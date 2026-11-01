@@ -15,10 +15,6 @@
     "desktop:dev": "npm run build && electron .",
     "desktop:dist": "npm run build && electron-builder"
   },
-  "author": {
-    "name": "Bangla Mushaf Prayer Team",
-    "email": "maintainer@example.com"
-  },
   "dependencies": {
     "@capacitor/android": "^7.0.0",
     "@capacitor/core": "^7.0.0",
