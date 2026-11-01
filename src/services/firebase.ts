@@ -1,4 +1,6 @@
 import { initializeApp } from 'firebase/app';
+import { Capacitor } from '@capacitor/core';
+import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
 import {
   getFirestore,
   doc,
@@ -13,6 +15,7 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithCredential,
   setPersistence,
   browserLocalPersistence,
   signOut,
@@ -96,11 +99,25 @@ export async function testConnection() {
 testConnection();
 
 /**
- * Sign in using Google Auth popup
+ * Google sign-in:
+ * - Android/iOS: use the native Google account flow, then exchange its
+ *   credential into the Firebase JS SDK so Firestore listeners keep working.
+ * - Web: use Firebase's browser popup flow.
  */
 export async function signInWithGoogle(): Promise<User> {
-  await setPersistence(auth, browserLocalPersistence);
   try {
+    if (Capacitor.isNativePlatform()) {
+      const nativeResult = await FirebaseAuthentication.signInWithGoogle();
+      const idToken = nativeResult.credential?.idToken;
+      if (!idToken) {
+        throw new Error('Google sign-in returned no ID token. Check Android Firebase configuration and SHA-1.');
+      }
+      const credential = GoogleAuthProvider.credential(idToken);
+      const result = await signInWithCredential(auth, credential);
+      return result.user;
+    }
+
+    await setPersistence(auth, browserLocalPersistence);
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
   } catch (error) {
@@ -110,14 +127,17 @@ export async function signInWithGoogle(): Promise<User> {
 }
 
 /**
- * Sign out current user
+ * Sign out from both native and JavaScript Firebase sessions.
  */
 export async function logOut(): Promise<void> {
   try {
-    await signOut(auth);
+    if (Capacitor.isNativePlatform()) {
+      await FirebaseAuthentication.signOut();
+    }
   } catch (error) {
-    console.error('Sign Out Error:', error);
+    console.warn('Native Firebase sign-out failed:', error);
   }
+  await signOut(auth);
 }
 
 /**
