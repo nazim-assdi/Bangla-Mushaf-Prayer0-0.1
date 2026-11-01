@@ -1,0 +1,95 @@
+name: Build Android and Desktop Apps
+
+on:
+  push:
+    branches: [feature/full-navigation-settings-i18n]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    name: Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools platforms;android-35 build-tools;35.0.0
+      - run: npm install --legacy-peer-deps
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - run: npx cap add android
+      - name: Generate branded Android launcher icons
+        run: |
+          npm install --no-save sharp
+          node scripts/create-android-icons.cjs
+      - run: npx cap sync android
+      - name: Add exact alarm permission
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('android/app/src/main/AndroidManifest.xml')
+          s=p.read_text()
+          permission='    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />'
+          if 'android.permission.SCHEDULE_EXACT_ALARM' not in s:
+              i=s.find('>',s.find('<manifest'))
+              s=s[:i+1]+'\\n'+permission+s[i+1:]
+              p.write_text(s)
+          PY
+      - working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bangla-mushaf-android-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
+
+  desktop:
+    name: Desktop ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            artifact: windows-exe
+          - os: macos-latest
+            artifact: macos-dmg
+          - os: ubuntu-latest
+            artifact: linux-app
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm install --legacy-peer-deps
+      - run: npm run build
+      - name: Build Windows installer and portable EXE
+        if: runner.os == 'Windows'
+        run: npx electron-builder --win nsis portable
+      - name: Build macOS DMG and ZIP
+        if: runner.os == 'macOS'
+        run: npx electron-builder --mac dmg zip
+      - name: Build Linux AppImage and DEB
+        if: runner.os == 'Linux'
+        run: npx electron-builder --linux AppImage deb
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bangla-mushaf-${{ matrix.artifact }}
+          path: release/*
+          if-no-files-found: error
+          retention-days: 14
