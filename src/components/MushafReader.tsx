@@ -236,15 +236,17 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
       return;
     }
 
-    if (playingAyahKey && autoPlayNextAyah) {
-      const currentIndex = ayahs.findIndex((a) => a.verseKey === playingAyahKey);
-      if (currentIndex >= 0 && currentIndex < ayahs.length - 1) {
-        const nextAyah = ayahs[currentIndex + 1];
-        handlePlayAyah(nextAyah);
-      } else {
-        setIsPlaying(false);
-        setPlayingAyahKey(null);
+    if (playingAyahKey) {
+      if (autoPlayNextAyah) {
+        const currentIndex = ayahs.findIndex((a) => a.verseKey === playingAyahKey);
+        if (currentIndex >= 0 && currentIndex < ayahs.length - 1) {
+          const nextAyah = ayahs[currentIndex + 1];
+          handlePlayAyah(nextAyah);
+          return;
+        }
       }
+      setIsPlaying(false);
+      setPlayingAyahKey(null);
     }
   };
 
