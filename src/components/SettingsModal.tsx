@@ -91,17 +91,29 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   }, [keepScreenAwake]);
 
   return (
-    <div className="max-w-2xl mx-auto px-3 sm:px-6 py-6 pb-28 font-bangla space-y-6">
-      <div className="border-b border-stone-200 dark:border-stone-800 pb-3">
-        <h2 className="text-xl font-bold text-stone-900 dark:text-white">
-          {translateUi(uiLanguage, 'settings')}
-        </h2>
-        <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
-          আপনার পছন্দমত ফন্ট সাইজ, অডিও তেলাওয়াতকারী ও ডিসপ্লে কাস্টমাইজ করুন
-        </p>
-      </div>
+    <div className="mx-auto max-w-2xl space-y-5 px-3 py-5 pb-28 font-bangla sm:px-6 sm:py-6">
+      <header className="relative isolate overflow-hidden rounded-3xl border border-emerald-800/20 bg-gradient-to-br from-[#064e3b] via-[#0b6b50] to-[#123f3a] p-5 text-white shadow-lg shadow-emerald-950/10 sm:p-6">
+        <div aria-hidden="true" className="pointer-events-none absolute -right-8 -top-12 h-40 w-40 rounded-full border border-white/10" />
+        <div aria-hidden="true" className="pointer-events-none absolute -right-1 -top-5 h-28 w-28 rounded-full border border-amber-200/15" />
+        <div className="relative flex items-start gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-2xl">⚙️</span>
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-100/80">PERSONALIZE YOUR MUSHAF</p>
+            <h2 className="mt-1 text-2xl font-extrabold tracking-tight">{translateUi(uiLanguage, 'settings')}</h2>
+            <p className="mt-1 max-w-sm text-xs leading-relaxed text-emerald-50/85">পাঠের ধরন, ভাষা, ফন্ট, অডিও ও স্ক্রিনের অভিজ্ঞতা নিজের মতো সাজিয়ে নিন।</p>
+          </div>
+        </div>
+        <nav aria-label="Settings sections" className="relative mt-5 flex gap-2 overflow-x-auto pb-1 text-[11px] font-bold">
+          <a href="#settings-language" className="shrink-0 rounded-full border border-white/20 bg-white/10 px-3 py-2 hover:bg-white/20">ভাষা</a>
+          <a href="#settings-theme" className="shrink-0 rounded-full border border-white/20 bg-white/10 px-3 py-2 hover:bg-white/20">থিম</a>
+          <a href="#settings-font" className="shrink-0 rounded-full border border-white/20 bg-white/10 px-3 py-2 hover:bg-white/20">ফন্ট</a>
+          <a href="#settings-reciter" className="shrink-0 rounded-full border border-white/20 bg-white/10 px-3 py-2 hover:bg-white/20">তিলাওয়াত</a>
+          <a href="#settings-reading" className="shrink-0 rounded-full border border-white/20 bg-white/10 px-3 py-2 hover:bg-white/20">পাঠের অপশন</a>
+          <a href="#settings-about" className="shrink-0 rounded-full border border-white/20 bg-white/10 px-3 py-2 hover:bg-white/20">সম্পর্কে</a>
+        </nav>
+      </header>
 
-      <section className="rounded-2xl border border-emerald-200 bg-white p-5 shadow-sm dark:border-stone-800 dark:bg-stone-900 space-y-3">
+      <section id="settings-language" className="scroll-mt-4 rounded-2xl border border-emerald-200 bg-white p-5 shadow-sm dark:border-stone-800 dark:bg-stone-900 space-y-3">
         <h3 className="font-bold text-stone-900 dark:text-white">{translateUi(uiLanguage, 'language')}</h3>
         <p className="text-xs text-stone-500 dark:text-stone-400">{translateUi(uiLanguage, 'languageHelp')}</p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -123,7 +135,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       <OfflineTafsirDownload uiLanguage={uiLanguage} />
 
       {/* Premium theme gallery */}
-      <section className="relative isolate overflow-hidden rounded-[1.75rem] border border-amber-300/50 bg-gradient-to-br from-[#fffdf7] via-[#f8f4e9] to-[#efe6d2] p-4 shadow-xl shadow-stone-900/10 dark:border-stone-700 dark:from-[#211e19] dark:via-[#191713] dark:to-[#12110f] sm:p-5 space-y-5">
+      <section id="settings-theme" className="scroll-mt-4 relative isolate overflow-hidden rounded-[1.75rem] border border-amber-300/50 bg-gradient-to-br from-[#fffdf7] via-[#f8f4e9] to-[#efe6d2] p-4 shadow-xl shadow-stone-900/10 dark:border-stone-700 dark:from-[#211e19] dark:via-[#191713] dark:to-[#12110f] sm:p-5 space-y-5">
         <div className="pointer-events-none absolute -right-12 -top-14 h-40 w-40 rounded-full border border-amber-500/15" />
         <div className="pointer-events-none absolute -right-6 -top-8 h-28 w-28 rounded-full border border-amber-500/15" />
         <div className="relative flex items-start justify-between gap-3">
@@ -196,7 +208,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       </section>
 
       {/* Font Size Adjusters */}
-      <div className="bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200 dark:border-stone-800 space-y-5">
+      <div id="settings-font" className="scroll-mt-4 bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200 dark:border-stone-800 space-y-5">
         <label className="text-sm font-bold text-stone-900 dark:text-white flex items-center gap-2">
           <Type className="w-4 h-4 text-emerald-600" />
           <span>{translateUi(uiLanguage, 'fontSizeSettings')}</span>
@@ -283,7 +295,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       </section>
 
       {/* Reciter Picker */}
-      <div className="bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200 dark:border-stone-800 space-y-4">
+      <div id="settings-reciter" className="scroll-mt-4 bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200 dark:border-stone-800 space-y-4">
         <label className="text-sm font-bold text-stone-900 dark:text-white flex items-center gap-2">
           <Volume2 className="w-4 h-4 text-emerald-600" />
           <span>{translateUi(uiLanguage, 'reciter')}</span>
@@ -322,7 +334,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       </div>
 
       {/* Visibility Toggles */}
-      <div className="bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200 dark:border-stone-800 space-y-3">
+      <div id="settings-reading" className="scroll-mt-4 bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200 dark:border-stone-800 space-y-3">
         <label className="text-sm font-bold text-stone-900 dark:text-white flex items-center gap-2">
           <Eye className="w-4 h-4 text-emerald-600" />
           <span>{translateUi(uiLanguage, 'visibilityOptions')}</span>
@@ -388,7 +400,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       </div>
 
       {/* About Box */}
-      <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-xs text-stone-600 dark:border-stone-800 dark:bg-stone-900 dark:text-stone-300 space-y-2">
+      <section id="settings-about" className="scroll-mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-xs text-stone-600 dark:border-stone-800 dark:bg-stone-900 dark:text-stone-300 space-y-2">
         <h4 className="text-sm font-bold text-stone-900 dark:text-white">{translateUi(uiLanguage, 'aboutApp')}</h4>
         <p className="leading-relaxed">{translateUi(uiLanguage, 'aboutDescription')}</p>
         <p className="border-t border-stone-200 pt-2 text-stone-500 dark:border-stone-800 dark:text-stone-400">{translateUi(uiLanguage, 'sourceNote')}</p>
