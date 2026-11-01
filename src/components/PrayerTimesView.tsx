@@ -117,10 +117,11 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
         longitude: activeLng,
         calculationMethod,
         asrJuristic,
+        timeZoneId,
       }).catch((error) => console.warn('Could not refresh prayer alerts:', error));
     }, 400);
     return () => window.clearTimeout(timer);
-  }, [prayerAlerts, makruhAlerts, activeLat, activeLng, calculationMethod, asrJuristic]);
+  }, [prayerAlerts, makruhAlerts, activeLat, activeLng, calculationMethod, asrJuristic, timeZoneId]);
 
   const timezoneOffsetHours = getTimeZoneOffsetHours(currentTime, timeZoneId);
   const timezoneLabel = `${timeZoneId} · UTC${timezoneOffsetHours >= 0 ? '+' : ''}${Number(timezoneOffsetHours.toFixed(2))}`;
