@@ -7,12 +7,19 @@ import { UiLanguage, formatUiNumber, translateUi } from '../services/i18n';
 type Coordinates = { lat: number; lng: number; nameBn: string; accuracy?: number };
 
 export const QiblaCompassView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLanguage }) => {
-  const [selectedDistrictId, setSelectedDistrictId] = useState('dhaka');
+  const [selectedDistrictId, setSelectedDistrictId] = useState(() => {
+    const saved = localStorage.getItem('mushaf_qibla_district');
+    return saved && BANGLADESH_DISTRICTS.some((district) => district.id === saved) ? saved : 'dhaka';
+  });
   const [customCoords, setCustomCoords] = useState<Coordinates | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
   const [geoError, setGeoError] = useState('');
   const [deviceHeading, setDeviceHeading] = useState<number | null>(null);
   const [sensorError, setSensorError] = useState('');
+
+  useEffect(() => {
+    localStorage.setItem('mushaf_qibla_district', selectedDistrictId);
+  }, [selectedDistrictId]);
 
   const currentDistrict = useMemo(
     () => BANGLADESH_DISTRICTS.find((district) => district.id === selectedDistrictId) || BANGLADESH_DISTRICTS[0],
