@@ -24,6 +24,10 @@ interface SettingsModalProps {
   setShowTranslation: (show: boolean) => void;
   selectedReciterId: string;
   setSelectedReciterId: (id: string) => void;
+  audioPlaybackSpeed: number;
+  setAudioPlaybackSpeed: (speed: number) => void;
+  autoPlayNextAyah: boolean;
+  setAutoPlayNextAyah: (enabled: boolean) => void;
   theme: ThemeMode;
   setTheme: (t: ThemeMode) => void;
   uiLanguage: UiLanguage;
@@ -45,6 +49,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   setShowTranslation,
   selectedReciterId,
   setSelectedReciterId,
+  audioPlaybackSpeed,
+  setAudioPlaybackSpeed,
+  autoPlayNextAyah,
+  setAutoPlayNextAyah,
   theme,
   setTheme,
   uiLanguage,
@@ -332,6 +340,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           })}
         </div>
       </div>
+
+      <section className="rounded-2xl border border-emerald-200 bg-white p-5 shadow-sm dark:border-stone-800 dark:bg-stone-900 space-y-4">
+        <div>
+          <h3 className="text-sm font-bold text-stone-900 dark:text-white">অডিও প্লেব্যাক সেটিংস</h3>
+          <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">তিলাওয়াতের গতি এবং আয়াত শেষে পরবর্তী আয়াত চালানোর নিয়ম নির্ধারণ করুন।</p>
+        </div>
+        <label className="flex items-center justify-between gap-4 rounded-xl bg-stone-50 p-3 dark:bg-stone-800">
+          <span><span className="block text-sm font-semibold text-stone-900 dark:text-white">তিলাওয়াতের গতি</span><span className="text-xs text-stone-500">ধীর বা স্বাভাবিক গতিতে শুনুন</span></span>
+          <select value={audioPlaybackSpeed} onChange={(event) => setAudioPlaybackSpeed(Number(event.target.value))} className="rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm font-bold text-stone-800 dark:border-stone-700 dark:bg-stone-900 dark:text-white" aria-label="তিলাওয়াতের গতি">
+            <option value="0.75">০.৭৫x</option><option value="0.9">০.৯x</option><option value="1">১.০x</option><option value="1.1">১.১x</option><option value="1.25">১.২৫x</option><option value="1.5">১.৫x</option>
+          </select>
+        </label>
+        <div className="flex items-center justify-between gap-4 rounded-xl bg-stone-50 p-3 dark:bg-stone-800">
+          <span><span className="block text-sm font-semibold text-stone-900 dark:text-white">পরবর্তী আয়াত স্বয়ংক্রিয় চালু</span><span className="text-xs text-stone-500">একটি আয়াত শেষ হলে পরেরটি চালু হবে</span></span>
+          <button type="button" role="switch" aria-checked={autoPlayNextAyah} onClick={() => setAutoPlayNextAyah((value) => !value)} className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${autoPlayNextAyah ? 'bg-emerald-600' : 'bg-stone-300 dark:bg-stone-700'}`}>
+            <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-transform ${autoPlayNextAyah ? 'translate-x-6' : 'translate-x-1'}`} />
+          </button>
+        </div>
+      </section>
 
       {/* Visibility Toggles */}
       <div id="settings-reading" className="scroll-mt-4 bg-white dark:bg-stone-900 rounded-2xl p-5 border border-stone-200 dark:border-stone-800 space-y-3">
