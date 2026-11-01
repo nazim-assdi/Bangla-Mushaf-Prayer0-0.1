@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { toBanglaNumber, toEnglishNumber, toArabicNumber, formatDurationToBangla } from './banglaNumbers';
 import { calculateQiblaDirection, calculateDistanceToKaaba, getHeadingDeviation } from './qibla';
 import { calculatePrayerTimes, BANGLADESH_DISTRICTS, getWaqtsStatus, formatTimeEn } from './prayerTimes';
-import { getTimeZoneForCoordinates, getTimeZoneOffsetHours, getDatePartsInTimeZone } from '../services/worldTimeZone';
+import { getTimeZoneOffsetHours, getDatePartsInTimeZone } from '../services/worldTimeZone';
 
 test('Bengali number conversion works correctly', () => {
   assert.equal(toBanglaNumber(12345), '১২৩৪৫');
