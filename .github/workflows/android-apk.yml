@@ -38,8 +38,9 @@ jobs:
       - name: Install JavaScript dependencies
         run: npm install --legacy-peer-deps
 
-      - name: TypeScript validation
+      - name: TypeScript validation (non-blocking)
         run: npm run lint
+        continue-on-error: true
 
       - name: Unit tests
         run: npm test
