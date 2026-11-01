@@ -689,7 +689,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
                             style={{ fontSize: `${banglaFontSize}px` }}
                           >
                             <span className="font-semibold text-emerald-800 dark:text-emerald-400 mr-1.5">
-                              ({langMeta.nativeName}) {translateUi(uiLanguage, 'translation')}:
+                              ({langMeta.nativeName})
                             </span>
                             {translationText}
                           </p>
@@ -716,7 +716,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
                           style={{ fontSize: `${banglaFontSize}px` }}
                         >
                           <span className="font-semibold text-emerald-800 dark:text-emerald-400 mr-1.5">
-                            ({langMeta.nativeName}):
+                            ({langMeta.nativeName})
                           </span>
                           {translationText}
                         </p>
