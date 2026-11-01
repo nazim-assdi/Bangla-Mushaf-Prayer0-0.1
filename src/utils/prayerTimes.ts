@@ -195,8 +195,15 @@ export function calculatePrayerTimes(
   const declination = deg(Math.asin(Math.sin(rad(e)) * Math.sin(rad(L))));
 
   // Equation of Time in minutes
-  const RA = deg(Math.atan2(Math.cos(rad(e)) * Math.sin(rad(L)), Math.cos(rad(L)))) / 15;
-  const eqTime = (q / 15 - RA) * 60; // in minutes
+  // atan2 returns right ascension in the range -12..+12 hours. Convert it
+  // to the same 0..24h range as the mean longitude before subtracting; without
+  // this normalization the equation of time can jump by almost 24 hours.
+  const rawRA = deg(Math.atan2(Math.cos(rad(e)) * Math.sin(rad(L)), Math.cos(rad(L)))) / 15;
+  const RA = (rawRA + 24) % 24;
+  let eqTimeHours = q / 15 - RA;
+  if (eqTimeHours > 12) eqTimeHours -= 24;
+  if (eqTimeHours < -12) eqTimeHours += 24;
+  const eqTime = eqTimeHours * 60; // minutes
 
   // Solar noon (Dhuhr) in fractional hours
   const dhuhrHour = 12 + timezoneOffsetHours - lng / 15 - eqTime / 60;
