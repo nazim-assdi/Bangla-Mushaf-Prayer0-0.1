@@ -21,20 +21,6 @@ import { LanguageSelectionScreen } from './components/LanguageSelectionScreen';
 import { ReadingPlanner } from './components/ReadingPlanner';
 import { ARABIC_FONTS } from './services/arabicFonts';
 import { OfflineIndicator } from './components/OfflineIndicator';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import {
-  saveBookmarkToFirestore,
-  deleteBookmarkFromFirestore,
-  subscribeToBookmarks,
-  saveUserProfile,
-  subscribeToUserProfile,
-} from './services/firebase';
-import {
-  syncUserToCloudSQL,
-  syncSettingsToCloudSQL,
-  addBookmarkToCloudSQL,
-  deleteBookmarkFromCloudSQL,
-} from './services/apiSync';
 
 interface BookmarkItem {
   id?: string;
@@ -77,7 +63,6 @@ function AppContent() {
     return saved === 'bn' || saved === 'en' || saved === 'ar' || saved === 'hi' || saved === 'ur' || saved === 'tr' ? saved : null;
   });
   const [languageDraft, setLanguageDraft] = useState<UiLanguage>('en');
-  const { user } = useAuth();
 
   // Bookmarks & last read state with localStorage sync
   const [bookmarks, setBookmarks] = useState<BookmarkItem[]>(() => {
@@ -105,59 +90,6 @@ function AppContent() {
     } catch (e) {}
     return { surahId: 1, ayahNumber: 1, surahNameBn: 'আল-ফাতিহা' };
   });
-
-  // Firestore is the source of truth for a signed-in account.
-  // Always apply snapshots, including empty ones, so another account's local data
-  // can never be copied into this account or resurrect deleted bookmarks.
-  useEffect(() => {
-    if (!user) return;
-
-    void syncUserToCloudSQL(user);
-    const unsubscribe = subscribeToBookmarks(user.uid, (remoteBookmarks) => {
-      setBookmarks(remoteBookmarks);
-    });
-
-    return () => unsubscribe();
-  }, [user]);
-
-  useEffect(() => {
-    if (!user) return;
-    const unsubscribe = subscribeToUserProfile(user.uid, (profile) => {
-      if (profile) {
-        if (profile.theme) setTheme(profile.theme as ThemeMode);
-        if (profile.arabicFontSize) setArabicFontSize(profile.arabicFontSize);
-        if (profile.banglaFontSize) setBanglaFontSize(profile.banglaFontSize);
-        if (profile.selectedReciterId) setSelectedReciterId(profile.selectedReciterId);
-        if (profile.currentLanguage) setCurrentLanguage(profile.currentLanguage as QuranLanguage);
-        if (profile.lastRead) setLastRead(profile.lastRead);
-      }
-    });
-    return () => unsubscribe();
-  }, [user]);
-
-  // Sync to Firestore and Cloud SQL on user settings and last read changes
-  useEffect(() => {
-    if (user && lastRead) {
-      saveUserProfile(user.uid, {
-        lastRead,
-        theme,
-        arabicFontSize,
-        banglaFontSize,
-        selectedReciterId,
-        currentLanguage,
-      });
-      syncSettingsToCloudSQL(user, {
-        theme,
-        arabicFontSize,
-        banglaFontSize,
-        selectedReciterId,
-        currentLanguage,
-        lastReadSurahId: lastRead.surahId,
-        lastReadAyahNumber: lastRead.ayahNumber,
-        lastReadSurahNameBn: lastRead.surahNameBn,
-      });
-    }
-  }, [lastRead, theme, arabicFontSize, banglaFontSize, selectedReciterId, currentLanguage, user]);
 
   useEffect(() => {
     try {
@@ -237,10 +169,6 @@ function AppContent() {
     const bookmarkId = verseKey.replace(':', '_');
     if (exists) {
       setBookmarks((prev) => prev.filter((b) => b.verseKey !== verseKey));
-      if (user) {
-        deleteBookmarkFromFirestore(user.uid, bookmarkId);
-        deleteBookmarkFromCloudSQL(user, verseKey);
-      }
     } else {
       const newBookmark: BookmarkItem = {
         id: bookmarkId,
@@ -250,31 +178,11 @@ function AppContent() {
         addedAt: new Date().toISOString(),
       };
       setBookmarks((prev) => [newBookmark, ...prev]);
-      if (user) {
-        saveBookmarkToFirestore(user.uid, {
-          id: bookmarkId,
-          userId: user.uid,
-          verseKey,
-          surahNameBn,
-          ayahNumber,
-          addedAt: newBookmark.addedAt,
-        });
-        addBookmarkToCloudSQL(user, {
-          verseKey,
-          surahNameBn,
-          ayahNumber,
-          addedAt: newBookmark.addedAt,
-        });
-      }
     }
   };
 
   const handleRemoveBookmark = (verseKey: string) => {
     setBookmarks((prev) => prev.filter((b) => b.verseKey !== verseKey));
-    if (user) {
-      deleteBookmarkFromFirestore(user.uid, verseKey.replace(':', '_'));
-      deleteBookmarkFromCloudSQL(user, verseKey);
-    }
   };
 
   const handleQuranLanguageChange = (language: QuranLanguage) => {
@@ -448,9 +356,5 @@ function AppContent() {
 }
 
 export default function App() {
-  return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
-  );
+  return <AppContent />;
 }
