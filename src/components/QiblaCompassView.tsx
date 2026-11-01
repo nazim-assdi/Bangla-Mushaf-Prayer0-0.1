@@ -115,7 +115,7 @@ export const QiblaCompassView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangu
   const shownHeading = deviceHeading === null ? 0 : deviceHeading;
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-3 py-4 pb-28 font-bangla sm:px-5 sm:py-6">
+    <div className="qibla-screen mx-auto w-full max-w-5xl px-3 py-4 pb-28 font-bangla sm:px-5 sm:py-6">
       <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-3">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
