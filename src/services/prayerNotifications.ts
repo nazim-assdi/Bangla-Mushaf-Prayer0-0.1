@@ -1,3 +1,4 @@
+import { getDatePartsInTimeZone, getTimeZoneOffsetHours } from './worldTimeZone';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications, type LocalNotificationSchema } from '@capacitor/local-notifications';
 import { calculatePrayerTimes } from '../utils/prayerTimes';
@@ -13,6 +14,7 @@ export interface PrayerAlertOptions {
   longitude: number;
   calculationMethod: string;
   asrJuristic: 'hanafi' | 'shafii';
+  timeZoneId?: string;
 }
 
 /** Schedules the next seven days on Android/iOS; native alarms survive app closure. */
@@ -61,22 +63,25 @@ export async function schedulePrayerAlerts(options: PrayerAlertOptions, requestP
     ISNA: { fajrAngle: 15, ishaAngle: 15 },
   };
   const angles = methodAngles[options.calculationMethod] || methodAngles.Karachi;
-  const timezoneOffsetHours = -now.getTimezoneOffset() / 60;
+  const timezoneOffsetHours = options.timeZoneId
+    ? getTimeZoneOffsetHours(now, options.timeZoneId)
+    : -now.getTimezoneOffset() / 60;
 
   for (let day = 0; day < 7; day++) {
-    const date = new Date(now);
-    date.setDate(now.getDate() + day);
-    const times = calculatePrayerTimes(date, options.latitude, options.longitude, timezoneOffsetHours, {
+    const date = new Date(now.getTime() + day * 86400000);
+    const dayOffset = options.timeZoneId ? getTimeZoneOffsetHours(date, options.timeZoneId) : timezoneOffsetHours;
+    const times = calculatePrayerTimes(date, options.latitude, options.longitude, dayOffset, {
       ...angles,
       asrJuristic: options.asrJuristic,
-    });
-    const dateKey = Number(date.getFullYear().toString() + String(date.getMonth() + 1).padStart(2, '0') + String(date.getDate()).padStart(2, '0'));
+    }, options.timeZoneId);
+    const localDate = options.timeZoneId ? getDatePartsInTimeZone(date, options.timeZoneId) : { year: date.getFullYear(), month: date.getMonth() + 1, day: date.getDate() };
+    const dateKey = Number(localDate.year.toString() + String(localDate.month).padStart(2, '0') + String(localDate.day).padStart(2, '0'));
     const add = (index: number, at: Date, title: string, body: string) => {
       if (at.getTime() <= now.getTime()) return;
       notifications.push({
         id: ID_START + (dateKey % 10_000_000) * 10 + index,
         title,
-        body: body + ' · নির্ধারিত সময়: ' + at.toLocaleString('bn-BD'),
+        body: body + ' · নির্ধারিত সময়: ' + at.toLocaleString('bn-BD', options.timeZoneId ? { timeZone: options.timeZoneId } : undefined),
         channelId: CHANNEL_ID,
         schedule: { at, allowWhileIdle: true },
         extra: { kind: 'prayer-alert', timestamp: at.toISOString() },
