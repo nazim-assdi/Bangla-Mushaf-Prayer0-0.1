@@ -26,13 +26,21 @@ import {
 import { formatDurationToBangla } from '../utils/banglaNumbers';
 import { schedulePrayerAlerts, cancelPrayerAlerts, refreshPrayerAlertsIfPermitted } from '../services/prayerNotifications';
 import { UiLanguage, formatUiNumber, translateUi } from '../services/i18n';
+import { getTimeZoneForCoordinates, getTimeZoneOffsetHours, formatDateInTimeZone } from '../services/worldTimeZone';
 
 export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLanguage }) => {
   const [selectedDistrictId, setSelectedDistrictId] = useState<string>(() => {
     const saved = localStorage.getItem('mushaf_prayer_district');
     return saved && BANGLADESH_DISTRICTS.some((district) => district.id === saved) ? saved : 'dhaka';
   });
-  const [customCoords, setCustomCoords] = useState<{ lat: number; lng: number; nameBn: string; accuracy?: number } | null>(null);
+  const [customCoords, setCustomCoords] = useState<{ lat: number; lng: number; nameBn: string; accuracy?: number } | null>(() => {
+    try { const saved = localStorage.getItem('mushaf_gps_location'); return saved ? JSON.parse(saved) : null; } catch { return null; }
+  });
+  const [timeZoneId, setTimeZoneId] = useState<string>(() => {
+    const saved = localStorage.getItem('mushaf_gps_timezone');
+    if (saved) { try { new Intl.DateTimeFormat('en-US', { timeZone: saved }); return saved; } catch {} }
+    return 'Asia/Dhaka';
+  });
   const [geoError, setGeoError] = useState('');
   const [geoLoading, setGeoLoading] = useState(false);
   const [asrJuristic, setAsrJuristic] = useState<'hanafi' | 'shafii'>(() => localStorage.getItem('mushaf_asr_juristic') === 'shafii' ? 'shafii' : 'hanafi');
@@ -54,6 +62,11 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
   useEffect(() => { localStorage.setItem('mushaf_prayer_district', selectedDistrictId); }, [selectedDistrictId]);
   useEffect(() => { localStorage.setItem('mushaf_asr_juristic', asrJuristic); }, [asrJuristic]);
   useEffect(() => { localStorage.setItem('mushaf_prayer_method', calculationMethod); }, [calculationMethod]);
+  useEffect(() => { localStorage.setItem('mushaf_gps_timezone', timeZoneId); }, [timeZoneId]);
+  useEffect(() => {
+    if (customCoords) localStorage.setItem('mushaf_gps_location', JSON.stringify(customCoords));
+    else localStorage.removeItem('mushaf_gps_location');
+  }, [customCoords]);
 
   const handleScheduleAlerts = async () => {
     setAlarmLoading(true);
@@ -65,7 +78,7 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
       } else {
         const result = await schedulePrayerAlerts({
           prayerAlerts, makruhAlerts, latitude: activeLat, longitude: activeLng,
-          calculationMethod, asrJuristic,
+          calculationMethod, asrJuristic, timeZoneId,
         });
         setAlarmMessage(`${result.scheduled}টি নোটিফিকেশন আগামী ৭ দিনের জন্য সেট হয়েছে। Exact alarm: ${result.exactAlarm}.`);
       }
@@ -109,8 +122,8 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
     return () => window.clearTimeout(timer);
   }, [prayerAlerts, makruhAlerts, activeLat, activeLng, calculationMethod, asrJuristic]);
 
-  const timezoneOffsetHours = -currentTime.getTimezoneOffset() / 60;
-  const timezoneLabel = 'UTC' + (timezoneOffsetHours >= 0 ? '+' : '') + timezoneOffsetHours;
+  const timezoneOffsetHours = getTimeZoneOffsetHours(currentTime, timeZoneId);
+  const timezoneLabel = `${timeZoneId} · UTC${timezoneOffsetHours >= 0 ? '+' : ''}${Number(timezoneOffsetHours.toFixed(2))}`;
 
   const config: PrayerTimeConfig = {
     fajrAngle: CALCULATION_METHODS[calculationMethod]?.fajrAngle || 18,
@@ -119,12 +132,12 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
   };
 
   const prayerTimes = useMemo(() => {
-    return calculatePrayerTimes(currentTime, activeLat, activeLng, timezoneOffsetHours, config);
-  }, [currentTime, activeLat, activeLng, timezoneOffsetHours, asrJuristic, calculationMethod]);
+    return calculatePrayerTimes(currentTime, activeLat, activeLng, timezoneOffsetHours, config, timeZoneId);
+  }, [currentTime, activeLat, activeLng, timezoneOffsetHours, timeZoneId, asrJuristic, calculationMethod]);
 
   const waqts = useMemo(() => {
-    return getWaqtsStatus(prayerTimes, currentTime);
-  }, [prayerTimes, currentTime]);
+    return getWaqtsStatus(prayerTimes, currentTime, timeZoneId);
+  }, [prayerTimes, currentTime, timeZoneId]);
 
   // Find next waqt and countdown
   const nextWaqt = waqts.find((w) => w.isNext) || waqts[0];
@@ -140,17 +153,33 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
     if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
     setGeoLoading(true);
     setGeoError('');
+    let zoneResolved = false;
     watchIdRef.current = navigator.geolocation.watchPosition(
-      (pos) => {
+      async (pos) => {
         setCustomCoords({
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
           accuracy: pos.coords.accuracy,
-          nameBn: 'Current GPS location',
+          nameBn: 'GPS · Global location',
         });
         setLastGpsUpdate(new Date(pos.timestamp));
-        setGpsLive(true);
-        setGeoLoading(false);
+        if (!zoneResolved) {
+          try {
+            const detectedZone = await getTimeZoneForCoordinates(pos.coords.latitude, pos.coords.longitude);
+            setTimeZoneId(detectedZone);
+            zoneResolved = true;
+            setGpsLive(true);
+            setGeoError('');
+          } catch {
+            setGeoError('GPS পাওয়া গেছে, কিন্তু World Time Zone শনাক্ত করা যায়নি। ইন্টারনেট চালু করে আবার GPS চাপুন।');
+            setGpsLive(false);
+          } finally {
+            setGeoLoading(false);
+          }
+        } else {
+          setGpsLive(true);
+          setGeoLoading(false);
+        }
       },
       (err) => {
         const messages: Record<number, string> = {
@@ -178,6 +207,7 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
     setGpsLive(false);
     setLastGpsUpdate(null);
     setCustomCoords(null);
+    setTimeZoneId('Asia/Dhaka');
     setSelectedDistrictId(districtId);
   };
 
@@ -297,14 +327,14 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
               <div className="p-2.5 rounded-xl bg-black/20 border border-white/10">
                 <p className="text-[11px] text-emerald-200">সেহরি শেষ (ফজর)</p>
                 <p className="text-base font-bold text-white mt-0.5">
-                  {formatTimeBn(prayerTimes.sehriEnd)}
+                  {formatTimeBn(prayerTimes.sehriEnd, timeZoneId)}
                 </p>
               </div>
 
               <div className="p-2.5 rounded-xl bg-black/20 border border-white/10">
                 <p className="text-[11px] text-amber-200">ইফতার (মাগরিব)</p>
                 <p className="text-base font-bold text-amber-300 mt-0.5">
-                  {formatTimeBn(prayerTimes.maghrib)}
+                  {formatTimeBn(prayerTimes.maghrib, timeZoneId)}
                 </p>
               </div>
             </div>
@@ -321,7 +351,7 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
         <h3 className="text-base font-bold text-stone-900 dark:text-white mb-3 flex items-center gap-2">
           <span>৫ ওয়াক্ত নামাজের নির্ধারিত সময়সূচী</span>
           <span className="text-xs font-normal text-stone-500">
-            ({currentTime.toLocaleDateString('bn-BD', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })})
+            ({formatDateInTimeZone(currentTime, timeZoneId)})
           </span>
         </h3>
 
@@ -409,7 +439,7 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
               <p className="text-[11px] text-stone-500">সূর্যোদয়ের ১৫ মিনিট পর শুরু</p>
             </div>
             <span className="font-bold text-emerald-700 dark:text-emerald-400 text-sm">
-              {formatTimeBn(prayerTimes.ishraq)} হতে
+              {formatTimeBn(prayerTimes.ishraq, timeZoneId)} হতে
             </span>
           </div>
 
@@ -419,7 +449,7 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
               <p className="text-[11px] text-stone-500">রাতের শেষ তৃতীয়াংশ</p>
             </div>
             <span className="font-bold text-emerald-700 dark:text-emerald-400 text-sm">
-              {formatTimeBn(prayerTimes.tahajjud)} হতে ফজর পর্যন্ত
+              {formatTimeBn(prayerTimes.tahajjud, timeZoneId)} হতে ফজর পর্যন্ত
             </span>
           </div>
         </div>
@@ -437,17 +467,17 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <div className="rounded-xl border border-amber-200/80 bg-white p-3 dark:border-amber-900/50 dark:bg-stone-900">
             <p className="text-xs text-stone-500 dark:text-stone-400">সূর্যোদয়</p>
-            <p className="mt-1 text-lg font-bold text-stone-900 dark:text-white">{formatTimeBn(prayerTimes.sunrise)}</p>
+            <p className="mt-1 text-lg font-bold text-stone-900 dark:text-white">{formatTimeBn(prayerTimes.sunrise, timeZoneId)}</p>
             <p className="text-[10px] text-amber-700 dark:text-amber-300">সূর্য ওঠার সময় সতর্কতা</p>
           </div>
           <div className="rounded-xl border border-amber-200/80 bg-white p-3 dark:border-amber-900/50 dark:bg-stone-900">
             <p className="text-xs text-stone-500 dark:text-stone-400">মধ্যাহ্ন / যাওয়াল</p>
-            <p className="mt-1 text-lg font-bold text-stone-900 dark:text-white">{formatTimeBn(prayerTimes.dhuhr)}</p>
+            <p className="mt-1 text-lg font-bold text-stone-900 dark:text-white">{formatTimeBn(prayerTimes.dhuhr, timeZoneId)}</p>
             <p className="text-[10px] text-amber-700 dark:text-amber-300">স্থানীয় সময়সূচি মিলিয়ে নিন</p>
           </div>
           <div className="rounded-xl border border-amber-200/80 bg-white p-3 dark:border-amber-900/50 dark:bg-stone-900">
             <p className="text-xs text-stone-500 dark:text-stone-400">সূর্যাস্ত</p>
-            <p className="mt-1 text-lg font-bold text-stone-900 dark:text-white">{formatTimeBn(prayerTimes.sunset)}</p>
+            <p className="mt-1 text-lg font-bold text-stone-900 dark:text-white">{formatTimeBn(prayerTimes.sunset, timeZoneId)}</p>
             <p className="text-[10px] text-amber-700 dark:text-amber-300">সূর্য ডোবার সময় সতর্কতা</p>
           </div>
         </div>
