@@ -1,0 +1,74 @@
+name: Build Android and Windows Apps
+
+on:
+  push:
+    branches: [feature/full-navigation-settings-i18n]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    name: Android APK on personal PC
+    runs-on: [self-hosted, Windows, X64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools platforms;android-35 build-tools;35.0.0
+      - run: npm install --legacy-peer-deps
+      - name: TypeScript validation (non-blocking)
+        run: npm run lint
+        continue-on-error: true
+      - run: npm test
+      - run: npm run build
+      - run: npx cap add android
+      - name: Generate branded Android launcher icons
+        run: node scripts/create-android-icons.cjs
+      - name: Add exact alarm permission
+        shell: pwsh
+        run: |
+          $manifest = "android/app/src/main/AndroidManifest.xml"
+          $source = Get-Content $manifest -Raw
+          $permission = '    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />'
+          if ($source -notmatch 'android.permission.SCHEDULE_EXACT_ALARM') {
+            $source = $source -replace '(<manifest[^>]*>)', ('$1' + "`n" + $permission)
+            Set-Content -Path $manifest -Value $source -NoNewline
+          }
+      - run: npx cap sync android
+      - name: Build APK
+        working-directory: android
+        shell: pwsh
+        run: .\gradlew.bat assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bangla-mushaf-android-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
+
+  windows:
+    name: Windows EXE on personal PC
+    runs-on: [self-hosted, Windows, X64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --legacy-peer-deps
+      - run: npm run build
+      - name: Build Windows installer and portable EXE
+        run: npx electron-builder --win nsis portable --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bangla-mushaf-windows-exe
+          path: release/*
+          if-no-files-found: error
+          retention-days: 14

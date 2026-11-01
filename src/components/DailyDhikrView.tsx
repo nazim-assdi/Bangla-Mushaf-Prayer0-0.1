@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { UiLanguage, formatUiNumber, translateUi } from '../services/i18n';
 import {
   Sparkles,
   RotateCcw,
@@ -23,7 +24,7 @@ import {
   Moon,
   Info,
 } from 'lucide-react';
-import { toBanglaNumber, toArabicNumber } from '../utils/banglaNumbers';
+import { toArabicNumber } from '../utils/banglaNumbers';
 import {
   MASNUN_ADHKAAR,
   ADHKAR_CATEGORIES,
@@ -34,7 +35,7 @@ import { useAuth } from '../context/AuthContext';
 import { saveDhikrProgress } from '../services/firebase';
 import { saveDhikrToCloudSQL } from '../services/apiSync';
 
-export const DailyDhikrView: React.FC = () => {
+export const DailyDhikrView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLanguage }) => {
   const [selectedCategory, setSelectedCategory] = useState<AdhkarCategory>('morning');
   const [selectedId, setSelectedId] = useState<string>(() => {
     const morningFirst = MASNUN_ADHKAAR.find((d) => d.categoryId === 'morning');
@@ -195,7 +196,7 @@ export const DailyDhikrView: React.FC = () => {
 
   const handleCopy = (dhikr: MasnunDhikr, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    const text = `${dhikr.titleBn} (${dhikr.categoryBn})\n\n${dhikr.arabic}\n\nউচ্চারণ: ${dhikr.transliterationBn}\n\nঅর্থ: ${dhikr.meaningBn}\n\nফজিলত: ${dhikr.virtueBn}`;
+    const text = `${dhikr.titleBn} (${dhikr.categoryBn})\n\n${dhikr.arabic}\n\nউচ্চারণ: ${dhikr.transliterationBn}\n\nঅর্থ: ${uiLanguage === 'bn' ? dhikr.meaningBn : translateUi(uiLanguage, 'noTranslationAvailable')}\n\nফজিলত: ${uiLanguage === 'bn' ? dhikr.virtueBn : ''}`;
     navigator.clipboard.writeText(text);
     setCopiedId(dhikr.id);
     setTimeout(() => setCopiedId(null), 2000);
@@ -287,7 +288,7 @@ export const DailyDhikrView: React.FC = () => {
           <div className="flex items-center gap-2">
             <span>ক্যাটেগরি সম্পন্ন:</span>
             <span className="font-bold text-amber-300 bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-700">
-              {toBanglaNumber(completedInCurrentCategory)} / {toBanglaNumber(filteredAdhkar.length)}
+              {formatUiNumber(completedInCurrentCategory, uiLanguage)} / {formatUiNumber(filteredAdhkar.length, uiLanguage)}
             </span>
           </div>
 
@@ -338,7 +339,7 @@ export const DailyDhikrView: React.FC = () => {
                   : 'bg-white dark:bg-stone-900 border-stone-200 dark:border-stone-800 text-stone-700 dark:text-stone-300 hover:border-emerald-400 hover:bg-stone-50 dark:hover:bg-stone-800'
               }`}
             >
-              <span>{cat.icon}</span>
+              
               <span>{cat.nameBn}</span>
               <span
                 className={`text-[10px] px-1.5 py-0.2 rounded-full ${
@@ -347,7 +348,7 @@ export const DailyDhikrView: React.FC = () => {
                     : 'bg-stone-100 dark:bg-stone-800 text-stone-500'
                 }`}
               >
-                {toBanglaNumber(countInCat)}
+                {formatUiNumber(countInCat, uiLanguage)}
               </span>
             </button>
           );
@@ -400,7 +401,7 @@ export const DailyDhikrView: React.FC = () => {
                 >
                   {done && <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />}
                   <span>
-                    {toBanglaNumber(index + 1)}. {d.titleBn.split('(')[0]}
+                    {formatUiNumber(index + 1, uiLanguage)}. {d.titleBn.split('(')[0]}
                   </span>
                   <span
                     className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
@@ -411,7 +412,7 @@ export const DailyDhikrView: React.FC = () => {
                         : 'bg-stone-100 dark:bg-stone-800 text-stone-500'
                     }`}
                   >
-                    {toBanglaNumber(count)}/{toBanglaNumber(d.targetCount)}
+                    {formatUiNumber(count, uiLanguage)}/{formatUiNumber(d.targetCount, uiLanguage)}
                   </span>
                 </button>
               );
@@ -437,7 +438,7 @@ export const DailyDhikrView: React.FC = () => {
                   {currentDhikr.categoryBn}
                 </span>
                 <span className="px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 text-xs font-semibold">
-                  লক্ষ্য: {toBanglaNumber(currentDhikr.targetCount)} বার
+                  লক্ষ্য: {formatUiNumber(currentDhikr.targetCount, uiLanguage)} বার
                 </span>
               </div>
 
@@ -486,7 +487,7 @@ export const DailyDhikrView: React.FC = () => {
               </div>
 
               {/* Transliteration */}
-              {currentDhikr.transliterationBn && (
+              {uiLanguage === 'bn' && currentDhikr.transliterationBn && (
                 <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400 italic text-left bg-stone-50 dark:bg-stone-800/40 p-2.5 rounded-xl border border-stone-200/60 dark:border-stone-800/60">
                   <span className="font-semibold text-emerald-800 dark:text-emerald-400 mr-1 not-italic">
                     উচ্চারণ:
@@ -498,7 +499,7 @@ export const DailyDhikrView: React.FC = () => {
               {/* Meaning */}
               <p className="text-xs sm:text-sm font-medium text-emerald-900 dark:text-emerald-300 text-left leading-relaxed">
                 <span className="font-bold text-stone-800 dark:text-stone-200 mr-1">অর্থ:</span>
-                {currentDhikr.meaningBn}
+                {uiLanguage === 'bn' ? currentDhikr.meaningBn : translateUi(uiLanguage, 'noTranslationAvailable')}
               </p>
             </div>
 
@@ -514,13 +515,13 @@ export const DailyDhikrView: React.FC = () => {
                 aria-label="তাসবীহ গণনা করতে ট্যাপ করুন"
               >
                 <span className="text-5xl sm:text-7xl font-black font-bangla text-amber-300 drop-shadow-md">
-                  {toBanglaNumber(currentCount)}
+                  {formatUiNumber(currentCount, uiLanguage)}
                 </span>
                 <span className="text-xs sm:text-sm text-emerald-100 font-medium mt-1 tracking-wide">
                   {isGoalReached ? 'মাশাআল্লাহ! লক্ষ্য পূর্ণ হয়েছে ✨' : 'ট্যাপ করে গণনা করুন 📿'}
                 </span>
                 <span className="text-[11px] text-amber-200/90 mt-0.5">
-                  লক্ষ্য: {toBanglaNumber(currentDhikr.targetCount)} বার
+                  লক্ষ্য: {formatUiNumber(currentDhikr.targetCount, uiLanguage)} বার
                 </span>
               </button>
             </div>
@@ -530,7 +531,7 @@ export const DailyDhikrView: React.FC = () => {
               <div className="flex justify-between text-xs text-stone-500 dark:text-stone-400 font-medium">
                 <span>সম্পন্ন হার</span>
                 <span className="font-bold text-emerald-700 dark:text-emerald-400">
-                  {toBanglaNumber(progressPercent)}%
+                  {formatUiNumber(progressPercent, uiLanguage)}%
                 </span>
               </div>
               <div className="w-full h-3 rounded-full bg-stone-100 dark:bg-stone-800 overflow-hidden border border-stone-200/60 dark:border-stone-700/60">
@@ -574,7 +575,7 @@ export const DailyDhikrView: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between text-xs text-stone-500 dark:text-stone-400">
             <span>
-              মোট আযকার: {toBanglaNumber(filteredAdhkar.length)} টি (ক্যাটেগরি: {selectedCategory === 'all' ? 'সকল' : ADHKAR_CATEGORIES.find((c) => c.id === selectedCategory)?.nameBn})
+              মোট আযকার: {formatUiNumber(filteredAdhkar.length, uiLanguage)} টি (ক্যাটেগরি: {selectedCategory === 'all' ? 'সকল' : ADHKAR_CATEGORIES.find((c) => c.id === selectedCategory)?.nameBn})
             </span>
             <button
               onClick={handleResetAllCategory}
@@ -610,7 +611,7 @@ export const DailyDhikrView: React.FC = () => {
                             : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300'
                         }`}
                       >
-                        {toBanglaNumber(idx + 1)}
+                        {formatUiNumber(idx + 1, uiLanguage)}
                       </div>
                       <div>
                         <h3 className="font-bold text-sm sm:text-base text-stone-900 dark:text-white">
@@ -655,7 +656,7 @@ export const DailyDhikrView: React.FC = () => {
                   </div>
 
                   {/* Transliteration & Meaning */}
-                  {dhikr.transliterationBn && (
+                  {uiLanguage === 'bn' && dhikr.transliterationBn && (
                     <p className="text-xs text-stone-500 dark:text-stone-400 italic mb-2 leading-relaxed">
                       <strong>উচ্চারণ: </strong>
                       {dhikr.transliterationBn}
@@ -677,7 +678,7 @@ export const DailyDhikrView: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-stone-500">গণনা:</span>
                       <span className="font-bold text-base font-bangla text-emerald-700 dark:text-emerald-400">
-                        {toBanglaNumber(count)} / {toBanglaNumber(dhikr.targetCount)} বার
+                        {formatUiNumber(count, uiLanguage)} / {formatUiNumber(dhikr.targetCount, uiLanguage)} বার
                       </span>
                       {isDone && (
                         <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-bold">

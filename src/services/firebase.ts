@@ -1,4 +1,6 @@
 import { initializeApp } from 'firebase/app';
+import { Capacitor } from '@capacitor/core';
+import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
 import {
   getFirestore,
   doc,
@@ -13,6 +15,9 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithCredential,
+  setPersistence,
+  browserLocalPersistence,
   signOut,
   onAuthStateChanged,
   User,
@@ -28,6 +33,7 @@ export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 // Initialize Firebase Auth
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 export enum OperationType {
   CREATE = 'create',
@@ -93,27 +99,45 @@ export async function testConnection() {
 testConnection();
 
 /**
- * Sign in using Google Auth popup
+ * Google sign-in:
+ * - Android/iOS: use the native Google account flow, then exchange its
+ *   credential into the Firebase JS SDK so Firestore listeners keep working.
+ * - Web: use Firebase's browser popup flow.
  */
-export async function signInWithGoogle(): Promise<User | null> {
+export async function signInWithGoogle(): Promise<User> {
   try {
+    if (Capacitor.isNativePlatform()) {
+      const nativeResult = await FirebaseAuthentication.signInWithGoogle();
+      const idToken = nativeResult.credential?.idToken;
+      if (!idToken) {
+        throw new Error('Google sign-in returned no ID token. Check Android Firebase configuration and SHA-1.');
+      }
+      const credential = GoogleAuthProvider.credential(idToken);
+      const result = await signInWithCredential(auth, credential);
+      return result.user;
+    }
+
+    await setPersistence(auth, browserLocalPersistence);
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
   } catch (error) {
     console.error('Google Sign In Error:', error);
-    return null;
+    throw error;
   }
 }
 
 /**
- * Sign out current user
+ * Sign out from both native and JavaScript Firebase sessions.
  */
 export async function logOut(): Promise<void> {
   try {
-    await signOut(auth);
+    if (Capacitor.isNativePlatform()) {
+      await FirebaseAuthentication.signOut();
+    }
   } catch (error) {
-    console.error('Sign Out Error:', error);
+    console.warn('Native Firebase sign-out failed:', error);
   }
+  await signOut(auth);
 }
 
 /**

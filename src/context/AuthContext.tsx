@@ -1,63 +1,26 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User } from 'firebase/auth';
-import { onAuthChange, signInWithGoogle, logOut } from '../services/firebase';
+import React, { createContext, useContext } from 'react';
 
+/** Authentication is intentionally disabled. All personal data stays on this device. */
 interface AuthContextType {
-  user: User | null;
-  loading: boolean;
+  user: null;
+  loading: false;
   signIn: () => Promise<void>;
   signOutUser: () => Promise<void>;
+  authError: null;
+  clearAuthError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  loading: true,
+  loading: false,
   signIn: async () => {},
   signOutUser: async () => {},
+  authError: null,
+  clearAuthError: () => {},
 });
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => <AuthContext.Provider value={{
+  user: null, loading: false, signIn: async () => {}, signOutUser: async () => {}, authError: null, clearAuthError: () => {},
+}}>{children}</AuthContext.Provider>;
 
-  useEffect(() => {
-    const unsubscribe = onAuthChange((currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  const handleSignIn = async () => {
-    try {
-      await signInWithGoogle();
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const handleSignOut = async () => {
-    try {
-      await logOut();
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        signIn: handleSignIn,
-        signOutUser: handleSignOut,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
-};
-
-export function useAuth() {
-  return useContext(AuthContext);
-}
+export function useAuth() { return useContext(AuthContext); }

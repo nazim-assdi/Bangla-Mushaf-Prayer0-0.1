@@ -36,6 +36,41 @@ export const RECITERS: Reciter[] = [
     audioPrefix: 'https://everyayah.com/data/Abdul_Basit_Murattal_192kbps',
   },
   {
+    id: 'minshawi',
+    nameBn: 'মুহাম্মদ সিদ্দিক আল-মিনশাওয়ী',
+    nameEn: 'Mohamed Siddiq Al-Minshawi',
+    subtext: 'মুরাত্তাল · 128 kbps',
+    audioPrefix: 'https://everyayah.com/data/Minshawy_Murattal_128kbps',
+  },
+  {
+    id: 'sudais',
+    nameBn: 'আব্দুর রহমান আস-সুদাইস',
+    nameEn: 'Abdur-Rahman As-Sudais',
+    subtext: 'মুরাত্তাল · 192 kbps',
+    audioPrefix: 'https://everyayah.com/data/Abdurrahmaan_As-Sudais_192kbps',
+  },
+  {
+    id: 'maher',
+    nameBn: 'মাহের আল-মুআইকলী',
+    nameEn: 'Maher Al-Muaiqly',
+    subtext: 'মুরাত্তাল · 128 kbps',
+    audioPrefix: 'https://everyayah.com/data/MaherAlMuaiqly128kbps',
+  },
+  {
+    id: 'ayyoub',
+    nameBn: 'মুহাম্মদ আইয়ুব',
+    nameEn: 'Muhammad Ayyoub',
+    subtext: 'মুরাত্তাল · 128 kbps',
+    audioPrefix: 'https://everyayah.com/data/Muhammad_Ayyoub_128kbps',
+  },
+  {
+    id: 'ghamdi',
+    nameBn: 'সা‘দ আল-গামিদী',
+    nameEn: 'Saad Al-Ghamdi',
+    subtext: 'মুরাত্তাল · 40 kbps · কম ডেটা',
+    audioPrefix: 'https://everyayah.com/data/Ghamadi_40kbps',
+  },
+  {
     id: 'shuraim',
     nameBn: 'সউদ আশ-শুরাইম',
     nameEn: "Sa'ud ash-Shuraym",
@@ -180,6 +215,10 @@ export async function fetchSurahVerses(surahId: number, reciterId: string = 'ala
 /**
  * Fetch Tafsir in multiple languages (Bengali, English, Arabic, Urdu, Hindi, Turkish) for a given verse
  */
+export function getBundledTafsir(verseKey: string): TafsirContent[] {
+  return tafsirCache[verseKey] || MULTI_LANG_TAFSIRS[verseKey] || [];
+}
+
 export async function fetchTafsir(verseKey: string): Promise<TafsirContent[]> {
   if (tafsirCache[verseKey]) {
     return tafsirCache[verseKey];

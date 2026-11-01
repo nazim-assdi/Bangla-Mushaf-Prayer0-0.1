@@ -2,17 +2,24 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Compass, MapPin, RefreshCw, CheckCircle2, AlertTriangle, Info, Smartphone } from 'lucide-react';
 import { BANGLADESH_DISTRICTS } from '../utils/prayerTimes';
 import { calculateQiblaDirection, calculateDistanceToKaaba, getHeadingDeviation } from '../utils/qibla';
-import { toBanglaNumber } from '../utils/banglaNumbers';
+import { UiLanguage, formatUiNumber, translateUi } from '../services/i18n';
 
 type Coordinates = { lat: number; lng: number; nameBn: string; accuracy?: number };
 
-export const QiblaCompassView: React.FC = () => {
-  const [selectedDistrictId, setSelectedDistrictId] = useState('dhaka');
+export const QiblaCompassView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLanguage }) => {
+  const [selectedDistrictId, setSelectedDistrictId] = useState(() => {
+    const saved = localStorage.getItem('mushaf_qibla_district');
+    return saved && BANGLADESH_DISTRICTS.some((district) => district.id === saved) ? saved : 'dhaka';
+  });
   const [customCoords, setCustomCoords] = useState<Coordinates | null>(null);
   const [geoLoading, setGeoLoading] = useState(false);
   const [geoError, setGeoError] = useState('');
   const [deviceHeading, setDeviceHeading] = useState<number | null>(null);
   const [sensorError, setSensorError] = useState('');
+
+  useEffect(() => {
+    localStorage.setItem('mushaf_qibla_district', selectedDistrictId);
+  }, [selectedDistrictId]);
 
   const currentDistrict = useMemo(
     () => BANGLADESH_DISTRICTS.find((district) => district.id === selectedDistrictId) || BANGLADESH_DISTRICTS[0],
@@ -20,7 +27,7 @@ export const QiblaCompassView: React.FC = () => {
   );
   const activeLat = customCoords?.lat ?? currentDistrict.lat;
   const activeLng = customCoords?.lng ?? currentDistrict.lng;
-  const locationLabel = customCoords?.nameBn ?? `${currentDistrict.nameBn} জেলা`;
+  const locationLabel = customCoords?.nameBn ?? (uiLanguage === 'bn' ? `${currentDistrict.nameBn} জেলা` : `${currentDistrict.nameEn} · ${translateUi(uiLanguage, 'districtFallback')}`);
   const qiblaBearing = useMemo(() => calculateQiblaDirection(activeLat, activeLng), [activeLat, activeLng]);
   const distanceKm = useMemo(() => calculateDistanceToKaaba(activeLat, activeLng), [activeLat, activeLng]);
   const deviation = deviceHeading === null ? null : getHeadingDeviation(deviceHeading, qiblaBearing);
@@ -88,7 +95,7 @@ export const QiblaCompassView: React.FC = () => {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
           accuracy: position.coords.accuracy,
-          nameBn: 'বর্তমান GPS অবস্থান',
+          nameBn: uiLanguage === 'bn' ? 'বর্তমান GPS অবস্থান' : 'Current GPS location',
         });
         setGeoLoading(false);
       },
@@ -108,18 +115,18 @@ export const QiblaCompassView: React.FC = () => {
   const shownHeading = deviceHeading === null ? 0 : deviceHeading;
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-3 py-4 pb-28 font-bangla sm:px-5 sm:py-6">
+    <div className="qibla-screen mx-auto w-full max-w-5xl px-3 py-4 pb-28 font-bangla sm:px-5 sm:py-6">
       <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-3">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
             <Compass className="h-5 w-5" />
           </div>
           <div className="min-w-0">
-            <h2 className="font-bold text-stone-900 dark:text-white">{locationLabel} থেকে কিবলার দিক</h2>
+            <h2 className="font-bold text-stone-900 dark:text-white">{locationLabel} · {translateUi(uiLanguage, 'qiblaDirection')}</h2>
             <p className="text-xs text-stone-500 dark:text-stone-400">
-              উত্তর থেকে ঘড়ির কাঁটার দিকে {toBanglaNumber(qiblaBearing)}° · কাবা পর্যন্ত {toBanglaNumber(distanceKm.toLocaleString())} কিমি
+              উত্তর থেকে ঘড়ির কাঁটার দিকে {formatUiNumber(qiblaBearing, uiLanguage)}° · কাবা পর্যন্ত {formatUiNumber(Math.round(distanceKm), uiLanguage)} কিমি
             </p>
-            {customCoords?.accuracy && <p className="text-[11px] text-stone-500">GPS নির্ভুলতা: প্রায় {Math.round(customCoords.accuracy)} মিটার</p>}
+            {customCoords?.accuracy && <p className="text-[11px] text-stone-500">{translateUi(uiLanguage, 'gpsAccuracy')}: {Math.round(customCoords.accuracy)} মিটার</p>}
           </div>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
@@ -127,9 +134,9 @@ export const QiblaCompassView: React.FC = () => {
             value={customCoords ? '' : selectedDistrictId}
             onChange={(event) => { setCustomCoords(null); setSelectedDistrictId(event.target.value); }}
             className="min-h-10 min-w-0 rounded-xl border border-stone-200 bg-stone-100 px-3 text-sm text-stone-800 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100"
-            aria-label="জেলা নির্বাচন করুন"
+            aria-label={translateUi(uiLanguage, 'districtFallback')}
           >
-            {BANGLADESH_DISTRICTS.map((district) => <option key={district.id} value={district.id}>{district.nameBn}</option>)}
+            {BANGLADESH_DISTRICTS.map((district) => <option key={district.id} value={district.id}>{uiLanguage === 'bn' ? district.nameBn : district.nameEn}</option>)}
           </select>
           <button onClick={handleUseGPS} disabled={geoLoading} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 text-sm font-semibold text-white disabled:opacity-60">
             <RefreshCw className={`h-4 w-4 ${geoLoading ? 'animate-spin' : ''}`} />
@@ -147,9 +154,9 @@ export const QiblaCompassView: React.FC = () => {
 
       <div className="rounded-3xl border border-emerald-800/50 bg-gradient-to-b from-stone-950 via-emerald-950 to-stone-950 px-4 py-6 text-white shadow-xl sm:px-8">
         <div className="mb-5 flex flex-wrap items-center justify-center gap-2 text-xs">
-          <span className="rounded-full border border-emerald-700 bg-emerald-900/70 px-3 py-1.5 text-amber-200">কিবলা {toBanglaNumber(qiblaBearing)}°</span>
+          <span className="rounded-full border border-emerald-700 bg-emerald-900/70 px-3 py-1.5 text-amber-200">কিবলা {formatUiNumber(qiblaBearing, uiLanguage)}°</span>
           <span className="rounded-full border border-emerald-700 bg-emerald-900/70 px-3 py-1.5 text-emerald-100">
-            {deviceHeading === null ? 'কম্পাস সেন্সর অপেক্ষমাণ' : `ফোনের দিক ${toBanglaNumber(Math.round(deviceHeading))}°`}
+            {deviceHeading === null ? 'কম্পাস সেন্সর অপেক্ষমাণ' : `ফোনের দিক ${formatUiNumber(Math.round(deviceHeading), uiLanguage)}°`}
           </span>
         </div>
 
@@ -161,7 +168,7 @@ export const QiblaCompassView: React.FC = () => {
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-300">পূর্ব</span>
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-300">পশ্চিম</span>
             <div className="absolute inset-0 flex justify-center" style={{ transform: `rotate(${qiblaBearing}deg)` }}>
-              <span className="mt-1 text-2xl drop-shadow-lg">🕋</span>
+              <span className="mt-1 rounded-md border border-amber-300/70 bg-amber-300/15 px-2 py-1 text-[10px] font-bold tracking-widest text-amber-200">QIBLA</span>
             </div>
           </div>
           <div className="relative z-10 flex flex-col items-center" style={{ transform: `rotate(${qiblaBearing - shownHeading}deg)` }}>
@@ -177,7 +184,7 @@ export const QiblaCompassView: React.FC = () => {
           ) : isAligned ? (
             <p className="flex items-center justify-center gap-2 font-bold text-emerald-300"><CheckCircle2 className="h-5 w-5" /> কিবলার দিকে প্রায় সোজা</p>
           ) : (
-            <p className="font-semibold text-amber-200">{deviation > 0 ? 'ডানে' : 'বামে'} আরও {toBanglaNumber(Math.abs(Math.round(deviation)))}° ঘোরান</p>
+            <p className="font-semibold text-amber-200">{deviation > 0 ? 'ডানে' : 'বামে'} আরও {formatUiNumber(Math.abs(Math.round(deviation)), uiLanguage)}° ঘোরান</p>
           )}
           <p className="mt-2 text-xs text-emerald-100/70">ফোন সমতল রাখুন এবং ধাতব বস্তু, চুম্বক ও বৈদ্যুতিক যন্ত্র থেকে দূরে থাকুন।</p>
         </div>

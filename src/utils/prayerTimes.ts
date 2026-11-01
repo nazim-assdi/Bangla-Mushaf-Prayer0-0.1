@@ -1,3 +1,4 @@
+import { getDatePartsInTimeZone, getTimeZoneOffsetHours } from '../services/worldTimeZone';
 /**
  * Astronomical Prayer Times Calculator with full Bangladesh Districts and Global Coordinates
  */
@@ -160,11 +161,21 @@ export function calculatePrayerTimes(
   lat: number,
   lng: number,
   timezoneOffsetHours: number = 6, // Bangladesh is UTC+6
-  config: PrayerTimeConfig = { fajrAngle: 18, ishaAngle: 18, asrJuristic: 'hanafi' }
+  config: PrayerTimeConfig = { fajrAngle: 18, ishaAngle: 18, asrJuristic: 'hanafi' },
+  timeZoneId?: string,
 ): PrayerTimesResult {
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
+  // With an IANA zone, use the calendar date at the GPS location, not the
+  // phone/computer's possibly unrelated local date.
+  const zonedParts = timeZoneId ? getDatePartsInTimeZone(date, timeZoneId) : null;
+  const year = zonedParts?.year ?? date.getFullYear();
+  const month = zonedParts?.month ?? date.getMonth() + 1;
+  const day = zonedParts?.day ?? date.getDate();
+  let effectiveOffsetHours = timezoneOffsetHours;
+  if (timeZoneId) {
+    const utcNoon = new Date(Date.UTC(year, month - 1, day, 12));
+    const firstOffset = getTimeZoneOffsetHours(utcNoon, timeZoneId);
+    effectiveOffsetHours = getTimeZoneOffsetHours(new Date(utcNoon.getTime() - firstOffset * 3600000), timeZoneId);
+  }
 
   // Julian Day
   const a = Math.floor((14 - month) / 12);
@@ -195,19 +206,42 @@ export function calculatePrayerTimes(
   const declination = deg(Math.asin(Math.sin(rad(e)) * Math.sin(rad(L))));
 
   // Equation of Time in minutes
-  const RA = deg(Math.atan2(Math.cos(rad(e)) * Math.sin(rad(L)), Math.cos(rad(L)))) / 15;
-  const eqTime = (q / 15 - RA) * 60; // in minutes
+  // atan2 returns right ascension in the range -12..+12 hours. Convert it
+  // to the same 0..24h range as the mean longitude before subtracting; without
+  // this normalization the equation of time can jump by almost 24 hours.
+  const rawRA = deg(Math.atan2(Math.cos(rad(e)) * Math.sin(rad(L)), Math.cos(rad(L)))) / 15;
+  const RA = (rawRA + 24) % 24;
+  let eqTimeHours = q / 15 - RA;
+  if (eqTimeHours > 12) eqTimeHours -= 24;
+  if (eqTimeHours < -12) eqTimeHours += 24;
+  const eqTime = eqTimeHours * 60; // minutes
 
   // Solar noon (Dhuhr) in fractional hours
-  const dhuhrHour = 12 + timezoneOffsetHours - lng / 15 - eqTime / 60;
+  const dhuhrHour = 12 + effectiveOffsetHours - lng / 15 - eqTime / 60;
 
   // Hour angle for twilight / angles
   const hourAngle = (angle: number): number => {
-    const cosHA =
-      (-Math.sin(rad(angle)) - Math.sin(rad(lat)) * Math.sin(rad(declination))) /
-      (Math.cos(rad(lat)) * Math.cos(rad(declination)));
-    if (cosHA > 1) return 0; // Sun never rises
-    if (cosHA < -1) return 180; // Sun never sets
+    const cosForLatitude = (latitude: number) =>
+      (-Math.sin(rad(angle)) - Math.sin(rad(latitude)) * Math.sin(rad(declination))) /
+      (Math.cos(rad(latitude)) * Math.cos(rad(declination)));
+    let cosHA = cosForLatitude(lat);
+    if (cosHA < -1 || cosHA > 1) {
+      // High-latitude fallback: when the sun does not reach a required
+      // twilight/horizon angle, use the nearest latitude where that angle
+      // occurs, stepping toward the equator. This avoids midnight/ noon
+      // placeholder prayer times in polar summer/winter.
+      const sign = lat < 0 ? -1 : 1;
+      const candidates = [Math.min(Math.abs(lat), 48.5), 45, 40, 35, 30];
+      for (const candidate of [...new Set(candidates)]) {
+        const fallbackCos = cosForLatitude(sign * candidate);
+        if (fallbackCos >= -1 && fallbackCos <= 1) {
+          cosHA = fallbackCos;
+          break;
+        }
+      }
+    }
+    if (cosHA > 1) return 0;
+    if (cosHA < -1) return 180;
     return deg(Math.acos(cosHA));
   };
 
@@ -232,11 +266,21 @@ export function calculatePrayerTimes(
   const ishaHour = dhuhrHour + haIsha / 15;
 
   const toDate = (fractionalHours: number): Date => {
+    const totalMinutes = Math.round(fractionalHours * 60);
+    if (timeZoneId) {
+      // Convert local wall-clock prayer time to a real UTC instant. This keeps
+      // alarms/countdowns correct even when device zone differs from GPS zone.
+      const localMidnightUtc = Date.UTC(year, month - 1, day);
+      const wallClockUtc = localMidnightUtc + totalMinutes * 60000;
+      const firstInstant = new Date(wallClockUtc - effectiveOffsetHours * 3600000);
+      // Re-check the offset at the actual prayer instant so a DST switch
+      // near Fajr/Isha uses the correct side of the transition.
+      const prayerOffset = getTimeZoneOffsetHours(firstInstant, timeZoneId);
+      return new Date(wallClockUtc - prayerOffset * 3600000);
+    }
     const result = new Date(date);
-    let totalMinutes = Math.round(fractionalHours * 60);
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    result.setHours(hours, minutes, 0, 0);
+    result.setHours(0, 0, 0, 0);
+    result.setMinutes(totalMinutes, 0, 0);
     return result;
   };
 
@@ -270,9 +314,15 @@ export function calculatePrayerTimes(
   };
 }
 
-export function formatTimeBn(d: Date): string {
-  let hours = d.getHours();
-  const minutes = d.getMinutes();
+function getClockParts(d: Date, timeZoneId?: string): { hours: number; minutes: number } {
+  if (!timeZoneId) return { hours: d.getHours(), minutes: d.getMinutes() };
+  const parts = new Intl.DateTimeFormat('en-GB', { timeZone: timeZoneId, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(d);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return { hours: Number(values.hour), minutes: Number(values.minute) };
+}
+
+export function formatTimeBn(d: Date, timeZoneId?: string): string {
+  let { hours, minutes } = getClockParts(d, timeZoneId);
   const isPm = hours >= 12;
   hours = hours % 12 || 12;
 
@@ -290,7 +340,6 @@ export function formatTimeBn(d: Date): string {
   else if (fullHour >= 18 && fullHour < 20) timeOfDayBn = 'সন্ধ্যা ';
   else timeOfDayBn = 'রাত ';
 
-  import('./banglaNumbers').then;
   // Use simple digit replacer
   const bnDigits: { [k: string]: string } = {
     '0': '০',
@@ -309,55 +358,69 @@ export function formatTimeBn(d: Date): string {
   return `${timeOfDayBn}${toBn(hStr)}:${toBn(mStr)}`;
 }
 
-export function formatTimeEn(d: Date): string {
-  let hours = d.getHours();
-  const minutes = d.getMinutes();
+export function formatTimeEn(d: Date, timeZoneId?: string): string {
+  let { hours, minutes } = getClockParts(d, timeZoneId);
   const ampm = hours >= 12 ? 'PM' : 'AM';
   hours = hours % 12 || 12;
   const mStr = minutes < 10 ? `0${minutes}` : `${minutes}`;
   return `${hours}:${mStr} ${ampm}`;
 }
 
-export function getWaqtsStatus(times: PrayerTimesResult, now: Date = new Date()): WaqtInfo[] {
+export function getWaqtsStatus(times: PrayerTimesResult, now: Date = new Date(), timeZoneId?: string): WaqtInfo[] {
   const nowMs = now.getTime();
+  let dayMs = 24 * 60 * 60 * 1000;
+  if (timeZoneId) {
+    // A local calendar day can be 23 or 25 hours across DST transitions.
+    const localToday = getDatePartsInTimeZone(now, timeZoneId);
+    const tomorrowNoonUtc = new Date(Date.UTC(localToday.year, localToday.month - 1, localToday.day + 1, 12));
+    const guessedOffset = getTimeZoneOffsetHours(tomorrowNoonUtc, timeZoneId);
+    const tomorrowLocalNoon = new Date(tomorrowNoonUtc.getTime() - guessedOffset * 3600000);
+    const todayOffset = getTimeZoneOffsetHours(now, timeZoneId);
+    const tomorrowOffset = getTimeZoneOffsetHours(tomorrowLocalNoon, timeZoneId);
+    dayMs -= (tomorrowOffset - todayOffset) * 3600000;
+  }
 
-  const mainWaqts: {
-    key: 'fajr' | 'sunrise' | 'dhuhr' | 'asr' | 'maghrib' | 'isha';
-    nameBn: string;
-    nameEn: string;
-    nameAr: string;
-    time: Date;
-  }[] = [
-    { key: 'fajr', nameBn: 'ফজর', nameEn: 'Fajr', nameAr: 'الفجر', time: times.fajr },
-    { key: 'sunrise', nameBn: 'সূর্যোদয়', nameEn: 'Sunrise', nameAr: 'الشروق', time: times.sunrise },
-    { key: 'dhuhr', nameBn: 'যোহর', nameEn: 'Dhuhr', nameAr: 'الظهر', time: times.dhuhr },
-    { key: 'asr', nameBn: 'আসর', nameEn: 'Asr', nameAr: 'العصر', time: times.asr },
-    { key: 'maghrib', nameBn: 'মাগরিব', nameEn: 'Maghrib', nameAr: 'المغرب', time: times.maghrib },
-    { key: 'isha', nameBn: 'ইশা', nameEn: 'Isha', nameAr: 'العشاء', time: times.isha },
+  // Sunrise is displayed as an important solar time, but it is not one of
+  // the five daily prayers and must never be selected as the next prayer.
+  const prayers = [
+    { key: 'fajr' as const, nameBn: 'ফজর', nameEn: 'Fajr', nameAr: 'الفجر', time: times.fajr },
+    { key: 'dhuhr' as const, nameBn: 'যোহর', nameEn: 'Dhuhr', nameAr: 'الظهر', time: times.dhuhr },
+    { key: 'asr' as const, nameBn: 'আসর', nameEn: 'Asr', nameAr: 'العصر', time: times.asr },
+    { key: 'maghrib' as const, nameBn: 'মাগরিব', nameEn: 'Maghrib', nameAr: 'المغرب', time: times.maghrib },
+    { key: 'isha' as const, nameBn: 'ইশা', nameEn: 'Isha', nameAr: 'العشاء', time: times.isha },
   ];
 
-  // After Isha, the next Fajr belongs to the following local day.
-  if (nowMs >= mainWaqts[5].time.getTime()) {
-    mainWaqts[0].time = new Date(mainWaqts[0].time.getTime() + 24 * 60 * 60 * 1000);
+  const nextPrayerIndex = prayers.findIndex((prayer) => prayer.time.getTime() > nowMs);
+  const nextIndex = nextPrayerIndex === -1 ? 0 : nextPrayerIndex;
+  if (nextPrayerIndex === -1) {
+    prayers[0].time = new Date(prayers[0].time.getTime() + dayMs);
   }
 
-  // Determine current active prayer
-  let currentIndex = -1;
-  for (let i = 0; i < mainWaqts.length; i++) {
-    if (nowMs >= mainWaqts[i].time.getTime()) {
-      currentIndex = i;
-    }
-  }
+  // A prayer is current only within its valid interval. After sunrise and
+  // before Dhuhr there is no active obligatory-prayer interval.
+  const intervals = [
+    { key: 'fajr', start: times.fajr, end: times.sunrise },
+    { key: 'dhuhr', start: times.dhuhr, end: times.asr },
+    { key: 'asr', start: times.asr, end: times.maghrib },
+    { key: 'maghrib', start: times.maghrib, end: times.isha },
+    { key: 'isha', start: times.isha, end: new Date(times.fajr.getTime() + dayMs) },
+  ];
+  const currentKey = intervals.find((interval) =>
+    nowMs >= interval.start.getTime() && nowMs < interval.end.getTime()
+  )?.key ?? (nowMs < times.fajr.getTime() ? 'isha' : undefined);
 
-  // Next prayer
-  const nextIndex = (currentIndex + 1) % mainWaqts.length;
+  const displayItems = [
+    prayers[0],
+    { key: 'sunrise' as const, nameBn: 'সূর্যোদয়', nameEn: 'Sunrise', nameAr: 'الشروق', time: times.sunrise },
+    ...prayers.slice(1),
+  ];
 
-  return mainWaqts.map((item, idx) => ({
+  return displayItems.map((item) => ({
     ...item,
-    timeFormattedBn: formatTimeBn(item.time),
-    timeFormattedEn: formatTimeEn(item.time),
+    timeFormattedBn: formatTimeBn(item.time, timeZoneId),
+    timeFormattedEn: formatTimeEn(item.time, timeZoneId),
     isPassed: nowMs >= item.time.getTime(),
-    isCurrent: idx === currentIndex,
-    isNext: idx === nextIndex,
+    isCurrent: item.key === currentKey,
+    isNext: item.key !== 'sunrise' && item.key === prayers[nextIndex].key,
   }));
 }

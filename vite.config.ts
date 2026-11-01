@@ -14,15 +14,16 @@ export default defineConfig(() => {
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icon.svg', 'pwa-192x192.png', 'pwa-512x512.png'],
         manifest: {
           id: '/',
-          name: 'Al-Quran Al-Kareem',
-          short_name: 'Al-Quran',
-          description: 'Read, reflect, and remember with Quran recitation, translations, tafsir, prayer times, and Qibla.',
+          name: 'Bangla Mushaf Prayer',
+          short_name: 'Bangla Mushaf',
+          description: 'A multilingual Quran and prayer companion with offline translations, tafsir, reading tools, prayer times and Qibla.',
           theme_color: '#064e3b',
           background_color: '#064e3b',
           display: 'standalone',
           start_url: '/',
           scope: '/',
           icons: [
+            { src: '/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
             {
               src: '/pwa-192x192.png',
               sizes: '192x192',

@@ -1,6 +1,6 @@
 {
   "appId": "com.nazimassdi.banglamushaf",
-  "appName": "বাংলা কুরআন ও নামাজ",
+  "appName": "Bangla Mushaf Prayer",
   "webDir": "dist",
   "bundledWebRuntime": false,
   "android": {

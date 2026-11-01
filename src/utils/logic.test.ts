@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { toBanglaNumber, toEnglishNumber, toArabicNumber, formatDurationToBangla } from './banglaNumbers';
 import { calculateQiblaDirection, calculateDistanceToKaaba, getHeadingDeviation } from './qibla';
-import { calculatePrayerTimes, BANGLADESH_DISTRICTS, getWaqtsStatus } from './prayerTimes';
+import { calculatePrayerTimes, BANGLADESH_DISTRICTS, getWaqtsStatus, formatTimeEn } from './prayerTimes';
+import { getTimeZoneOffsetHours, getDatePartsInTimeZone } from '../services/worldTimeZone';
 
 test('Bengali number conversion works correctly', () => {
   assert.equal(toBanglaNumber(12345), '১২৩৪৫');
@@ -76,6 +77,50 @@ test('Prayer times calculate valid chronological order for Dhaka', () => {
   assert.ok(times.maghrib.getTime() < times.isha.getTime(), 'Maghrib must be before Isha');
 });
 
+test('Dhaka prayer times stay in realistic Bangladesh clock-time ranges', () => {
+  const testDate = new Date('2026-10-26T12:00:00Z');
+  const dhaka = BANGLADESH_DISTRICTS.find((d) => d.id === 'dhaka')!;
+  const times = calculatePrayerTimes(testDate, dhaka.lat, dhaka.lng, 6);
+  // Regression guard: right ascension must be normalized before calculating
+  // equation of time; otherwise prayer times can shift by almost 24 hours.
+  assert.ok(times.fajr.getHours() >= 4 && times.fajr.getHours() <= 5, `Fajr hour: ${times.fajr.getHours()}`);
+  assert.ok(times.sunrise.getHours() >= 5 && times.sunrise.getHours() <= 6, `Sunrise hour: ${times.sunrise.getHours()}`);
+  assert.ok(times.dhuhr.getHours() >= 11 && times.dhuhr.getHours() <= 12, `Dhuhr hour: ${times.dhuhr.getHours()}`);
+  assert.ok(times.asr.getHours() >= 15 && times.asr.getHours() <= 16, `Asr hour: ${times.asr.getHours()}`);
+  assert.ok(times.maghrib.getHours() >= 17 && times.maghrib.getHours() <= 18, `Maghrib hour: ${times.maghrib.getHours()}`);
+  assert.ok(times.isha.getHours() >= 18 && times.isha.getHours() <= 19, `Isha hour: ${times.isha.getHours()}`);
+});
+
+test('GPS world time zones apply local date, local clock and daylight saving rules', () => {
+  const instant = new Date('2026-07-15T16:00:00.000Z');
+  assert.equal(getTimeZoneOffsetHours(instant, 'Asia/Dhaka'), 6);
+  assert.equal(getTimeZoneOffsetHours(instant, 'America/New_York'), -4);
+  assert.equal(getTimeZoneOffsetHours(new Date('2026-01-15T16:00:00.000Z'), 'America/New_York'), -5);
+  assert.deepEqual(getDatePartsInTimeZone(instant, 'America/Los_Angeles'), { year: 2026, month: 7, day: 15 });
+
+  const newYork = calculatePrayerTimes(
+    instant, 40.7128, -74.0060, -4,
+    { fajrAngle: 18, ishaAngle: 18, asrJuristic: 'hanafi' },
+    'America/New_York',
+  );
+  const localDhuhr = formatTimeEn(newYork.dhuhr, 'America/New_York');
+  assert.match(localDhuhr, /^12:|^1:00 PM|^1:01 PM|^1:02 PM|^1:03 PM/);
+  assert.ok(newYork.fajr.getTime() < newYork.sunrise.getTime());
+  assert.ok(newYork.sunrise.getTime() < newYork.dhuhr.getTime());
+});
+
+test('High-latitude GPS locations receive finite prayer times during polar season', () => {
+  const summerInstant = new Date('2026-06-21T10:00:00.000Z');
+  const tromso = calculatePrayerTimes(
+    summerInstant, 69.6492, 18.9553, 2,
+    { fajrAngle: 18, ishaAngle: 18, asrJuristic: 'hanafi' },
+    'Europe/Oslo',
+  );
+  const ordered = [tromso.fajr, tromso.sunrise, tromso.dhuhr, tromso.asr, tromso.maghrib, tromso.isha];
+  assert.ok(ordered.every((value) => Number.isFinite(value.getTime())));
+  assert.ok(ordered.every((value, index) => index === 0 || value.getTime() > ordered[index - 1].getTime()));
+});
+
 test('Next prayer after Isha is tomorrow Fajr, not a passed Fajr today', () => {
   const today = new Date(2026, 9, 26, 12, 0, 0);
   const dhaka = BANGLADESH_DISTRICTS.find((d) => d.id === 'dhaka')!;
@@ -85,4 +130,28 @@ test('Next prayer after Isha is tomorrow Fajr, not a passed Fajr today', () => {
   const next = waqts.find((waqt) => waqt.isNext);
   assert.equal(next?.key, 'fajr');
   assert.ok(next!.time.getTime() > afterIsha.getTime(), 'Next Fajr must be in the future');
+});
+
+test('Next prayer after Fajr skips sunrise and current Fajr ends at sunrise', () => {
+  const today = new Date(2026, 9, 26, 12, 0, 0);
+  const dhaka = BANGLADESH_DISTRICTS.find((d) => d.id === 'dhaka')!;
+  const times = calculatePrayerTimes(today, dhaka.lat, dhaka.lng, 6);
+
+  const duringFajr = getWaqtsStatus(times, new Date(times.fajr.getTime() + 30 * 60000));
+  assert.equal(duringFajr.find((waqt) => waqt.isCurrent)?.key, 'fajr');
+  assert.equal(duringFajr.find((waqt) => waqt.isNext)?.key, 'dhuhr');
+
+  const afterSunrise = getWaqtsStatus(times, new Date(times.sunrise.getTime() + 30 * 60000));
+  assert.equal(afterSunrise.find((waqt) => waqt.isNext)?.key, 'dhuhr');
+  assert.equal(afterSunrise.some((waqt) => waqt.isCurrent), false);
+});
+
+test('Isha remains the current night interval before Fajr', () => {
+  const today = new Date(2026, 9, 26, 12, 0, 0);
+  const dhaka = BANGLADESH_DISTRICTS.find((d) => d.id === 'dhaka')!;
+  const times = calculatePrayerTimes(today, dhaka.lat, dhaka.lng, 6);
+  const beforeFajr = new Date(times.fajr.getTime() - 30 * 60000);
+  const waqts = getWaqtsStatus(times, beforeFajr);
+  assert.equal(waqts.find((waqt) => waqt.isCurrent)?.key, 'isha');
+  assert.equal(waqts.find((waqt) => waqt.isNext)?.key, 'fajr');
 });

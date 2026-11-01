@@ -3,13 +3,30 @@ import { Copy, Heart, Check } from 'lucide-react';
 
 export const DonationCard: React.FC = () => {
   const [copied, setCopied] = useState<string | null>(null);
+  const [copyError, setCopyError] = useState(false);
   const copy = async (value: string, key: string) => {
+    setCopyError(false);
     try {
-      await navigator.clipboard.writeText(value);
+      // Clipboard API is not available in every Android WebView/file context.
+      if (navigator.clipboard?.writeText && window.isSecureContext) {
+        await navigator.clipboard.writeText(value);
+      } else {
+        const field = document.createElement('textarea');
+        field.value = value;
+        field.setAttribute('readonly', '');
+        field.style.position = 'fixed';
+        field.style.opacity = '0';
+        document.body.appendChild(field);
+        field.select();
+        const copied = document.execCommand('copy');
+        document.body.removeChild(field);
+        if (!copied) throw new Error('Copy command was rejected');
+      }
       setCopied(key);
-      window.setTimeout(() => setCopied(null), 1800);
+      window.setTimeout(() => setCopied(null), 2200);
     } catch {
       setCopied(null);
+      setCopyError(true);
     }
   };
 
@@ -42,6 +59,7 @@ export const DonationCard: React.FC = () => {
             </button>
           </div>
         </div>
+        {copyError && <p role="alert" className="mt-3 rounded-lg bg-rose-100 px-3 py-2 text-xs text-rose-800 dark:bg-rose-950/50 dark:text-rose-200">কপি করা যায়নি। নম্বরটি চেপে ধরে ম্যানুয়ালি কপি করুন।</p>}
         <p className="mt-3 text-[11px] text-stone-500 dark:text-stone-400">অনুদান পাঠানোর আগে প্রাপকের তথ্য যাচাই করে নিন। এই অ্যাপ কোনো পেমেন্ট স্বয়ংক্রিয়ভাবে গ্রহণ বা যাচাই করে না।</p>
       </div>
     </section>

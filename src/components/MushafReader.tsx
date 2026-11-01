@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Play,
   Pause,
@@ -13,14 +13,16 @@ import {
   Sparkles,
   Globe,
 } from 'lucide-react';
-import { QuranAyah, QuranWord } from '../data/quranSampleData';
+import { QuranAyah, QuranWord, TafsirContent } from '../data/quranSampleData';
 import { SURAH_LIST } from '../data/quranMetadata';
-import { RECITERS } from '../services/quranApi';
+import { RECITERS, getBundledTafsir } from '../services/quranApi';
 import { QURAN_LANGUAGES, QuranLanguage, fetchVersesByLanguage } from '../services/multiLangQuran';
-import { toBanglaNumber, toArabicNumber } from '../utils/banglaNumbers';
+import { toArabicNumber } from '../utils/banglaNumbers';
 import { TafsirModal } from './TafsirModal';
-import { OfflineQuranDownload } from './OfflineQuranDownload';
 import { AyahStudyTools } from './AyahStudyTools';
+import { UiLanguage, formatUiNumber, translateUi } from '../services/i18n';
+import { getOfflineTafsirForSurah, OfflineTafsirRecord } from '../services/offlineTafsir';
+import { padNumber } from '../services/quranApi';
 
 export type ViewMode = 'wbw' | 'verse' | 'mushaf';
 
@@ -36,8 +38,11 @@ interface MushafReaderProps {
   showTranslation: boolean;
   selectedReciterId: string;
   onSelectReciter: (id: string) => void;
+  audioPlaybackSpeed: number;
+  autoPlayNextAyah: boolean;
   currentLanguage: QuranLanguage;
   onSelectLanguage: (lang: QuranLanguage) => void;
+  uiLanguage: UiLanguage;
 }
 
 export const MushafReader: React.FC<MushafReaderProps> = ({
@@ -52,8 +57,11 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
   showTranslation,
   selectedReciterId,
   onSelectReciter,
+  audioPlaybackSpeed,
+  autoPlayNextAyah,
   currentLanguage,
   onSelectLanguage,
+  uiLanguage,
 }) => {
   const [ayahs, setAyahs] = useState<QuranAyah[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,37 +70,65 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
   // Tafsir modal state
   const [tafsirAyah, setTafsirAyah] = useState<QuranAyah | null>(null);
   const [isTafsirOpen, setIsTafsirOpen] = useState(false);
+  const [offlineTafsirRecords, setOfflineTafsirRecords] = useState<OfflineTafsirRecord[]>([]);
 
   // Audio player state
   const [playingAyahKey, setPlayingAyahKey] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [audioError, setAudioError] = useState<string | null>(null);
   const [activeWordId, setActiveWordId] = useState<number | null>(null);
   const [hifzRepeatCount, setHifzRepeatCount] = useState<number>(1);
   const [currentRepeat, setCurrentRepeat] = useState<number>(1);
   const [copiedAyahKey, setCopiedAyahKey] = useState<string | null>(null);
   const [studyRecords, setStudyRecords] = useState<Record<string, { read: boolean; note: string }>>({});
+  const [readerZoom, setReaderZoom] = useState(1);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const pinchStartRef = useRef<{ distance: number; zoom: number } | null>(null);
+  const getTouchDistance = (touches: React.TouchList) => {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  const studyStorageKey = 'mushaf_ayah_study_v1';
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem('mushaf_ayah_study_v1');
-      if (stored) setStudyRecords(JSON.parse(stored));
+      const stored = localStorage.getItem(studyStorageKey);
+      setStudyRecords(stored ? JSON.parse(stored) : {});
     } catch (error) {
       console.warn('Could not restore reading notes:', error);
+      setStudyRecords({});
     }
-  }, []);
+  }, [studyStorageKey]);
 
   const updateStudyRecord = (verseKey: string, patch: Partial<{ read: boolean; note: string }>) => {
     setStudyRecords((previous) => {
       const next = { ...previous, [verseKey]: { read: previous[verseKey]?.read ?? false, note: previous[verseKey]?.note ?? '', ...patch } };
-      try { localStorage.setItem('mushaf_ayah_study_v1', JSON.stringify(next)); } catch (error) { console.warn('Could not save reading notes:', error); }
+      try { localStorage.setItem(studyStorageKey, JSON.stringify(next)); } catch (error) { console.warn('Could not save reading notes:', error); }
       return next;
     });
   };
 
   const readCount = ayahs.filter((ayah) => studyRecords[ayah.verseKey]?.read).length;
 
+  const mushafPages = useMemo(() => {
+    const pages = new Map<number, QuranAyah[]>();
+    ayahs.forEach((ayah) => {
+      const page = ayah.pageNumber || 0;
+      const existing = pages.get(page) || [];
+      existing.push(ayah);
+      pages.set(page, existing);
+    });
+    return Array.from(pages.entries()).sort((a, b) => a[0] - b[0]);
+  }, [ayahs]);
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const wordAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.playbackRate = audioPlaybackSpeed;
+  }, [audioPlaybackSpeed]);
 
   const currentSurah = SURAH_LIST.find((s) => s.id === surahId) || SURAH_LIST[0];
 
@@ -102,9 +138,18 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
     setLoading(true);
     if (audioRef.current) {
       audioRef.current.pause();
+      audioRef.current.removeAttribute('src');
+      audioRef.current.load();
       setIsPlaying(false);
       setPlayingAyahKey(null);
     }
+    if (wordAudioRef.current) {
+      wordAudioRef.current.pause();
+      wordAudioRef.current.removeAttribute('src');
+      wordAudioRef.current.load();
+      setActiveWordId(null);
+    }
+    setAudioError(null);
 
     fetchVersesByLanguage(surahId, currentLanguage, selectedReciterId)
       .then((data) => {
@@ -123,6 +168,39 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
     };
   }, [surahId, currentLanguage, selectedReciterId]);
 
+  useEffect(() => {
+    let active = true;
+    const refreshTafsir = () => {
+      getOfflineTafsirForSurah(surahId)
+        .then((records) => { if (active) setOfflineTafsirRecords(records); })
+        .catch((error: unknown) => console.warn('Could not load offline tafsir:', error));
+    };
+    refreshTafsir();
+    window.addEventListener('mushaf:tafsir-updated', refreshTafsir);
+    return () => {
+      active = false;
+      window.removeEventListener('mushaf:tafsir-updated', refreshTafsir);
+    };
+  }, [surahId]);
+
+  const getTafsirsForAyah = (verseKey: string): TafsirContent[] => {
+    const bundled = getBundledTafsir(verseKey);
+    const downloaded = offlineTafsirRecords
+      .filter((record) => record.verseKey === verseKey)
+      .map((record) => ({
+        author: record.authorName,
+        nameBn: record.resourceName,
+        nameEn: record.resourceName,
+        language: record.languageCode,
+        resourceId: record.resourceId,
+        text: record.text,
+      }));
+    const unique = new Map<number | string, TafsirContent>();
+    bundled.forEach((item, index) => unique.set(item.resourceId ?? `bundled-${index}-${item.nameBn}`, item));
+    downloaded.forEach((item) => unique.set(item.resourceId ?? item.nameEn ?? item.nameBn, item));
+    return Array.from(unique.values());
+  };
+
   // Handle play/pause of full Ayah audio
   const handlePlayAyah = (ayah: QuranAyah) => {
     if (playingAyahKey === ayah.verseKey && isPlaying) {
@@ -131,15 +209,24 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
       return;
     }
 
+    const player = audioRef.current;
+    if (!player || !ayah.audioUrl) {
+      setAudioError('এই আয়াতের তিলাওয়াত অডিও পাওয়া যায়নি।');
+      return;
+    }
+
+    setAudioError(null);
     setPlayingAyahKey(ayah.verseKey);
     setCurrentRepeat(1);
-
-    if (audioRef.current) {
-      audioRef.current.src = ayah.audioUrl;
-      audioRef.current.playbackRate = 1;
-      audioRef.current.play().catch((e) => console.warn('Audio play error:', e));
-      setIsPlaying(true);
-    }
+    player.pause();
+    player.src = ayah.audioUrl;
+    player.playbackRate = audioPlaybackSpeed;
+    player.load();
+    void player.play().catch((error) => {
+      setIsPlaying(false);
+      setAudioError('অডিও চালানো যায়নি। ইন্টারনেট সংযোগ ও অডিও লিংক পরীক্ষা করুন।');
+      console.warn('Ayah audio playback failed:', error);
+    });
   };
 
   const handleAyahAudioEnded = () => {
@@ -150,30 +237,67 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
     }
 
     if (playingAyahKey) {
-      const currentIndex = ayahs.findIndex((a) => a.verseKey === playingAyahKey);
-      if (currentIndex >= 0 && currentIndex < ayahs.length - 1) {
-        const nextAyah = ayahs[currentIndex + 1];
-        handlePlayAyah(nextAyah);
-      } else {
-        setIsPlaying(false);
-        setPlayingAyahKey(null);
+      if (autoPlayNextAyah) {
+        const currentIndex = ayahs.findIndex((a) => a.verseKey === playingAyahKey);
+        if (currentIndex >= 0 && currentIndex < ayahs.length - 1) {
+          const nextAyah = ayahs[currentIndex + 1];
+          handlePlayAyah(nextAyah);
+          return;
+        }
       }
+      setIsPlaying(false);
+      setPlayingAyahKey(null);
     }
   };
 
-  const handlePlayWord = (word: QuranWord, e: React.MouseEvent) => {
+  const handlePlayWord = (word: QuranWord, ayah: QuranAyah, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!word.audioUrl) return;
 
-    setActiveWordId(word.id);
-    if (!wordAudioRef.current) {
-      wordAudioRef.current = new Audio();
-    }
-    wordAudioRef.current.src = word.audioUrl;
-    wordAudioRef.current.play().catch((err) => console.warn('Word audio error:', err));
-    wordAudioRef.current.onended = () => {
+    // Fail closed: only play a word clip whose filename matches this exact
+    // Surah, Ayah and word position. Never play an unverified/mismatched clip.
+    const expectedFile = `${padNumber(surahId)}_${padNumber(ayah.verseNumber)}_${padNumber(word.position)}.mp3`;
+    let audioUrl: URL;
+    try {
+      audioUrl = new URL(word.audioUrl);
+    } catch {
       setActiveWordId(null);
+      console.warn('Word audio skipped: invalid audio URL', word.verseKey, word.position);
+      return;
+    }
+    if (
+      audioUrl.protocol !== 'https:' ||
+      audioUrl.hostname !== 'audio.qurancdn.com' ||
+      !audioUrl.pathname.endsWith(`/wbw/${expectedFile}`)
+    ) {
+      setActiveWordId(null);
+      console.warn('Word audio skipped: clip does not match this Quran word', {
+        verseKey: ayah.verseKey,
+        position: word.position,
+        expectedFile,
+        audioUrl: word.audioUrl,
+      });
+      return;
+    }
+
+    if (!wordAudioRef.current) wordAudioRef.current = new Audio();
+    const player = wordAudioRef.current;
+    player.pause();
+    player.onended = null;
+    player.onerror = null;
+    player.removeAttribute('src');
+    player.load();
+    player.src = audioUrl.toString();
+    player.onended = () => setActiveWordId(null);
+    player.onerror = () => {
+      setActiveWordId(null);
+      console.warn('Verified word audio could not be loaded:', word.verseKey, word.position);
     };
+    setActiveWordId(word.id);
+    player.load();
+    void player.play().catch((err) => {
+      setActiveWordId(null);
+      console.warn('Word audio playback failed:', err);
+    });
   };
 
   const handleCopyAyah = (ayah: QuranAyah) => {
@@ -193,35 +317,68 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
     if (surahId < 114) onSelectSurah(surahId + 1);
   };
 
-  // Helper to extract correct translation string based on current language
-  const getAyahTranslation = (ayah: any) => {
-    if (currentLanguage === 'en') return ayah.translationEn || ayah.translationBn;
-    if (currentLanguage === 'hi') return ayah.translationHi || ayah.translationBn;
-    if (currentLanguage === 'ur') return ayah.translationUr || ayah.translationBn;
-    if (currentLanguage === 'tr') return ayah.translationTr || ayah.translationBn;
-    if (currentLanguage === 'ar') return ayah.tafsirAr || ayah.textUthmani;
-    return ayah.translationBn;
+  const handleReaderTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (event.touches.length === 2) {
+      touchStartRef.current = null;
+      pinchStartRef.current = { distance: getTouchDistance(event.touches), zoom: readerZoom };
+    } else if (event.touches.length === 1) {
+      touchStartRef.current = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+      pinchStartRef.current = null;
+    }
+  };
+  const handleReaderTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (event.touches.length === 2 && pinchStartRef.current) {
+      event.preventDefault();
+      const ratio = getTouchDistance(event.touches) / Math.max(1, pinchStartRef.current.distance);
+      setReaderZoom(Math.min(1.6, Math.max(0.8, pinchStartRef.current.zoom * ratio)));
+    }
+  };
+  const handleReaderTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (event.touches.length > 0) return;
+    if (touchStartRef.current && event.changedTouches.length) {
+      const dx = event.changedTouches[0].clientX - touchStartRef.current.x;
+      const dy = event.changedTouches[0].clientY - touchStartRef.current.y;
+      if (Math.abs(dx) > 95 && Math.abs(dx) > Math.abs(dy) * 1.25) {
+        if (dx < 0) handleNextSurah();
+        else handlePrevSurah();
+      }
+    }
+    touchStartRef.current = null;
+    pinchStartRef.current = null;
   };
 
-  // Helper to extract word-by-word translation in selected language
+  // Helper to extract correct translation string based on current language
+  const getAyahTranslation = (ayah: QuranAyah): string => {
+    if (ayah.translationText) return ayah.translationText;
+    if (currentLanguage === 'en') return ayah.translationEn || '';
+    if (currentLanguage === 'hi') return ayah.translationHi || '';
+    if (currentLanguage === 'ur') return ayah.translationUr || '';
+    if (currentLanguage === 'tr') return ayah.translationTr || '';
+    if (currentLanguage === 'bn') return ayah.translationBn || '';
+    return '';
+  };
+
+  // Never substitute another language's wording when a verified translation is absent.
   const getWordTranslation = (word: QuranWord): string => {
-    if (currentLanguage === 'en') return word.translationEn || word.translationBn;
-    if (currentLanguage === 'hi') return word.translationHi || word.translationEn || word.translationBn;
-    if (currentLanguage === 'ur') return word.translationUr || word.translationEn || word.translationBn;
-    if (currentLanguage === 'tr') return word.translationTr || word.translationEn || word.translationBn;
-    if (currentLanguage === 'ar') return word.translationBn || word.translationEn;
-    return word.translationBn || word.translationEn;
+    if (word.translationText) return word.translationText;
+    if (currentLanguage === 'en') return word.translationEn || '';
+    if (currentLanguage === 'hi') return word.translationHi || '';
+    if (currentLanguage === 'ur') return word.translationUr || '';
+    if (currentLanguage === 'tr') return word.translationTr || '';
+    if (currentLanguage === 'bn') return word.translationBn || '';
+    return '';
   };
 
   const langMeta = QURAN_LANGUAGES.find((l) => l.code === currentLanguage) || QURAN_LANGUAGES[0];
 
   return (
-    <div className="min-h-screen w-full min-w-0 pb-32 pt-2 px-3 sm:px-5 max-w-7xl mx-auto font-bangla">
+    <div className="min-h-screen w-full min-w-0 pb-32 pt-2 px-3 sm:px-5 max-w-7xl mx-auto font-bangla touch-pan-y" style={{ zoom: readerZoom }} onTouchStart={handleReaderTouchStart} onTouchMove={handleReaderTouchMove} onTouchEnd={handleReaderTouchEnd}>
       <audio
         ref={audioRef}
         onEnded={handleAyahAudioEnded}
         onPause={() => setIsPlaying(false)}
-        onPlay={() => setIsPlaying(true)}
+        onPlay={() => { setIsPlaying(true); setAudioError(null); }}
+        onError={() => { setIsPlaying(false); setAudioError('তিলাওয়াত অডিও লোড করা যায়নি। পরে আবার চেষ্টা করুন।'); }}
       />
 
       {/* Surah Banner & Navigation Card */}
@@ -236,20 +393,20 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
             className={`p-2 rounded-xl border border-emerald-700/60 bg-emerald-950/40 text-emerald-200 transition-colors flex items-center gap-1 text-xs ${
               surahId <= 1 ? 'opacity-40 cursor-not-allowed' : 'hover:bg-emerald-700 hover:text-white'
             }`}
-            aria-label="পূর্ববর্তী সূরা"
+            aria-label={translateUi(uiLanguage, 'previousSurah')}
           >
             <ChevronLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">পূর্ববর্তী</span>
+            <span className="hidden sm:inline">{translateUi(uiLanguage, 'previousSurah')}</span>
           </button>
 
           <div className="text-center">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/70 border border-amber-400/30 text-amber-300 text-xs mb-2 shadow-xs">
               <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              <span>সূরা নম্বর: {toBanglaNumber(currentSurah.id)}</span>
+              <span>{translateUi(uiLanguage, 'surahNumber')}: {formatUiNumber(currentSurah.id, uiLanguage)}</span>
               <span>•</span>
-              <span>{currentSurah.revelationPlace === 'makkah' ? 'মাক্কী' : 'মাদানী'}</span>
+              <span>{currentSurah.revelationPlace === 'makkah' ? translateUi(uiLanguage, 'revelationMakkah') : translateUi(uiLanguage, 'revelationMadinah')}</span>
               <span>•</span>
-              <span>{toBanglaNumber(currentSurah.versesCount)} আয়াত</span>
+              <span>{formatUiNumber(currentSurah.versesCount, uiLanguage)} {translateUi(uiLanguage, 'verses')}</span>
             </div>
 
             <div className="flex flex-col items-center">
@@ -267,10 +424,10 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
             <button
               onClick={onOpenSurahList}
               className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-400 hover:bg-amber-300 text-emerald-950 font-bold text-xs transition-transform hover:scale-105 shadow-sm"
-              aria-label="সূরা তালিকা খুলুন"
+              aria-label={translateUi(uiLanguage, 'chooseSurah')}
             >
               <BookOpen className="w-3.5 h-3.5" />
-              <span>অন্য সূরা নির্বাচন করুন</span>
+              <span>{translateUi(uiLanguage, 'chooseAnotherSurah')}</span>
             </button>
           </div>
 
@@ -280,19 +437,17 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
             className={`p-2 rounded-xl border border-emerald-700/60 bg-emerald-950/40 text-emerald-200 transition-colors flex items-center gap-1 text-xs ${
               surahId >= 114 ? 'opacity-40 cursor-not-allowed' : 'hover:bg-emerald-700 hover:text-white'
             }`}
-            aria-label="পরবর্তী সূরা"
+            aria-label={translateUi(uiLanguage, 'nextSurah')}
           >
-            <span className="hidden sm:inline">পরবর্তী</span>
+            <span className="hidden sm:inline">{translateUi(uiLanguage, 'nextSurah')}</span>
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       </div>
 
-      <OfflineQuranDownload />
-
       <section className="mb-5 rounded-2xl border border-emerald-200 bg-white p-4 shadow-sm dark:border-stone-800 dark:bg-stone-900" aria-label="Reading progress">
         <div className="flex items-center justify-between gap-3">
-          <div><h3 className="font-bold text-stone-900 dark:text-white">Reading Progress</h3><p className="text-xs text-stone-500 dark:text-stone-400">এই সূরার কতটি আয়াত পড়েছেন তা চিহ্নিত করুন</p></div>
+          <div><h3 className="font-bold text-stone-900 dark:text-white">{translateUi(uiLanguage, 'readingProgress')}</h3><p className="text-xs text-stone-500 dark:text-stone-400">এই সূরার কতটি আয়াত পড়েছেন তা চিহ্নিত করুন</p></div>
           <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-extrabold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">{readCount}/{currentSurah.versesCount}</span>
         </div>
         <div className="mt-3 h-2 overflow-hidden rounded-full bg-stone-100 dark:bg-stone-800"><div className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-amber-400 transition-all" style={{ width: `${Math.round(readCount / currentSurah.versesCount * 100)}%` }} /></div>
@@ -310,7 +465,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
                 : 'text-stone-700 dark:text-stone-300 hover:text-emerald-700'
             }`}
           >
-            🔤 শব্দে শব্দে
+            🔤 {translateUi(uiLanguage, 'wordByWord')}
           </button>
           <button
             onClick={() => setViewMode('verse')}
@@ -320,7 +475,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
                 : 'text-stone-700 dark:text-stone-300 hover:text-emerald-700'
             }`}
           >
-            📄 পূর্ণ আয়াত
+            📄 {translateUi(uiLanguage, 'fullVerse')}
           </button>
           <button
             onClick={() => setViewMode('mushaf')}
@@ -330,19 +485,18 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
                 : 'text-stone-700 dark:text-stone-300 hover:text-emerald-700'
             }`}
           >
-            📖 মুসহাফ পাতা
+            📖 {translateUi(uiLanguage, 'mushafPage')}
           </button>
         </div>
 
         {/* Multi-Language Selector */}
         <div className="flex items-center gap-2">
           <Globe className="w-3.5 h-3.5 text-emerald-600" />
-          <span className="text-stone-500 dark:text-stone-400">ভাষা / Translation:</span>
           <select
             value={currentLanguage}
             onChange={(e) => onSelectLanguage(e.target.value as QuranLanguage)}
             className="px-2.5 py-1.5 rounded-lg bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-800 dark:text-stone-200 font-bold focus:outline-none focus:ring-1 focus:ring-emerald-500"
-            aria-label="কুরআন অনুবাদ ভাষা নির্বাচন করুন"
+            aria-label={translateUi(uiLanguage, 'translation')}
           >
             {QURAN_LANGUAGES.map((l) => (
               <option key={l.code} value={l.code}>
@@ -406,26 +560,29 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
           <p>আয়াত লোড করা সম্ভব হয়নি।</p>
         </div>
       ) : viewMode === 'mushaf' ? (
-        <div className="bg-[#faf7ee] dark:bg-stone-900/90 text-stone-900 dark:text-stone-100 rounded-2xl p-6 sm:p-10 shadow-md border-2 border-amber-300/60 dark:border-stone-800 leading-[3.2rem]">
-          <div className="text-justify font-arabic" style={{ fontSize: `${arabicFontSize + 6}px` }} dir="rtl">
-            {ayahs.map((ayah) => {
-              const isPlaying = playingAyahKey === ayah.verseKey;
-              return (
-                <span
-                  key={ayah.id}
-                  className={`inline cursor-pointer px-1 py-0.5 rounded transition-colors ${
-                    isPlaying ? 'bg-amber-300/40 text-emerald-950' : 'hover:bg-amber-100 dark:hover:bg-stone-800'
-                  }`}
-                  onClick={() => handlePlayAyah(ayah)}
-                >
-                  {ayah.textUthmani}{' '}
-                  <span className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-amber-600/60 text-amber-700 dark:text-amber-400 text-sm mx-1 align-middle font-arabic font-bold">
-                    {toArabicNumber(ayah.verseNumber)}
-                  </span>{' '}
-                </span>
-              );
-            })}
-          </div>
+        <div className="space-y-5">
+          {mushafPages.map(([pageNumber, pageAyahs]) => (
+            <article key={pageNumber} className="mushaf-page mx-auto w-full max-w-3xl rounded-2xl p-5 sm:p-8">
+              <div className="mb-4 flex items-center justify-between border-b border-current/15 pb-2 text-[10px] font-semibold opacity-60">
+                <span>{currentSurah.nameEnglish}</span>
+                <span>Mushaf page {pageNumber || '—'}</span>
+              </div>
+              <div className="text-justify font-arabic leading-[3.4rem] sm:leading-[4rem]" style={{ fontSize: `${arabicFontSize + 6}px` }} dir="rtl">
+                {pageAyahs.map((ayah) => {
+                  const isPlaying = playingAyahKey === ayah.verseKey;
+                  return (
+                    <span key={ayah.id} className={`inline cursor-pointer rounded px-1 py-0.5 transition-colors ${isPlaying ? 'bg-amber-300/50 text-emerald-950' : 'hover:bg-amber-100/50 dark:hover:bg-stone-800'}`} onClick={() => handlePlayAyah(ayah)}>
+                      {ayah.textUthmani}{' '}
+                      <span className="mx-1 inline-flex h-8 w-8 items-center justify-center rounded-full border border-current/40 align-middle text-sm font-bold">
+                        {toArabicNumber(ayah.verseNumber)}
+                      </span>{' '}
+                    </span>
+                  );
+                })}
+              </div>
+              <div className="mt-4 border-t border-current/15 pt-2 text-center text-[10px] opacity-50">Page {pageNumber || '—'} · {pageAyahs.length} verses in this chapter</div>
+            </article>
+          ))}
         </div>
       ) : (
         <div className="space-y-6">
@@ -433,6 +590,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
             const isPlayingThisAyah = playingAyahKey === ayah.verseKey && isPlaying;
             const isBookmarked = bookmarks.includes(ayah.verseKey);
             const translationText = getAyahTranslation(ayah);
+            const availableTafsirs = getTafsirsForAyah(ayah.verseKey);
 
             return (
               <div
@@ -471,20 +629,22 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
                       aria-label="অডিও শুনুন"
                     >
                       {isPlayingThisAyah ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-                      <span className="hidden sm:inline">তিলাওয়াত</span>
+                      <span className="hidden sm:inline">{translateUi(uiLanguage, 'listen')}</span>
                     </button>
 
-                    <button
-                      onClick={() => {
-                        setTafsirAyah(ayah);
-                        setIsTafsirOpen(true);
-                      }}
-                      className="p-1.5 rounded-lg bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-200 hover:bg-emerald-600 hover:text-white transition-colors flex items-center gap-1"
-                      aria-label="তাফসীর"
-                    >
-                      <BookOpen className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
-                      <span className="hidden sm:inline">তাফসীর</span>
-                    </button>
+                    {availableTafsirs.length > 0 && (
+                      <button
+                        onClick={() => {
+                          setTafsirAyah(ayah);
+                          setIsTafsirOpen(true);
+                        }}
+                        className="p-1.5 rounded-lg bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-200 hover:bg-emerald-600 hover:text-white transition-colors flex items-center gap-1"
+                        aria-label={translateUi(uiLanguage, 'tafsir')}
+                      >
+                        <BookOpen className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
+                        <span className="hidden sm:inline">{translateUi(uiLanguage, 'tafsir')}</span>
+                      </button>
+                    )}
 
                     <button
                       onClick={() => onToggleBookmark(ayah.verseKey, currentSurah.nameBengali, ayah.verseNumber)}
@@ -493,7 +653,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
                           ? 'bg-amber-500 text-white'
                           : 'bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-200 hover:bg-amber-500 hover:text-white'
                       }`}
-                      aria-label="বুকমার্ক"
+                      aria-label={translateUi(uiLanguage, 'bookmark')}
                     >
                       <Bookmark className="w-3.5 h-3.5" />
                     </button>
@@ -501,14 +661,14 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
                     <button
                       onClick={() => handleCopyAyah(ayah)}
                       className="p-1.5 rounded-lg bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-200 hover:bg-emerald-600 hover:text-white transition-colors"
-                      aria-label="কপি"
+                      aria-label={translateUi(uiLanguage, 'copy')}
                     >
                       {copiedAyahKey === ayah.verseKey ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                     </button>
                   </div>
                 </div>
 
-                <div className="px-4 sm:px-6"><AyahStudyTools read={!!studyRecords[ayah.verseKey]?.read} note={studyRecords[ayah.verseKey]?.note ?? ''} onToggleRead={() => updateStudyRecord(ayah.verseKey, { read: !studyRecords[ayah.verseKey]?.read })} onNoteChange={(note) => updateStudyRecord(ayah.verseKey, { note })} /></div>
+                <div className="px-4 sm:px-6"><AyahStudyTools read={!!studyRecords[ayah.verseKey]?.read} note={studyRecords[ayah.verseKey]?.note ?? ''} onToggleRead={() => updateStudyRecord(ayah.verseKey, { read: !studyRecords[ayah.verseKey]?.read })} onNoteChange={(note) => updateStudyRecord(ayah.verseKey, { note })} uiLanguage={uiLanguage} /></div>
 
                 {/* Body Content */}
                 <div className="p-4 sm:p-6 space-y-4">
@@ -521,7 +681,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
                           return (
                             <div
                               key={word.id}
-                              onClick={(e) => handlePlayWord(word, e)}
+                              onClick={(e) => handlePlayWord(word, ayah, e)}
                               className={`group cursor-pointer rounded-xl p-2.5 border transition-all text-center flex flex-col items-center min-w-[70px] sm:min-w-[85px] ${
                                 isWordActive
                                   ? 'bg-amber-300 dark:bg-amber-500/20 border-amber-500 ring-2 ring-amber-400 scale-105 shadow-md'
@@ -542,12 +702,11 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
                                 </span>
                               )}
 
-                              <span
-                                className="text-xs sm:text-sm font-medium text-emerald-800 dark:text-emerald-400 mt-1 leading-tight"
-                                dir={currentLanguage === 'ur' ? 'rtl' : 'ltr'}
-                              >
-                                {getWordTranslation(word)}
-                              </span>
+                              {getWordTranslation(word) && (
+                                <span className="mt-1 text-xs leading-tight font-medium text-emerald-800 dark:text-emerald-400" dir={currentLanguage === 'ur' ? 'rtl' : 'ltr'}>
+                                  {getWordTranslation(word)}
+                                </span>
+                              )}
                             </div>
                           );
                         })}
@@ -560,12 +719,13 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
                             style={{ fontSize: `${banglaFontSize}px` }}
                           >
                             <span className="font-semibold text-emerald-800 dark:text-emerald-400 mr-1.5">
-                              ({langMeta.nativeName}) Translation:
+                              ({langMeta.nativeName})
                             </span>
                             {translationText}
                           </p>
                         </div>
                       )}
+                      {showTranslation && !translationText && <p className="mt-3 text-xs text-amber-700 dark:text-amber-300">{translateUi(uiLanguage, 'noTranslationAvailable')}</p>}
                     </div>
                   ) : (
                     <div className="space-y-4">
@@ -586,14 +746,24 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
                           style={{ fontSize: `${banglaFontSize}px` }}
                         >
                           <span className="font-semibold text-emerald-800 dark:text-emerald-400 mr-1.5">
-                            ({langMeta.nativeName}):
+                            ({langMeta.nativeName})
                           </span>
                           {translationText}
                         </p>
                       )}
+                      {showTranslation && !translationText && <p className="text-xs text-amber-700 dark:text-amber-300">{translateUi(uiLanguage, 'noTranslationAvailable')}</p>}
                     </div>
                   )}
                 </div>
+                  {availableTafsirs.length > 0 && (
+                    <section className="mx-4 mb-4 rounded-xl border border-amber-200/80 bg-amber-50/60 p-4 dark:border-amber-900/60 dark:bg-amber-950/20">
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <h4 className="text-sm font-bold text-amber-900 dark:text-amber-200">{translateUi(uiLanguage, 'tafsir')} · {availableTafsirs[0].nameEn || availableTafsirs[0].nameBn}</h4>
+                        <button type="button" onClick={() => { setTafsirAyah(ayah); setIsTafsirOpen(true); }} className="text-xs font-bold text-emerald-700 underline dark:text-emerald-300">View</button>
+                      </div>
+                      <p className="whitespace-pre-line text-sm leading-relaxed text-stone-700 dark:text-stone-200">{availableTafsirs[0].text}</p>
+                    </section>
+                  )}
               </div>
             );
           })}
@@ -617,7 +787,9 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 flex-col items-end gap-1">
+            {audioError && <p role="status" className="max-w-[180px] text-right text-[10px] text-amber-200">{audioError}</p>}
+            <div className="flex items-center gap-2">
             <button
               onClick={() => {
                 if (audioRef.current) {
@@ -641,6 +813,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
             >
               ✕
             </button>
+            </div>
           </div>
         </div>
       )}
@@ -649,7 +822,10 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
         isOpen={isTafsirOpen}
         onClose={() => setIsTafsirOpen(false)}
         ayah={tafsirAyah}
-        surahNameBn={currentSurah.nameBengali}
+        surahNameBn={currentSurah.nameEnglish}
+        translationText={tafsirAyah ? getAyahTranslation(tafsirAyah) : ''}
+        translationLanguage={langMeta.nativeName}
+        preloadedTafsirs={tafsirAyah ? getTafsirsForAyah(tafsirAyah.verseKey) : []}
       />
     </div>
   );

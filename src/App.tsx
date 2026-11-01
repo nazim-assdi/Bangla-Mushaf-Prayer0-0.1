@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { BookOpen, Compass, Clock3, CircleDot, CalendarDays, Search, Bookmark } from 'lucide-react';
 import { Navbar, ActiveTab, ThemeMode } from './components/Navbar';
 import { MushafReader } from './components/MushafReader';
 import { SurahDrawer } from './components/SurahDrawer';
@@ -13,23 +14,14 @@ import { BookmarksView } from './components/BookmarksView';
 import { SettingsModal } from './components/SettingsModal';
 import { DailyDhikrView } from './components/DailyDhikrView';
 import { GlobalSearchModal } from './components/GlobalSearchModal';
+import { SideMenu } from './components/SideMenu';
 import { SURAH_LIST } from './data/quranMetadata';
-import { QuranLanguage } from './services/multiLangQuran';
+import { QURAN_LANGUAGES, QuranLanguage } from './services/multiLangQuran';
+import { UiLanguage, translateUi } from './services/i18n';
+import { LanguageSelectionScreen } from './components/LanguageSelectionScreen';
+import { ReadingPlanner } from './components/ReadingPlanner';
+import { ARABIC_FONTS } from './services/arabicFonts';
 import { OfflineIndicator } from './components/OfflineIndicator';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import {
-  saveBookmarkToFirestore,
-  deleteBookmarkFromFirestore,
-  subscribeToBookmarks,
-  saveUserProfile,
-  subscribeToUserProfile,
-} from './services/firebase';
-import {
-  syncUserToCloudSQL,
-  syncSettingsToCloudSQL,
-  addBookmarkToCloudSQL,
-  deleteBookmarkFromCloudSQL,
-} from './services/apiSync';
 
 interface BookmarkItem {
   id?: string;
@@ -44,16 +36,36 @@ function AppContent() {
   const [currentSurahId, setCurrentSurahId] = useState<number>(1);
   const [isSurahDrawerOpen, setIsSurahDrawerOpen] = useState<boolean>(false);
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState<boolean>(false);
+  const [isSideMenuOpen, setIsSideMenuOpen] = useState<boolean>(false);
 
   // Settings & display state
-  const [theme, setTheme] = useState<ThemeMode>('emerald');
-  const [arabicFontSize, setArabicFontSize] = useState<number>(28);
-  const [banglaFontSize, setBanglaFontSize] = useState<number>(15);
-  const [showTransliteration, setShowTransliteration] = useState<boolean>(true);
-  const [showTranslation, setShowTranslation] = useState<boolean>(true);
-  const [selectedReciterId, setSelectedReciterId] = useState<string>('alafasy');
-  const [currentLanguage, setCurrentLanguage] = useState<QuranLanguage>('bn');
-  const { user } = useAuth();
+  const [theme, setTheme] = useState<ThemeMode>(() => {
+    const saved = localStorage.getItem('mushaf_theme');
+    return saved === 'dark' || saved === 'sepia' || saved === 'softblue' || saved === 'eyecare' ? saved : 'emerald';
+  });
+  const [arabicFontSize, setArabicFontSize] = useState<number>(() => Number(localStorage.getItem('mushaf_arabic_font_size')) || 28);
+  const [arabicFontId, setArabicFontId] = useState<string>(() => localStorage.getItem('mushaf_arabic_font') || 'noto-naskh');
+  const [mushafPageStyle, setMushafPageStyle] = useState<string>(() => localStorage.getItem('mushaf_page_style') || 'classic');
+  const [banglaFontSize, setBanglaFontSize] = useState<number>(() => Number(localStorage.getItem('mushaf_translation_font_size')) || 15);
+  const [showTransliteration, setShowTransliteration] = useState<boolean>(() => {
+    const saved = localStorage.getItem('mushaf_show_transliteration');
+    return saved === null ? localStorage.getItem('mushaf_ui_language') === 'bn' : saved === 'true';
+  });
+  const [showTranslation, setShowTranslation] = useState<boolean>(() => localStorage.getItem('mushaf_show_translation') !== 'false');
+  const [selectedReciterId, setSelectedReciterId] = useState<string>(() => localStorage.getItem('mushaf_selected_reciter') || 'alafasy');
+  const [audioPlaybackSpeed, setAudioPlaybackSpeed] = useState<number>(() => Number(localStorage.getItem('mushaf_audio_speed')) || 1);
+  const [autoPlayNextAyah, setAutoPlayNextAyah] = useState<boolean>(() => localStorage.getItem('mushaf_auto_next_ayah') !== 'false');
+  const [currentLanguage, setCurrentLanguage] = useState<QuranLanguage>(() => {
+    const saved = localStorage.getItem('mushaf_quran_language');
+    if (saved && QURAN_LANGUAGES.some((item) => item.code === saved)) return saved as QuranLanguage;
+    const ui = localStorage.getItem('mushaf_ui_language');
+    return ui && QURAN_LANGUAGES.some((item) => item.code === ui) ? ui as QuranLanguage : 'en';
+  });
+  const [uiLanguage, setUiLanguage] = useState<UiLanguage | null>(() => {
+    const saved = localStorage.getItem('mushaf_ui_language');
+    return saved === 'bn' || saved === 'en' || saved === 'ar' || saved === 'hi' || saved === 'ur' || saved === 'tr' ? saved : null;
+  });
+  const [languageDraft, setLanguageDraft] = useState<UiLanguage>('en');
 
   // Bookmarks & last read state with localStorage sync
   const [bookmarks, setBookmarks] = useState<BookmarkItem[]>(() => {
@@ -82,59 +94,6 @@ function AppContent() {
     return { surahId: 1, ayahNumber: 1, surahNameBn: 'আল-ফাতিহা' };
   });
 
-  // Firestore is the source of truth for a signed-in account.
-  // Always apply snapshots, including empty ones, so another account's local data
-  // can never be copied into this account or resurrect deleted bookmarks.
-  useEffect(() => {
-    if (!user) return;
-
-    void syncUserToCloudSQL(user);
-    const unsubscribe = subscribeToBookmarks(user.uid, (remoteBookmarks) => {
-      setBookmarks(remoteBookmarks);
-    });
-
-    return () => unsubscribe();
-  }, [user]);
-
-  useEffect(() => {
-    if (!user) return;
-    const unsubscribe = subscribeToUserProfile(user.uid, (profile) => {
-      if (profile) {
-        if (profile.theme) setTheme(profile.theme as ThemeMode);
-        if (profile.arabicFontSize) setArabicFontSize(profile.arabicFontSize);
-        if (profile.banglaFontSize) setBanglaFontSize(profile.banglaFontSize);
-        if (profile.selectedReciterId) setSelectedReciterId(profile.selectedReciterId);
-        if (profile.currentLanguage) setCurrentLanguage(profile.currentLanguage as QuranLanguage);
-        if (profile.lastRead) setLastRead(profile.lastRead);
-      }
-    });
-    return () => unsubscribe();
-  }, [user]);
-
-  // Sync to Firestore and Cloud SQL on user settings and last read changes
-  useEffect(() => {
-    if (user && lastRead) {
-      saveUserProfile(user.uid, {
-        lastRead,
-        theme,
-        arabicFontSize,
-        banglaFontSize,
-        selectedReciterId,
-        currentLanguage,
-      });
-      syncSettingsToCloudSQL(user, {
-        theme,
-        arabicFontSize,
-        banglaFontSize,
-        selectedReciterId,
-        currentLanguage,
-        lastReadSurahId: lastRead.surahId,
-        lastReadAyahNumber: lastRead.ayahNumber,
-        lastReadSurahNameBn: lastRead.surahNameBn,
-      });
-    }
-  }, [lastRead, theme, arabicFontSize, banglaFontSize, selectedReciterId, currentLanguage, user]);
-
   useEffect(() => {
     try {
       localStorage.setItem('bangla_mushaf_bookmarks', JSON.stringify(bookmarks));
@@ -148,6 +107,50 @@ function AppContent() {
       } catch (e) {}
     }
   }, [lastRead]);
+
+  useEffect(() => {
+    if (!uiLanguage) return;
+    const root = document.documentElement;
+    root.lang = uiLanguage;
+    root.dir = uiLanguage === 'ar' || uiLanguage === 'ur' ? 'rtl' : 'ltr';
+    localStorage.setItem('mushaf_ui_language', uiLanguage);
+  }, [uiLanguage]);
+
+  const handleUiLanguageChange = (language: UiLanguage) => {
+    const firstLaunch = !localStorage.getItem('mushaf_ui_language');
+    if (firstLaunch) setShowTransliteration(language === 'bn');
+    setUiLanguage(language);
+    setLanguageDraft(language);
+    localStorage.setItem('mushaf_ui_language', language);
+    if (!localStorage.getItem('mushaf_quran_language')) {
+      const translationLanguage: QuranLanguage = language === 'ar' ? 'en' : language;
+      setCurrentLanguage(translationLanguage);
+      localStorage.setItem('mushaf_quran_language', translationLanguage);
+    }
+  };
+
+  useEffect(() => {
+    const font = ARABIC_FONTS.find((item) => item.id === arabicFontId) ?? ARABIC_FONTS[0];
+    document.documentElement.style.setProperty('--font-arabic', `${font.family}, serif`);
+    localStorage.setItem('mushaf_arabic_font', font.id);
+  }, [arabicFontId]);
+
+  useEffect(() => {
+    document.documentElement.dataset.mushafStyle = mushafPageStyle;
+    localStorage.setItem('mushaf_page_style', mushafPageStyle);
+  }, [mushafPageStyle]);
+
+  useEffect(() => {
+    localStorage.setItem('mushaf_theme', theme);
+    localStorage.setItem('mushaf_arabic_font_size', String(arabicFontSize));
+    localStorage.setItem('mushaf_translation_font_size', String(banglaFontSize));
+    localStorage.setItem('mushaf_show_transliteration', String(showTransliteration));
+    localStorage.setItem('mushaf_show_translation', String(showTranslation));
+    localStorage.setItem('mushaf_selected_reciter', selectedReciterId);
+    localStorage.setItem('mushaf_audio_speed', String(audioPlaybackSpeed));
+    localStorage.setItem('mushaf_auto_next_ayah', String(autoPlayNextAyah));
+    localStorage.setItem('mushaf_quran_language', currentLanguage);
+  }, [theme, arabicFontSize, banglaFontSize, showTransliteration, showTranslation, selectedReciterId, currentLanguage, audioPlaybackSpeed, autoPlayNextAyah]);
 
   // Handle theme classes on html
   useEffect(() => {
@@ -171,10 +174,6 @@ function AppContent() {
     const bookmarkId = verseKey.replace(':', '_');
     if (exists) {
       setBookmarks((prev) => prev.filter((b) => b.verseKey !== verseKey));
-      if (user) {
-        deleteBookmarkFromFirestore(user.uid, bookmarkId);
-        deleteBookmarkFromCloudSQL(user, verseKey);
-      }
     } else {
       const newBookmark: BookmarkItem = {
         id: bookmarkId,
@@ -184,31 +183,16 @@ function AppContent() {
         addedAt: new Date().toISOString(),
       };
       setBookmarks((prev) => [newBookmark, ...prev]);
-      if (user) {
-        saveBookmarkToFirestore(user.uid, {
-          id: bookmarkId,
-          userId: user.uid,
-          verseKey,
-          surahNameBn,
-          ayahNumber,
-          addedAt: newBookmark.addedAt,
-        });
-        addBookmarkToCloudSQL(user, {
-          verseKey,
-          surahNameBn,
-          ayahNumber,
-          addedAt: newBookmark.addedAt,
-        });
-      }
     }
   };
 
   const handleRemoveBookmark = (verseKey: string) => {
     setBookmarks((prev) => prev.filter((b) => b.verseKey !== verseKey));
-    if (user) {
-      deleteBookmarkFromFirestore(user.uid, verseKey.replace(':', '_'));
-      deleteBookmarkFromCloudSQL(user, verseKey);
-    }
+  };
+
+  const handleQuranLanguageChange = (language: QuranLanguage) => {
+    setCurrentLanguage(language);
+    localStorage.setItem('mushaf_quran_language', language);
   };
 
   const handleSelectSurah = (surahId: number, targetAyah?: number) => {
@@ -236,9 +220,14 @@ function AppContent() {
     }
   };
 
+  if (!uiLanguage) {
+    return <LanguageSelectionScreen selectedLanguage={languageDraft} onSelect={setLanguageDraft} onContinue={() => handleUiLanguageChange(languageDraft)} firstLaunch />;
+  }
+  const activeUiLanguage: UiLanguage = uiLanguage;
+
   return (
     <div
-      className={`min-h-screen transition-colors duration-200 ${
+      className={`app-shell min-h-screen transition-colors duration-300 ${
         theme === 'dark'
           ? 'bg-stone-950 text-stone-100'
           : theme === 'sepia'
@@ -256,17 +245,17 @@ function AppContent() {
         setActiveTab={setActiveTab}
         onOpenSurahSearch={() => setIsSurahDrawerOpen(true)}
         onOpenGlobalSearch={() => setIsGlobalSearchOpen(true)}
-        currentSurahNameBn={currentSurah.nameBengali}
+        onOpenMenu={() => setIsSideMenuOpen(true)}
+        currentSurahNameBn={activeUiLanguage === 'bn' ? currentSurah.nameBengali : currentSurah.nameEnglish}
         currentSurahId={currentSurahId}
-        theme={theme}
-        setTheme={setTheme}
+        uiLanguage={activeUiLanguage}
       />
 
       {/* Offline Status Banner */}
       <OfflineIndicator />
 
       {/* Main View Area */}
-      <main className="transition-all">
+      <main className="transition-all" data-active-screen={activeTab}>
         {activeTab === 'mushaf' && (
           <MushafReader
             surahId={currentSurahId}
@@ -280,16 +269,21 @@ function AppContent() {
             showTranslation={showTranslation}
             selectedReciterId={selectedReciterId}
             onSelectReciter={setSelectedReciterId}
+            audioPlaybackSpeed={audioPlaybackSpeed}
+            autoPlayNextAyah={autoPlayNextAyah}
             currentLanguage={currentLanguage}
-            onSelectLanguage={setCurrentLanguage}
+            onSelectLanguage={handleQuranLanguageChange}
+            uiLanguage={activeUiLanguage}
           />
         )}
 
-        {activeTab === 'prayer' && <PrayerTimesView />}
+        {activeTab === 'prayer' && <PrayerTimesView uiLanguage={activeUiLanguage} />}
 
-        {activeTab === 'qibla' && <QiblaCompassView />}
+        {activeTab === 'qibla' && <QiblaCompassView uiLanguage={activeUiLanguage} />}
 
-        {activeTab === 'dhikr' && <DailyDhikrView />}
+        {activeTab === 'dhikr' && <DailyDhikrView uiLanguage={activeUiLanguage} />}
+
+        {activeTab === 'planner' && <ReadingPlanner uiLanguage={activeUiLanguage} />}
 
         {activeTab === 'bookmarks' && (
           <BookmarksView
@@ -297,6 +291,7 @@ function AppContent() {
             onRemoveBookmark={handleRemoveBookmark}
             onNavigateToAyah={handleSelectSurah}
             lastRead={lastRead}
+            uiLanguage={activeUiLanguage}
           />
         )}
 
@@ -304,6 +299,10 @@ function AppContent() {
           <SettingsModal
             arabicFontSize={arabicFontSize}
             setArabicFontSize={setArabicFontSize}
+            arabicFontId={arabicFontId}
+            setArabicFontId={setArabicFontId}
+            mushafPageStyle={mushafPageStyle}
+            setMushafPageStyle={setMushafPageStyle}
             banglaFontSize={banglaFontSize}
             setBanglaFontSize={setBanglaFontSize}
             showTransliteration={showTransliteration}
@@ -312,11 +311,29 @@ function AppContent() {
             setShowTranslation={setShowTranslation}
             selectedReciterId={selectedReciterId}
             setSelectedReciterId={setSelectedReciterId}
+            audioPlaybackSpeed={audioPlaybackSpeed}
+            setAudioPlaybackSpeed={setAudioPlaybackSpeed}
+            autoPlayNextAyah={autoPlayNextAyah}
+            setAutoPlayNextAyah={setAutoPlayNextAyah}
             theme={theme}
             setTheme={setTheme}
+            uiLanguage={activeUiLanguage}
+            onUiLanguageChange={handleUiLanguageChange}
           />
         )}
       </main>
+
+      {/* Main side menu */}
+      <SideMenu
+        isOpen={isSideMenuOpen}
+        onClose={() => setIsSideMenuOpen(false)}
+        onSearch={() => { setIsSideMenuOpen(false); setIsGlobalSearchOpen(true); }}
+        onSettings={() => { setIsSideMenuOpen(false); setActiveTab('settings'); }}
+        onPrayer={() => { setIsSideMenuOpen(false); setActiveTab('prayer'); }}
+        onBookmarks={() => { setIsSideMenuOpen(false); setActiveTab('bookmarks'); }}
+        onGoToAyah={() => { setIsSideMenuOpen(false); setIsSurahDrawerOpen(true); }}
+        uiLanguage={activeUiLanguage}
+      />
 
       {/* Surah & Juz Selection Drawer Modal */}
       <SurahDrawer
@@ -333,88 +350,22 @@ function AppContent() {
         onSelectSurahAndAyah={handleSelectSurah}
       />
 
-      {/* Mobile Bottom Navigation Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 dark:bg-stone-900/95 backdrop-blur-md border-t border-stone-200 dark:border-stone-800 sm:hidden flex items-center justify-around py-2 px-1 text-[11px] font-bangla shadow-lg">
-        <button
-          onClick={() => setActiveTab('mushaf')}
-          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-lg transition-colors ${
-            activeTab === 'mushaf'
-              ? 'text-emerald-700 dark:text-emerald-400 font-bold'
-              : 'text-stone-500 hover:text-stone-900 dark:hover:text-stone-100'
-          }`}
-        >
-          <span>📖</span>
-          <span>মুসহাফ</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('prayer')}
-          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-lg transition-colors ${
-            activeTab === 'prayer'
-              ? 'text-emerald-700 dark:text-emerald-400 font-bold'
-              : 'text-stone-500 hover:text-stone-900 dark:hover:text-stone-100'
-          }`}
-        >
-          <span>⏰</span>
-          <span>নামাজ</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('qibla')}
-          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-lg transition-colors ${
-            activeTab === 'qibla'
-              ? 'text-emerald-700 dark:text-emerald-400 font-bold'
-              : 'text-stone-500 hover:text-stone-900 dark:hover:text-stone-100'
-          }`}
-        >
-          <span>🕋</span>
-          <span>কিবলা</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('dhikr')}
-          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-lg transition-colors ${
-            activeTab === 'dhikr'
-              ? 'text-emerald-700 dark:text-emerald-400 font-bold'
-              : 'text-stone-500 hover:text-stone-900 dark:hover:text-stone-100'
-          }`}
-        >
-          <span>📿</span>
-          <span>যিকির</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('bookmarks')}
-          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-lg transition-colors ${
-            activeTab === 'bookmarks'
-              ? 'text-emerald-700 dark:text-emerald-400 font-bold'
-              : 'text-stone-500 hover:text-stone-900 dark:hover:text-stone-100'
-          }`}
-        >
-          <span>⭐</span>
-          <span>সংরক্ষিত</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('settings')}
-          className={`flex flex-col items-center gap-1 py-1 px-2.5 rounded-lg transition-colors ${
-            activeTab === 'settings'
-              ? 'text-emerald-700 dark:text-emerald-400 font-bold'
-              : 'text-stone-500 hover:text-stone-900 dark:hover:text-stone-100'
-          }`}
-        >
-          <span>⚙️</span>
-          <span>সেটিংস</span>
-        </button>
-      </div>
+      {/* Primary mobile navigation: seven destinations */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-emerald-900/10 bg-white/95 px-1 py-2 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur-md dark:border-stone-700 dark:bg-stone-950/95" aria-label="Main navigation">
+        <div className="mx-auto flex max-w-2xl items-center justify-between gap-1 overflow-x-auto">
+          <button onClick={() => setActiveTab('mushaf')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-2 text-[10px] transition-all ${activeTab === 'mushaf' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><BookOpen className="h-5 w-5" /><span>{translateUi(activeUiLanguage, 'home')}</span></button>
+          <button onClick={() => setActiveTab('qibla')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'qibla' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><Compass className="h-5 w-5" /><span>{translateUi(activeUiLanguage, 'qibla')}</span></button>
+          <button onClick={() => setActiveTab('prayer')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'prayer' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><Clock3 className="h-5 w-5" /><span>{translateUi(activeUiLanguage, 'salat')}</span></button>
+          <button onClick={() => setActiveTab('dhikr')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'dhikr' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><CircleDot className="h-5 w-5" /><span>{translateUi(activeUiLanguage, 'adhkar')}</span></button>
+          <button onClick={() => setActiveTab('planner')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'planner' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><CalendarDays className="h-5 w-5" /><span>{translateUi(activeUiLanguage, 'planner')}</span></button>
+          <button onClick={() => setIsGlobalSearchOpen(true)} className="flex min-w-[64px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] text-stone-500"><Search className="h-5 w-5" /><span>{translateUi(activeUiLanguage, 'topicAyah')}</span></button>
+          <button onClick={() => setActiveTab('bookmarks')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'bookmarks' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><Bookmark className="h-5 w-5" /><span>{translateUi(activeUiLanguage, 'library')}</span></button>
+        </div>
+      </nav>
     </div>
   );
 }
 
 export default function App() {
-  return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
-  );
+  return <AppContent />;
 }

@@ -9,6 +9,9 @@ interface TafsirModalProps {
   onClose: () => void;
   ayah: QuranAyah | null;
   surahNameBn: string;
+  translationText?: string;
+  translationLanguage?: string;
+  preloadedTafsirs?: TafsirContent[];
 }
 
 export const TafsirModal: React.FC<TafsirModalProps> = ({
@@ -16,6 +19,9 @@ export const TafsirModal: React.FC<TafsirModalProps> = ({
   onClose,
   ayah,
   surahNameBn,
+  translationText,
+  translationLanguage,
+  preloadedTafsirs,
 }) => {
   const [tafsirs, setTafsirs] = useState<TafsirContent[]>([]);
   const [loading, setLoading] = useState(false);
@@ -27,8 +33,13 @@ export const TafsirModal: React.FC<TafsirModalProps> = ({
     if (!ayah || !isOpen) return;
 
     let isMounted = true;
-    setLoading(true);
     setSelectedTafsirIndex(0);
+    if (preloadedTafsirs && preloadedTafsirs.length > 0) {
+      setTafsirs(preloadedTafsirs);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
 
     fetchTafsir(ayah.verseKey)
       .then((data) => {
@@ -45,7 +56,7 @@ export const TafsirModal: React.FC<TafsirModalProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [ayah, isOpen]);
+  }, [ayah?.verseKey, isOpen]);
 
   if (!isOpen || !ayah) return null;
 
@@ -53,7 +64,7 @@ export const TafsirModal: React.FC<TafsirModalProps> = ({
 
   const handleCopyTafsir = () => {
     if (!currentTafsir) return;
-    const textToCopy = `সূরা: ${surahNameBn}, আয়াত: ${toArabicNumber(ayah.verseNumber)}\n\nতাফসীরকারক: ${currentTafsir.nameBn}\n\n${currentTafsir.text}`;
+    const textToCopy = `সূরা: ${surahNameBn}, আয়াত: ${toArabicNumber(ayah.verseNumber)}\n\nতাফসীরকারক: ${currentTafsir.nameEn || currentTafsir.nameBn}\n\n${currentTafsir.text}`;
     navigator.clipboard.writeText(textToCopy);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -133,8 +144,8 @@ export const TafsirModal: React.FC<TafsirModalProps> = ({
             {ayah.textUthmani}
           </p>
           <p className="font-bangla text-xs sm:text-sm text-stone-700 dark:text-stone-300 leading-relaxed">
-            <span className="font-semibold text-emerald-800 dark:text-emerald-400 mr-1.5">বঙ্গানুবাদ:</span>
-            {ayah.translationBn}
+            <span className="font-semibold text-emerald-800 dark:text-emerald-400 mr-1.5">{translationLanguage || 'Translation'}:</span>
+            {translationText || ayah.translationBn}
           </p>
         </div>
 
