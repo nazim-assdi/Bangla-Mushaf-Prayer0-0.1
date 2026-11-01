@@ -1,4 +1,4 @@
-name: Build Android and Desktop Apps
+name: Build Android and Windows Apps
 
 on:
   push:
@@ -10,8 +10,8 @@ permissions:
 
 jobs:
   android:
-    name: Android APK
-    runs-on: ubuntu-latest
+    name: Android APK on personal PC
+    runs-on: [self-hosted, Windows, X64]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -33,42 +33,30 @@ jobs:
       - run: npx cap add android
       - name: Generate branded Android launcher icons
         run: node scripts/create-android-icons.cjs
-      - run: npx cap sync android
       - name: Add exact alarm permission
+        shell: pwsh
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('android/app/src/main/AndroidManifest.xml')
-          s=p.read_text()
-          permission='    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />'
-          if 'android.permission.SCHEDULE_EXACT_ALARM' not in s:
-              i=s.find('>',s.find('<manifest'))
-              s=s[:i+1]+'\\n'+permission+s[i+1:]
-              p.write_text(s)
-          PY
-      - working-directory: android
-        run: |
-          chmod +x gradlew
-          ./gradlew assembleDebug
+          $manifest = "android/app/src/main/AndroidManifest.xml"
+          $source = Get-Content $manifest -Raw
+          $permission = '    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />'
+          if ($source -notmatch 'android.permission.SCHEDULE_EXACT_ALARM') {
+            $source = $source -replace '(<manifest[^>]*>)', ('$1' + "`n" + $permission)
+            Set-Content -Path $manifest -Value $source -NoNewline
+          }
+      - run: npx cap sync android
+      - name: Build APK
+        working-directory: android
+        shell: pwsh
+        run: .\gradlew.bat assembleDebug
       - uses: actions/upload-artifact@v4
         with:
           name: bangla-mushaf-android-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 14
 
-  desktop:
-    name: Desktop ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: windows-latest
-            artifact: windows-exe
-          - os: macos-latest
-            artifact: macos-dmg
-          - os: ubuntu-latest
-            artifact: linux-app
-    runs-on: ${{ matrix.os }}
+  windows:
+    name: Windows EXE on personal PC
+    runs-on: [self-hosted, Windows, X64]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -77,17 +65,10 @@ jobs:
       - run: npm install --legacy-peer-deps
       - run: npm run build
       - name: Build Windows installer and portable EXE
-        if: runner.os == 'Windows'
         run: npx electron-builder --win nsis portable --publish never
-      - name: Build macOS DMG and ZIP
-        if: runner.os == 'macOS'
-        run: npx electron-builder --mac dmg zip --publish never
-      - name: Build Linux AppImage and DEB
-        if: runner.os == 'Linux'
-        run: npx electron-builder --linux AppImage deb --publish never
       - uses: actions/upload-artifact@v4
         with:
-          name: bangla-mushaf-${{ matrix.artifact }}
+          name: bangla-mushaf-windows-exe
           path: release/*
           if-no-files-found: error
           retention-days: 14
