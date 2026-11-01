@@ -74,9 +74,10 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
     } finally { setAlarmLoading(false); }
   };
 
-  // Update clock every 30 seconds for live countdown
+  // Countdown is displayed in whole minutes; update once per minute to avoid
+  // needlessly rerendering the entire prayer screen every 10 seconds.
   useEffect(() => {
-    const timer = window.setInterval(() => setCurrentTime(new Date()), 10000);
+    const timer = window.setInterval(() => setCurrentTime(new Date()), 60000);
     return () => window.clearInterval(timer);
   }, []);
 
