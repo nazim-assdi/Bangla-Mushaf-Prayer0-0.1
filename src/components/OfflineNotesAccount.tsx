@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { UiLanguage, translateUi } from '../services/i18n';
 
 export const OfflineNotesAccount: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLanguage }) => {
-  const { user, loading, signIn, signOutUser } = useAuth();
+  const { user, loading, signIn, signOutUser, authError, clearAuthError } = useAuth();
 
   return (
     <section className="rounded-2xl border border-emerald-200 bg-white p-5 shadow-sm dark:border-stone-800 dark:bg-stone-900 space-y-3">
@@ -21,6 +21,7 @@ export const OfflineNotesAccount: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLa
       ) : (
         <button type="button" onClick={() => void signIn()} className="w-full rounded-xl bg-emerald-700 px-4 py-3 text-sm font-bold text-white">{translateUi(uiLanguage, 'googleSignIn')}</button>
       )}
+      {authError && <div role="alert" className="rounded-xl border border-red-300 bg-red-50 p-3 text-xs leading-relaxed text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200"><p>{authError}</p><button type="button" onClick={clearAuthError} className="mt-2 font-bold underline">Dismiss</button></div>}
       <p className="text-[11px] leading-relaxed text-amber-700 dark:text-amber-300">{translateUi(uiLanguage, 'cloudSyncNote')}</p>
     </section>
   );
