@@ -222,7 +222,7 @@ function AppContent() {
 
   return (
     <div
-      className={`min-h-screen transition-colors duration-200 ${
+      className={`app-shell min-h-screen transition-colors duration-300 ${
         theme === 'dark'
           ? 'bg-stone-950 text-stone-100'
           : theme === 'sepia'
