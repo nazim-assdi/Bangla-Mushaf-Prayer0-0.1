@@ -13,6 +13,8 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
+  setPersistence,
+  browserLocalPersistence,
   signOut,
   onAuthStateChanged,
   User,
@@ -28,6 +30,7 @@ export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 // Initialize Firebase Auth
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 export enum OperationType {
   CREATE = 'create',
@@ -95,13 +98,14 @@ testConnection();
 /**
  * Sign in using Google Auth popup
  */
-export async function signInWithGoogle(): Promise<User | null> {
+export async function signInWithGoogle(): Promise<User> {
+  await setPersistence(auth, browserLocalPersistence);
   try {
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
   } catch (error) {
     console.error('Google Sign In Error:', error);
-    return null;
+    throw error;
   }
 }
 
