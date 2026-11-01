@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { toBanglaNumber, toEnglishNumber, toArabicNumber, formatDurationToBangla } from './banglaNumbers';
 import { calculateQiblaDirection, calculateDistanceToKaaba, getHeadingDeviation } from './qibla';
-import { calculatePrayerTimes, BANGLADESH_DISTRICTS, getWaqtsStatus } from './prayerTimes';
+import { calculatePrayerTimes, BANGLADESH_DISTRICTS, getWaqtsStatus, formatTimeEn } from './prayerTimes';
+import { getTimeZoneForCoordinates, getTimeZoneOffsetHours, getDatePartsInTimeZone } from '../services/worldTimeZone';
 
 test('Bengali number conversion works correctly', () => {
   assert.equal(toBanglaNumber(12345), '১২৩৪৫');
@@ -88,6 +89,24 @@ test('Dhaka prayer times stay in realistic Bangladesh clock-time ranges', () => 
   assert.ok(times.asr.getHours() >= 15 && times.asr.getHours() <= 16, `Asr hour: ${times.asr.getHours()}`);
   assert.ok(times.maghrib.getHours() >= 17 && times.maghrib.getHours() <= 18, `Maghrib hour: ${times.maghrib.getHours()}`);
   assert.ok(times.isha.getHours() >= 18 && times.isha.getHours() <= 19, `Isha hour: ${times.isha.getHours()}`);
+});
+
+test('GPS world time zones apply local date, local clock and daylight saving rules', () => {
+  const instant = new Date('2026-07-15T16:00:00.000Z');
+  assert.equal(getTimeZoneOffsetHours(instant, 'Asia/Dhaka'), 6);
+  assert.equal(getTimeZoneOffsetHours(instant, 'America/New_York'), -4);
+  assert.equal(getTimeZoneOffsetHours(new Date('2026-01-15T16:00:00.000Z'), 'America/New_York'), -5);
+  assert.deepEqual(getDatePartsInTimeZone(instant, 'America/Los_Angeles'), { year: 2026, month: 7, day: 15 });
+
+  const newYork = calculatePrayerTimes(
+    instant, 40.7128, -74.0060, -4,
+    { fajrAngle: 18, ishaAngle: 18, asrJuristic: 'hanafi' },
+    'America/New_York',
+  );
+  const localDhuhr = formatTimeEn(newYork.dhuhr, 'America/New_York');
+  assert.match(localDhuhr, /^12:|^1:00 PM|^1:01 PM|^1:02 PM|^1:03 PM/);
+  assert.ok(newYork.fajr.getTime() < newYork.sunrise.getTime());
+  assert.ok(newYork.sunrise.getTime() < newYork.dhuhr.getTime());
 });
 
 test('Next prayer after Isha is tomorrow Fajr, not a passed Fajr today', () => {
