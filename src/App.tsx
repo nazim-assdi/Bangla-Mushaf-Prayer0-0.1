@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { BookOpen, Compass, Clock3, CircleDot, CalendarDays, Search, Bookmark } from 'lucide-react';
 import { Navbar, ActiveTab, ThemeMode } from './components/Navbar';
 import { MushafReader } from './components/MushafReader';
 import { SurahDrawer } from './components/SurahDrawer';
@@ -250,7 +251,7 @@ function AppContent() {
       <OfflineIndicator />
 
       {/* Main View Area */}
-      <main className="transition-all">
+      <main className="transition-all" data-active-screen={activeTab}>
         {activeTab === 'mushaf' && (
           <MushafReader
             surahId={currentSurahId}
@@ -342,13 +343,13 @@ function AppContent() {
       {/* Primary mobile navigation: seven destinations */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-emerald-900/10 bg-white/95 px-1 py-2 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur-md dark:border-stone-700 dark:bg-stone-950/95" aria-label="Main navigation">
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-1 overflow-x-auto">
-          <button onClick={() => setActiveTab('mushaf')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'mushaf' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">📖</span><span>{translateUi(activeUiLanguage, 'home')}</span></button>
-          <button onClick={() => setActiveTab('qibla')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'qibla' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">🕋</span><span>{translateUi(activeUiLanguage, 'qibla')}</span></button>
-          <button onClick={() => setActiveTab('prayer')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'prayer' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">🕌</span><span>{translateUi(activeUiLanguage, 'salat')}</span></button>
-          <button onClick={() => setActiveTab('dhikr')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'dhikr' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">📿</span><span>{translateUi(activeUiLanguage, 'adhkar')}</span></button>
-          <button onClick={() => setActiveTab('planner')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'planner' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">🗓️</span><span>{translateUi(activeUiLanguage, 'planner')}</span></button>
-          <button onClick={() => setIsGlobalSearchOpen(true)} className="flex min-w-[64px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] text-stone-500"><span className="text-lg">🔎</span><span>{translateUi(activeUiLanguage, 'topicAyah')}</span></button>
-          <button onClick={() => setActiveTab('bookmarks')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'bookmarks' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><span className="text-lg">📚</span><span>{translateUi(activeUiLanguage, 'library')}</span></button>
+          <button onClick={() => setActiveTab('mushaf')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-2 text-[10px] transition-all ${activeTab === 'mushaf' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><BookOpen className="h-5 w-5" /><span>{translateUi(activeUiLanguage, 'home')}</span></button>
+          <button onClick={() => setActiveTab('qibla')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'qibla' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><Compass className="h-5 w-5" /><span>{translateUi(activeUiLanguage, 'qibla')}</span></button>
+          <button onClick={() => setActiveTab('prayer')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'prayer' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><Clock3 className="h-5 w-5" /><span>{translateUi(activeUiLanguage, 'salat')}</span></button>
+          <button onClick={() => setActiveTab('dhikr')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'dhikr' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><CircleDot className="h-5 w-5" /><span>{translateUi(activeUiLanguage, 'adhkar')}</span></button>
+          <button onClick={() => setActiveTab('planner')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'planner' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><CalendarDays className="h-5 w-5" /><span>{translateUi(activeUiLanguage, 'planner')}</span></button>
+          <button onClick={() => setIsGlobalSearchOpen(true)} className="flex min-w-[64px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] text-stone-500"><Search className="h-5 w-5" /><span>{translateUi(activeUiLanguage, 'topicAyah')}</span></button>
+          <button onClick={() => setActiveTab('bookmarks')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'bookmarks' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><Bookmark className="h-5 w-5" /><span>{translateUi(activeUiLanguage, 'library')}</span></button>
         </div>
       </nav>
     </div>
