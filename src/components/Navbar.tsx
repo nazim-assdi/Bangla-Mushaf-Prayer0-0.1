@@ -30,9 +30,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   uiLanguage,
 }) => {
   return (
-    <header className="sticky top-0 z-40 bg-emerald-900/95 dark:bg-stone-900/95 backdrop-blur-md text-white border-b border-emerald-800/60 dark:border-stone-800 shadow-md transition-colors">
+    <header className="sticky top-0 z-40 bg-[#082f3b]/95 dark:bg-[#082f3b]/95 backdrop-blur-xl text-white border-b border-amber-300/20 shadow-xl transition-all">
       <div className="max-w-7xl mx-auto px-3 sm:px-6">
-        <div className="flex items-center justify-between h-16 gap-2">
+        <div className="flex items-center justify-between h-[4.5rem] gap-2">
           
           {/* Logo & Current Surah */}
           <div className="flex items-center gap-3">
@@ -41,10 +41,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="flex items-center gap-2.5 text-left group focus:outline-none focus:ring-2 focus:ring-emerald-400 rounded-lg p-1"
               aria-label="হোমপেজ ও মুসহাফে ফিরে যান"
             >
-              <img src="/icon.svg" alt="Bangla Mushaf app logo" className="h-11 w-11 shrink-0 rounded-2xl shadow-lg ring-1 ring-amber-200/60 transition-transform group-hover:scale-105" />
+              <img src="/icon.svg" alt="Bangla Mushaf app logo" className="h-11 w-11 shrink-0 rounded-2xl shadow-xl ring-2 ring-amber-300/50 transition-transform group-hover:scale-105" />
               <div className="min-w-0 leading-tight">
-                <div className="font-serif text-[15px] sm:text-lg font-extrabold tracking-tight text-amber-300">Bangla Mushaf Prayer</div>
-                <p className="hidden text-[10px] tracking-[0.16em] text-emerald-100/80 sm:block">QURAN · PRAYER · PEACE</p>
+                <div className="font-serif text-[15px] sm:text-lg font-extrabold tracking-tight text-[#f0cf8b]">Bangla Mushaf Prayer</div>
+                <p className="hidden text-[10px] tracking-[0.16em] text-cyan-100/80 sm:block">QURAN · PRAYER · PEACE</p>
               </div>
             </button>
 
