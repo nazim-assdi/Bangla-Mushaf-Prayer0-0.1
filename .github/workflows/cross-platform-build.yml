@@ -32,9 +32,7 @@ jobs:
       - run: npm run build
       - run: npx cap add android
       - name: Generate branded Android launcher icons
-        run: |
-          npm install --no-save sharp
-          node scripts/create-android-icons.cjs
+        run: node scripts/create-android-icons.cjs
       - run: npx cap sync android
       - name: Add exact alarm permission
         run: |
@@ -45,7 +43,7 @@ jobs:
           permission='    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />'
           if 'android.permission.SCHEDULE_EXACT_ALARM' not in s:
               i=s.find('>',s.find('<manifest'))
-              s=s[:i+1]+'\n'+permission+s[i+1:]
+              s=s[:i+1]+'\\n'+permission+s[i+1:]
               p.write_text(s)
           PY
       - working-directory: android
@@ -80,13 +78,13 @@ jobs:
       - run: npm run build
       - name: Build Windows installer and portable EXE
         if: runner.os == 'Windows'
-        run: npx electron-builder --win nsis portable
+        run: npx electron-builder --win nsis portable --publish never
       - name: Build macOS DMG and ZIP
         if: runner.os == 'macOS'
-        run: npx electron-builder --mac dmg zip
+        run: npx electron-builder --mac dmg zip --publish never
       - name: Build Linux AppImage and DEB
         if: runner.os == 'Linux'
-        run: npx electron-builder --linux AppImage deb
+        run: npx electron-builder --linux AppImage deb --publish never
       - uses: actions/upload-artifact@v4
         with:
           name: bangla-mushaf-${{ matrix.artifact }}
