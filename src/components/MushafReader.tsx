@@ -71,6 +71,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
   // Audio player state
   const [playingAyahKey, setPlayingAyahKey] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [audioError, setAudioError] = useState<string | null>(null);
   const [activeWordId, setActiveWordId] = useState<number | null>(null);
   const [hifzRepeatCount, setHifzRepeatCount] = useState<number>(1);
   const [currentRepeat, setCurrentRepeat] = useState<number>(1);
@@ -129,9 +130,18 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
     setLoading(true);
     if (audioRef.current) {
       audioRef.current.pause();
+      audioRef.current.removeAttribute('src');
+      audioRef.current.load();
       setIsPlaying(false);
       setPlayingAyahKey(null);
     }
+    if (wordAudioRef.current) {
+      wordAudioRef.current.pause();
+      wordAudioRef.current.removeAttribute('src');
+      wordAudioRef.current.load();
+      setActiveWordId(null);
+    }
+    setAudioError(null);
 
     fetchVersesByLanguage(surahId, currentLanguage, selectedReciterId)
       .then((data) => {
@@ -191,15 +201,24 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
       return;
     }
 
+    const player = audioRef.current;
+    if (!player || !ayah.audioUrl) {
+      setAudioError('এই আয়াতের তিলাওয়াত অডিও পাওয়া যায়নি।');
+      return;
+    }
+
+    setAudioError(null);
     setPlayingAyahKey(ayah.verseKey);
     setCurrentRepeat(1);
-
-    if (audioRef.current) {
-      audioRef.current.src = ayah.audioUrl;
-      audioRef.current.playbackRate = 1;
-      audioRef.current.play().catch((e) => console.warn('Audio play error:', e));
-      setIsPlaying(true);
-    }
+    player.pause();
+    player.src = ayah.audioUrl;
+    player.playbackRate = 1;
+    player.load();
+    void player.play().catch((error) => {
+      setIsPlaying(false);
+      setAudioError('অডিও চালানো যায়নি। ইন্টারনেট সংযোগ ও অডিও লিংক পরীক্ষা করুন।');
+      console.warn('Ayah audio playback failed:', error);
+    });
   };
 
   const handleAyahAudioEnded = () => {
@@ -348,7 +367,8 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
         ref={audioRef}
         onEnded={handleAyahAudioEnded}
         onPause={() => setIsPlaying(false)}
-        onPlay={() => setIsPlaying(true)}
+        onPlay={() => { setIsPlaying(true); setAudioError(null); }}
+        onError={() => { setIsPlaying(false); setAudioError('তিলাওয়াত অডিও লোড করা যায়নি। পরে আবার চেষ্টা করুন।'); }}
       />
 
       {/* Surah Banner & Navigation Card */}
@@ -757,7 +777,9 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 flex-col items-end gap-1">
+            {audioError && <p role="status" className="max-w-[180px] text-right text-[10px] text-amber-200">{audioError}</p>}
+            <div className="flex items-center gap-2">
             <button
               onClick={() => {
                 if (audioRef.current) {
@@ -781,6 +803,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
             >
               ✕
             </button>
+            </div>
           </div>
         </div>
       )}
