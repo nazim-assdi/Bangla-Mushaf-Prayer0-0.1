@@ -76,6 +76,20 @@ test('Prayer times calculate valid chronological order for Dhaka', () => {
   assert.ok(times.maghrib.getTime() < times.isha.getTime(), 'Maghrib must be before Isha');
 });
 
+test('Dhaka prayer times stay in realistic Bangladesh clock-time ranges', () => {
+  const testDate = new Date('2026-10-26T12:00:00Z');
+  const dhaka = BANGLADESH_DISTRICTS.find((d) => d.id === 'dhaka')!;
+  const times = calculatePrayerTimes(testDate, dhaka.lat, dhaka.lng, 6);
+  // Regression guard: right ascension must be normalized before calculating
+  // equation of time; otherwise prayer times can shift by almost 24 hours.
+  assert.ok(times.fajr.getHours() >= 4 && times.fajr.getHours() <= 5, `Fajr hour: ${times.fajr.getHours()}`);
+  assert.ok(times.sunrise.getHours() >= 5 && times.sunrise.getHours() <= 6, `Sunrise hour: ${times.sunrise.getHours()}`);
+  assert.ok(times.dhuhr.getHours() >= 11 && times.dhuhr.getHours() <= 12, `Dhuhr hour: ${times.dhuhr.getHours()}`);
+  assert.ok(times.asr.getHours() >= 15 && times.asr.getHours() <= 16, `Asr hour: ${times.asr.getHours()}`);
+  assert.ok(times.maghrib.getHours() >= 17 && times.maghrib.getHours() <= 18, `Maghrib hour: ${times.maghrib.getHours()}`);
+  assert.ok(times.isha.getHours() >= 18 && times.isha.getHours() <= 19, `Isha hour: ${times.isha.getHours()}`);
+});
+
 test('Next prayer after Isha is tomorrow Fajr, not a passed Fajr today', () => {
   const today = new Date(2026, 9, 26, 12, 0, 0);
   const dhaka = BANGLADESH_DISTRICTS.find((d) => d.id === 'dhaka')!;
