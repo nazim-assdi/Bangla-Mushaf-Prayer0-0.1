@@ -230,9 +230,9 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
   const divisions = Array.from(new Set(BANGLADESH_DISTRICTS.map((district) => uiLanguage === 'bn' ? district.divisionBn : district.divisionEn)));
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-3 py-4 pb-28 font-bangla sm:px-5 sm:py-6 space-y-5">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#071321] text-slate-900 dark:text-slate-100"><div className="mx-auto w-full max-w-6xl px-3 py-5 pb-28 font-bangla sm:px-5 sm:py-7 space-y-5">\n      <div className="relative overflow-hidden rounded-[2rem] border border-slate-200 dark:border-cyan-900/50 bg-gradient-to-r from-[#0b1f33] via-[#123b50] to-[#075b59] px-5 py-5 sm:px-7 sm:py-6 text-white shadow-xl"><div className="absolute -right-10 -top-16 h-52 w-52 rounded-full border border-white/10" /><div className="relative flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-cyan-200">GLOBAL • SALAH • PRAYER TIMES</p><h1 className="mt-1 text-2xl font-bold sm:text-3xl">নামাজের সময়সূচি <span className="text-cyan-200">/ Prayer Schedule</span></h1><p className="mt-1 text-xs text-slate-200">Worldwide GPS · Local time zone · Daily prayer tracker</p></div><div className="flex items-center gap-2 text-xs text-cyan-100"><span className="rounded-full border border-cyan-200/30 bg-white/10 px-3 py-1.5">🌐 International Edition</span><span className="rounded-full border border-emerald-200/30 bg-emerald-400/10 px-3 py-1.5">IANA Time Zone</span></div></div></div>
       {/* Location Selector Bar */}
-      <div className="bg-white dark:bg-stone-900 rounded-2xl p-4 sm:p-5 shadow-xs border border-stone-200 dark:border-stone-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-[#102235] rounded-2xl p-4 sm:p-5 shadow-lg shadow-slate-200/50 dark:shadow-black/20 border border-slate-200 dark:border-slate-700/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 flex items-center justify-center shrink-0">
             <MapPin className="w-5 h-5" />
@@ -284,7 +284,7 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
       {geoError && <div role="status" className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">{geoError}</div>}
 
       {/* Native background alarm controls */}
-      <section className="rounded-2xl border border-emerald-200 bg-white p-4 shadow-sm dark:border-emerald-900 dark:bg-stone-900 space-y-3">
+      <section className="rounded-2xl border border-emerald-200 bg-white p-4 shadow-lg dark:border-slate-700 dark:bg-[#102235] space-y-3">
         <div>
           <h3 className="font-bold text-stone-900 dark:text-white">{translateUi(uiLanguage, 'notifications')}</h3>
           <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">Android APK-তে অ্যাপ বন্ধ বা ফোন লক থাকলেও স্থানীয় অ্যালার্ম কাজ করার জন্য আগামী ৭ দিনের সময় সেট হবে।</p>
@@ -305,7 +305,7 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
       </section>
 
       {/* Hero Next Prayer Countdown Card */}
-      <div className="bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden border border-emerald-700/60">
+      <div className="bg-gradient-to-br from-[#071a2b] via-[#0b4050] to-[#075b59] text-white rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden border border-emerald-700/60">
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/70 border border-amber-400/30 text-amber-300 text-xs mb-3">
@@ -364,7 +364,7 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
       {/* 6 Main Waqt Cards Grid */}
       <div>
         <h3 className="text-base font-bold text-stone-900 dark:text-white mb-3 flex items-center gap-2">
-          <span>৫ ওয়াক্ত নামাজের নির্ধারিত সময়সূচী</span>
+          <span>৫ ওয়াক্ত নামাজের নির্ধারিত সময়সূচী <span className="ml-1 text-[10px] font-semibold uppercase tracking-wider text-cyan-700 dark:text-cyan-300">/ Daily Salah</span></span>
           <span className="text-xs font-normal text-stone-500">
             ({formatDateInTimeZone(currentTime, timeZoneId)})
           </span>
@@ -397,7 +397,7 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
                     ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 ring-2 ring-emerald-500 shadow-md'
                     : waqt.isNext
                     ? 'bg-amber-50/60 dark:bg-amber-950/20 border-amber-400 ring-1 ring-amber-400'
-                    : 'bg-white dark:bg-stone-900 border-stone-200 dark:border-stone-800'
+                    : 'bg-white dark:bg-[#102235] border-slate-200 dark:border-slate-700'
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
@@ -443,12 +443,12 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
       </div>
 
       {/* Extra Nafal Times: Ishraq & Tahajjud */}
-      <div className="bg-stone-50 dark:bg-stone-900/60 rounded-2xl p-4 border border-stone-200 dark:border-stone-800">
+      <div className="bg-slate-100 dark:bg-[#102235] rounded-2xl p-4 border border-stone-200 dark:border-stone-800">
         <h4 className="text-xs font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wider mb-2">
           নফল ইবাদতের বিশেষ সময়সমূহ
         </h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-          <div className="p-3 bg-white dark:bg-stone-800/80 rounded-xl border border-stone-200 dark:border-stone-700 flex items-center justify-between">
+          <div className="p-3 bg-white dark:bg-[#152c40] rounded-xl border border-stone-200 dark:border-stone-700 flex items-center justify-between">
             <div>
               <p className="font-bold text-stone-800 dark:text-stone-200">ইশরাক ও চাশতের ওয়াক্ত</p>
               <p className="text-[11px] text-stone-500">সূর্যোদয়ের ১৫ মিনিট পর শুরু</p>
@@ -480,7 +480,7 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
           </div>
         </div>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-          <div className="rounded-xl border border-amber-200/80 bg-white p-3 dark:border-amber-900/50 dark:bg-stone-900">
+          <div className="rounded-xl border border-amber-200/80 bg-white p-3 dark:border-amber-900/50 dark:bg-[#102235]">
             <p className="text-xs text-stone-500 dark:text-stone-400">সূর্যোদয়</p>
             <p className="mt-1 text-lg font-bold text-stone-900 dark:text-white">{formatTimeBn(prayerTimes.sunrise, timeZoneId)}</p>
             <p className="text-[10px] text-amber-700 dark:text-amber-300">সূর্য ওঠার সময় সতর্কতা</p>
@@ -502,7 +502,7 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
       </section>
 
       {/* Calculation Settings Options */}
-      <div className="bg-white dark:bg-stone-900 rounded-2xl p-4 border border-stone-200 dark:border-stone-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div className="bg-white dark:bg-[#102235] rounded-2xl p-4 border border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-3 text-xs">
         {/* Asr Juristic School Toggle */}
         <div className="flex items-center gap-2">
           <span className="text-stone-600 dark:text-stone-400 font-medium">আসর মাযহাব:</span>
