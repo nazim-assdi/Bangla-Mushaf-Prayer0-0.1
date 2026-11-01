@@ -13,8 +13,8 @@ permissions:
 
 jobs:
   build-apk:
-    name: Build debug APK
-    runs-on: ubuntu-latest
+    name: Build debug APK on personal PC
+    runs-on: [self-hosted, Windows, X64]
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -55,40 +55,32 @@ jobs:
         run: node scripts/create-android-icons.cjs
 
       - name: Add runtime permissions for Android
+        shell: pwsh
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          manifest = Path("android/app/src/main/AndroidManifest.xml")
-          source = manifest.read_text()
-          permissions = [
-              "android.permission.ACCESS_COARSE_LOCATION",
-              "android.permission.ACCESS_FINE_LOCATION",
-              "android.permission.POST_NOTIFICATIONS",
-              "android.permission.RECEIVE_BOOT_COMPLETED",
-              "android.permission.WAKE_LOCK",
-              "android.permission.SCHEDULE_EXACT_ALARM",
-          ]
-          opening_tag_end = source.find(">", source.find("<manifest"))
-          if opening_tag_end < 0:
-              raise SystemExit("Android manifest opening tag was not found")
-          missing = [
-              f'    <uses-permission android:name="{name}" />'
-              for name in permissions
-              if f'android:name="{name}"' not in source
-          ]
-          if missing:
-              source = source[:opening_tag_end + 1] + "\n" + "\n".join(missing) + source[opening_tag_end + 1:]
-              manifest.write_text(source)
-          PY
+          $manifest = "android/app/src/main/AndroidManifest.xml"
+          $source = Get-Content $manifest -Raw
+          $permissions = @(
+            "android.permission.ACCESS_COARSE_LOCATION",
+            "android.permission.ACCESS_FINE_LOCATION",
+            "android.permission.POST_NOTIFICATIONS",
+            "android.permission.RECEIVE_BOOT_COMPLETED",
+            "android.permission.WAKE_LOCK",
+            "android.permission.SCHEDULE_EXACT_ALARM"
+          )
+          foreach ($permission in $permissions) {
+            if ($source -notmatch [regex]::Escape("android:name=`"$permission`"")) {
+              $source = $source -replace '(<manifest[^>]*>)', ('$1' + "`n    <uses-permission android:name=`"' + $permission + '`" />')
+            }
+          }
+          Set-Content -Path $manifest -Value $source -NoNewline
 
       - name: Copy web build into Android project
         run: npx cap sync android
 
       - name: Build debug APK
         working-directory: android
-        run: |
-          chmod +x gradlew
-          ./gradlew assembleDebug
+        shell: pwsh
+        run: .\gradlew.bat assembleDebug
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
