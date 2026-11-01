@@ -168,7 +168,7 @@ export const QiblaCompassView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangu
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-300">পূর্ব</span>
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-300">পশ্চিম</span>
             <div className="absolute inset-0 flex justify-center" style={{ transform: `rotate(${qiblaBearing}deg)` }}>
-              <span className="mt-1 text-2xl drop-shadow-lg">🕋</span>
+              <span className="mt-1 rounded-md border border-amber-300/70 bg-amber-300/15 px-2 py-1 text-[10px] font-bold tracking-widest text-amber-200">QIBLA</span>
             </div>
           </div>
           <div className="relative z-10 flex flex-col items-center" style={{ transform: `rotate(${qiblaBearing - shownHeading}deg)` }}>
