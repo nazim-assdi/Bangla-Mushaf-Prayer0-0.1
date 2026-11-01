@@ -28,12 +28,18 @@ import { schedulePrayerAlerts, cancelPrayerAlerts, refreshPrayerAlertsIfPermitte
 import { UiLanguage, formatUiNumber, translateUi } from '../services/i18n';
 
 export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLanguage }) => {
-  const [selectedDistrictId, setSelectedDistrictId] = useState<string>('dhaka');
+  const [selectedDistrictId, setSelectedDistrictId] = useState<string>(() => {
+    const saved = localStorage.getItem('mushaf_prayer_district');
+    return saved && BANGLADESH_DISTRICTS.some((district) => district.id === saved) ? saved : 'dhaka';
+  });
   const [customCoords, setCustomCoords] = useState<{ lat: number; lng: number; nameBn: string; accuracy?: number } | null>(null);
   const [geoError, setGeoError] = useState('');
   const [geoLoading, setGeoLoading] = useState(false);
-  const [asrJuristic, setAsrJuristic] = useState<'hanafi' | 'shafii'>('hanafi');
-  const [calculationMethod, setCalculationMethod] = useState<string>('Karachi');
+  const [asrJuristic, setAsrJuristic] = useState<'hanafi' | 'shafii'>(() => localStorage.getItem('mushaf_asr_juristic') === 'shafii' ? 'shafii' : 'hanafi');
+  const [calculationMethod, setCalculationMethod] = useState<string>(() => {
+    const saved = localStorage.getItem('mushaf_prayer_method');
+    return saved && Object.prototype.hasOwnProperty.call(CALCULATION_METHODS, saved) ? saved : 'Karachi';
+  });
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [gpsLive, setGpsLive] = useState(false);
   const [lastGpsUpdate, setLastGpsUpdate] = useState<Date | null>(null);
@@ -45,6 +51,9 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
 
   useEffect(() => { localStorage.setItem('mushaf_prayer_alerts', String(prayerAlerts)); }, [prayerAlerts]);
   useEffect(() => { localStorage.setItem('mushaf_makruh_alerts', String(makruhAlerts)); }, [makruhAlerts]);
+  useEffect(() => { localStorage.setItem('mushaf_prayer_district', selectedDistrictId); }, [selectedDistrictId]);
+  useEffect(() => { localStorage.setItem('mushaf_asr_juristic', asrJuristic); }, [asrJuristic]);
+  useEffect(() => { localStorage.setItem('mushaf_prayer_method', calculationMethod); }, [calculationMethod]);
 
   const handleScheduleAlerts = async () => {
     setAlarmLoading(true);
