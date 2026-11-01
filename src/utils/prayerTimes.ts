@@ -347,7 +347,17 @@ export function formatTimeEn(d: Date, timeZoneId?: string): string {
 
 export function getWaqtsStatus(times: PrayerTimesResult, now: Date = new Date(), timeZoneId?: string): WaqtInfo[] {
   const nowMs = now.getTime();
-  const dayMs = 24 * 60 * 60 * 1000;
+  let dayMs = 24 * 60 * 60 * 1000;
+  if (timeZoneId) {
+    // A local calendar day can be 23 or 25 hours across DST transitions.
+    const localToday = getDatePartsInTimeZone(now, timeZoneId);
+    const tomorrowNoonUtc = new Date(Date.UTC(localToday.year, localToday.month - 1, localToday.day + 1, 12));
+    const guessedOffset = getTimeZoneOffsetHours(tomorrowNoonUtc, timeZoneId);
+    const tomorrowLocalNoon = new Date(tomorrowNoonUtc.getTime() - guessedOffset * 3600000);
+    const todayOffset = getTimeZoneOffsetHours(now, timeZoneId);
+    const tomorrowOffset = getTimeZoneOffsetHours(tomorrowLocalNoon, timeZoneId);
+    dayMs -= (tomorrowOffset - todayOffset) * 3600000;
+  }
 
   // Sunrise is displayed as an important solar time, but it is not one of
   // the five daily prayers and must never be selected as the next prayer.
