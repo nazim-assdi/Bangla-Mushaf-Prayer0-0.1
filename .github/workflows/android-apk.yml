@@ -51,6 +51,9 @@ jobs:
       - name: Generate Android project
         run: npx cap add android
 
+      - name: Generate branded Android launcher icons
+        run: node scripts/create-android-icons.cjs
+
       - name: Add runtime permissions for Android
         run: |
           python3 - <<'PY'
