@@ -53,6 +53,8 @@ function AppContent() {
   });
   const [showTranslation, setShowTranslation] = useState<boolean>(() => localStorage.getItem('mushaf_show_translation') !== 'false');
   const [selectedReciterId, setSelectedReciterId] = useState<string>(() => localStorage.getItem('mushaf_selected_reciter') || 'alafasy');
+  const [audioPlaybackSpeed, setAudioPlaybackSpeed] = useState<number>(() => Number(localStorage.getItem('mushaf_audio_speed')) || 1);
+  const [autoPlayNextAyah, setAutoPlayNextAyah] = useState<boolean>(() => localStorage.getItem('mushaf_auto_next_ayah') !== 'false');
   const [currentLanguage, setCurrentLanguage] = useState<QuranLanguage>(() => {
     const saved = localStorage.getItem('mushaf_quran_language');
     if (saved && QURAN_LANGUAGES.some((item) => item.code === saved)) return saved as QuranLanguage;
@@ -145,8 +147,10 @@ function AppContent() {
     localStorage.setItem('mushaf_show_transliteration', String(showTransliteration));
     localStorage.setItem('mushaf_show_translation', String(showTranslation));
     localStorage.setItem('mushaf_selected_reciter', selectedReciterId);
+    localStorage.setItem('mushaf_audio_speed', String(audioPlaybackSpeed));
+    localStorage.setItem('mushaf_auto_next_ayah', String(autoPlayNextAyah));
     localStorage.setItem('mushaf_quran_language', currentLanguage);
-  }, [theme, arabicFontSize, banglaFontSize, showTransliteration, showTranslation, selectedReciterId, currentLanguage]);
+  }, [theme, arabicFontSize, banglaFontSize, showTransliteration, showTranslation, selectedReciterId, currentLanguage, audioPlaybackSpeed, autoPlayNextAyah]);
 
   // Handle theme classes on html
   useEffect(() => {
@@ -265,6 +269,8 @@ function AppContent() {
             showTranslation={showTranslation}
             selectedReciterId={selectedReciterId}
             onSelectReciter={setSelectedReciterId}
+            audioPlaybackSpeed={audioPlaybackSpeed}
+            autoPlayNextAyah={autoPlayNextAyah}
             currentLanguage={currentLanguage}
             onSelectLanguage={handleQuranLanguageChange}
             uiLanguage={activeUiLanguage}
@@ -305,6 +311,10 @@ function AppContent() {
             setShowTranslation={setShowTranslation}
             selectedReciterId={selectedReciterId}
             setSelectedReciterId={setSelectedReciterId}
+            audioPlaybackSpeed={audioPlaybackSpeed}
+            setAudioPlaybackSpeed={setAudioPlaybackSpeed}
+            autoPlayNextAyah={autoPlayNextAyah}
+            setAutoPlayNextAyah={setAutoPlayNextAyah}
             theme={theme}
             setTheme={setTheme}
             uiLanguage={activeUiLanguage}
