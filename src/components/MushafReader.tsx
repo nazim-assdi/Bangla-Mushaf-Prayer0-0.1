@@ -22,6 +22,7 @@ import { TafsirModal } from './TafsirModal';
 import { AyahStudyTools } from './AyahStudyTools';
 import { UiLanguage, formatUiNumber, translateUi } from '../services/i18n';
 import { getOfflineTafsirForSurah, OfflineTafsirRecord } from '../services/offlineTafsir';
+import { padNumber } from '../services/quranApi';
 
 export type ViewMode = 'wbw' | 'verse' | 'mushaf';
 
@@ -220,19 +221,54 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
     }
   };
 
-  const handlePlayWord = (word: QuranWord, e: React.MouseEvent) => {
+  const handlePlayWord = (word: QuranWord, ayah: QuranAyah, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!word.audioUrl) return;
 
-    setActiveWordId(word.id);
-    if (!wordAudioRef.current) {
-      wordAudioRef.current = new Audio();
-    }
-    wordAudioRef.current.src = word.audioUrl;
-    wordAudioRef.current.play().catch((err) => console.warn('Word audio error:', err));
-    wordAudioRef.current.onended = () => {
+    // Fail closed: only play a word clip whose filename matches this exact
+    // Surah, Ayah and word position. Never play an unverified/mismatched clip.
+    const expectedFile = `${padNumber(surahId)}_${padNumber(ayah.verseNumber)}_${padNumber(word.position)}.mp3`;
+    let audioUrl: URL;
+    try {
+      audioUrl = new URL(word.audioUrl);
+    } catch {
       setActiveWordId(null);
+      console.warn('Word audio skipped: invalid audio URL', word.verseKey, word.position);
+      return;
+    }
+    if (
+      audioUrl.protocol !== 'https:' ||
+      audioUrl.hostname !== 'audio.qurancdn.com' ||
+      !audioUrl.pathname.endsWith(`/wbw/${expectedFile}`)
+    ) {
+      setActiveWordId(null);
+      console.warn('Word audio skipped: clip does not match this Quran word', {
+        verseKey: ayah.verseKey,
+        position: word.position,
+        expectedFile,
+        audioUrl: word.audioUrl,
+      });
+      return;
+    }
+
+    if (!wordAudioRef.current) wordAudioRef.current = new Audio();
+    const player = wordAudioRef.current;
+    player.pause();
+    player.onended = null;
+    player.onerror = null;
+    player.removeAttribute('src');
+    player.load();
+    player.src = audioUrl.toString();
+    player.onended = () => setActiveWordId(null);
+    player.onerror = () => {
+      setActiveWordId(null);
+      console.warn('Verified word audio could not be loaded:', word.verseKey, word.position);
     };
+    setActiveWordId(word.id);
+    player.load();
+    void player.play().catch((err) => {
+      setActiveWordId(null);
+      console.warn('Word audio playback failed:', err);
+    });
   };
 
   const handleCopyAyah = (ayah: QuranAyah) => {
@@ -615,7 +651,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
                           return (
                             <div
                               key={word.id}
-                              onClick={(e) => handlePlayWord(word, e)}
+                              onClick={(e) => handlePlayWord(word, ayah, e)}
                               className={`group cursor-pointer rounded-xl p-2.5 border transition-all text-center flex flex-col items-center min-w-[70px] sm:min-w-[85px] ${
                                 isWordActive
                                   ? 'bg-amber-300 dark:bg-amber-500/20 border-amber-500 ring-2 ring-amber-400 scale-105 shadow-md'
