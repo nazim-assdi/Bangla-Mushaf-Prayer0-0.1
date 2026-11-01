@@ -409,6 +409,7 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
                       <h4 className="font-bold text-stone-900 dark:text-white text-base">
                         {waqt.nameBn}
                       </h4>
+                      <p className="text-[10px] uppercase tracking-[0.16em] text-slate-400">{waqt.nameEn}</p>
                       <p className="text-[11px] text-stone-400 font-arabic">
                         {waqt.nameAr}
                       </p>
@@ -547,6 +548,7 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
           </select>
         </div>
       </div>
+    </div>
     </div>
   );
 };
