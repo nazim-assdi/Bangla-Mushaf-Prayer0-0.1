@@ -4,6 +4,9 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { Geolocation } from '@capacitor/geolocation';
+import { getTimeZoneForCoordinates } from './services/worldTimeZone';
 import { BookOpen, Compass, Clock3, CircleDot, CalendarDays, Search, Bookmark } from 'lucide-react';
 import { Navbar, ActiveTab, ThemeMode } from './components/Navbar';
 import { MushafReader } from './components/MushafReader';
@@ -32,7 +35,9 @@ interface BookmarkItem {
 }
 
 function AppContent() {
+  const isElectronDesktop = typeof navigator !== 'undefined' && /Electron/i.test(navigator.userAgent);
   const [activeTab, setActiveTab] = useState<ActiveTab>('mushaf');
+  useEffect(() => { if (isElectronDesktop && activeTab === 'qibla') setActiveTab('mushaf'); }, [isElectronDesktop, activeTab]);
   const [currentSurahId, setCurrentSurahId] = useState<number>(1);
   const [isSurahDrawerOpen, setIsSurahDrawerOpen] = useState<boolean>(false);
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState<boolean>(false);
@@ -93,6 +98,33 @@ function AppContent() {
     } catch (e) {}
     return { surahId: 1, ayahNumber: 1, surahNameBn: 'আল-ফাতিহা' };
   });
+
+  // Android first-run location permission: Android will show its own permission dialog.
+  // Permission is never silently granted; users can still enable GPS later from Prayer Times.
+  useEffect(() => {
+    if (!uiLanguage || Capacitor.getPlatform() !== 'android') return;
+    if (localStorage.getItem('mushaf_android_location_prompted') === 'true') return;
+    localStorage.setItem('mushaf_android_location_prompted', 'true');
+    const requestLocation = async () => {
+      try {
+        let permission = await Geolocation.checkPermissions();
+        if (permission.location !== 'granted') permission = await Geolocation.requestPermissions();
+        if (permission.location !== 'granted') return;
+        const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 20000, maximumAge: 60000 });
+        const point = { lat: position.coords.latitude, lng: position.coords.longitude, accuracy: position.coords.accuracy, nameBn: 'বর্তমান GPS অবস্থান' };
+        localStorage.setItem('mushaf_gps_location', JSON.stringify(point));
+        try {
+          const zone = await getTimeZoneForCoordinates(point.lat, point.lng);
+          localStorage.setItem('mushaf_gps_timezone', zone);
+        } catch (error) {
+          console.warn('Could not detect local time zone; using device time zone.', error);
+        }
+      } catch (error) {
+        console.warn('Android location permission/location was not granted:', error);
+      }
+    };
+    void requestLocation();
+  }, [uiLanguage]);
 
   useEffect(() => {
     try {
@@ -279,7 +311,7 @@ function AppContent() {
 
         {activeTab === 'prayer' && <PrayerTimesView uiLanguage={activeUiLanguage} />}
 
-        {activeTab === 'qibla' && <QiblaCompassView uiLanguage={activeUiLanguage} />}
+        {activeTab === 'qibla' && !isElectronDesktop && <QiblaCompassView uiLanguage={activeUiLanguage} />}
 
         {activeTab === 'dhikr' && <DailyDhikrView uiLanguage={activeUiLanguage} />}
 
@@ -354,7 +386,7 @@ function AppContent() {
       <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-emerald-900/10 bg-white/95 px-1 py-2 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur-md dark:border-stone-700 dark:bg-stone-950/95" aria-label="Main navigation">
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-1 overflow-x-auto">
           <button onClick={() => setActiveTab('mushaf')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-2 text-[10px] transition-all ${activeTab === 'mushaf' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><BookOpen className="h-5 w-5" /><span>{translateUi(activeUiLanguage, 'home')}</span></button>
-          <button onClick={() => setActiveTab('qibla')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'qibla' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><Compass className="h-5 w-5" /><span>{translateUi(activeUiLanguage, 'qibla')}</span></button>
+          {!isElectronDesktop && <button onClick={() => setActiveTab('qibla')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'qibla' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><Compass className="h-5 w-5" /><span>{translateUi(activeUiLanguage, 'qibla')}</span></button>}
           <button onClick={() => setActiveTab('prayer')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'prayer' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><Clock3 className="h-5 w-5" /><span>{translateUi(activeUiLanguage, 'salat')}</span></button>
           <button onClick={() => setActiveTab('dhikr')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'dhikr' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><CircleDot className="h-5 w-5" /><span>{translateUi(activeUiLanguage, 'adhkar')}</span></button>
           <button onClick={() => setActiveTab('planner')} className={`flex min-w-[54px] flex-col items-center gap-1 rounded-xl px-2 py-1 text-[10px] ${activeTab === 'planner' ? 'font-bold text-emerald-700 dark:text-emerald-300' : 'text-stone-500'}`}><CalendarDays className="h-5 w-5" /><span>{translateUi(activeUiLanguage, 'planner')}</span></button>
