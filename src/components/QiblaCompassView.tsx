@@ -13,7 +13,9 @@ export const QiblaCompassView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangu
     const saved = localStorage.getItem('mushaf_qibla_district');
     return saved && BANGLADESH_DISTRICTS.some((district) => district.id === saved) ? saved : 'dhaka';
   });
-  const [customCoords, setCustomCoords] = useState<Coordinates | null>(null);
+  const [customCoords, setCustomCoords] = useState<Coordinates | null>(() => {
+    try { const saved = localStorage.getItem('mushaf_gps_location'); return saved ? JSON.parse(saved) as Coordinates : null; } catch { return null; }
+  });
   const [geoLoading, setGeoLoading] = useState(false);
   const [geoError, setGeoError] = useState('');
   const [deviceHeading, setDeviceHeading] = useState<number | null>(null);
