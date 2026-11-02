@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { Geolocation } from '@capacitor/geolocation';
 import {
   MapPin,
   Clock,
@@ -146,7 +148,28 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
   const minutesUntilNext = Math.max(0, Math.round((nextWaqt.time.getTime() - currentTime.getTime()) / 60000));
 
   // Start continuous GPS updates only after the user grants permission.
-  const handleUseGPS = () => {
+  const handleUseGPS = async () => {
+    if (Capacitor.isNativePlatform()) {
+      setGeoLoading(true);
+      setGeoError('');
+      try {
+        let permission = await Geolocation.checkPermissions();
+        if (permission.location !== 'granted') permission = await Geolocation.requestPermissions();
+        if (permission.location !== 'granted') throw new Error('Location permission দেওয়া হয়নি। Android Settings থেকে অনুমতি দিন।');
+        const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, maximumAge: 10000, timeout: 30000 });
+        const point = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy, nameBn: 'বর্তমান GPS অবস্থান' };
+        setCustomCoords(point);
+        setLastGpsUpdate(new Date(pos.timestamp));
+        try {
+          const zone = await getTimeZoneForCoordinates(point.lat, point.lng);
+          setTimeZoneId(zone);
+        } catch { setTimeZoneId(Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Dhaka'); }
+        setGpsLive(true);
+      } catch (error) {
+        setGeoError(error instanceof Error ? error.message : 'GPS অবস্থান পাওয়া যায়নি।');
+      } finally { setGeoLoading(false); }
+      return;
+    }
     if (!navigator.geolocation) {
       setGeoError('আপনার ব্রাউজারে GPS উপলব্ধ নেই।');
       return;
