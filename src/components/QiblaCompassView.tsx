@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { Geolocation } from '@capacitor/geolocation';
 import { Compass, MapPin, RefreshCw, CheckCircle2, AlertTriangle, Info, Smartphone } from 'lucide-react';
 import { BANGLADESH_DISTRICTS } from '../utils/prayerTimes';
 import { calculateQiblaDirection, calculateDistanceToKaaba, getHeadingDeviation } from '../utils/qibla';
@@ -82,7 +84,21 @@ export const QiblaCompassView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangu
     };
   }, []);
 
-  const handleUseGPS = () => {
+  const handleUseGPS = async () => {
+    if (Capacitor.isNativePlatform()) {
+      setGeoLoading(true);
+      setGeoError('');
+      try {
+        let permission = await Geolocation.checkPermissions();
+        if (permission.location !== 'granted') permission = await Geolocation.requestPermissions();
+        if (permission.location !== 'granted') throw new Error('Location permission দেওয়া হয়নি। Android Settings থেকে অনুমতি দিন।');
+        const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, maximumAge: 0, timeout: 20000 });
+        setCustomCoords({ lat: position.coords.latitude, lng: position.coords.longitude, accuracy: position.coords.accuracy, nameBn: uiLanguage === 'bn' ? 'বর্তমান GPS অবস্থান' : 'Current GPS location' });
+      } catch (error) {
+        setGeoError(error instanceof Error ? error.message : 'GPS অবস্থান পাওয়া যায়নি।');
+      } finally { setGeoLoading(false); }
+      return;
+    }
     if (!navigator.geolocation) {
       setGeoError('এই ডিভাইসে GPS/Location সুবিধা পাওয়া যায়নি।');
       return;
