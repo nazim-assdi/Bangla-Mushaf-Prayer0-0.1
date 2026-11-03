@@ -290,7 +290,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
     player.onended = () => setActiveWordId(null);
     player.onerror = () => {
       setActiveWordId(null);
-      console.warn('Verified word audio could not be loaded:', word.verseKey, word.position);
+      console.warn('Verified word audio could not be loaded:', ayah.verseKey, word.position);
     };
     setActiveWordId(word.id);
     player.load();
