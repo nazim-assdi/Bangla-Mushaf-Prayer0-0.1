@@ -8,6 +8,7 @@ import { OfflineQuranDownload } from './OfflineQuranDownload';
 import { OfflineTafsirDownload } from './OfflineTafsirDownload';
 import { UI_LANGUAGES, UiLanguage, translateUi } from '../services/i18n';
 import { ARABIC_FONTS } from '../services/arabicFonts';
+import { DonationCard } from './DonationCard';
 
 interface SettingsModalProps {
   arabicFontSize: number;
@@ -425,6 +426,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
         {wakeLockError && <p className="text-[11px] text-amber-700 dark:text-amber-300">{wakeLockError}</p>}
       </div>
+
+      <div id="donation-card" className="scroll-mt-4"><DonationCard /></div>
 
       {/* About Box */}
       <section id="settings-about" className="scroll-mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-xs text-stone-600 dark:border-stone-800 dark:bg-stone-900 dark:text-stone-300 space-y-2">
