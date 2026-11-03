@@ -51,7 +51,8 @@ export const DonationCard: React.FC = () => {
             </button>
           </div>
           <div className="rounded-2xl border border-amber-200 bg-white/80 p-4 dark:border-stone-700 dark:bg-stone-800/70">
-            <p className="text-xs font-semibold text-amber-700 dark:text-amber-300">Dutch-Bangla Bank · Account</p>
+            <p className="text-xs font-semibold text-amber-700 dark:text-amber-300">Dutch-Bangla Bank PLC · Account</p>
+            <p className="mt-1 text-xs font-semibold text-stone-600 dark:text-stone-300">Branch: Ibrahimpur</p>
             <p className="mt-1 break-all text-lg font-extrabold tracking-wide text-stone-900 dark:text-white">3001030620034</p>
             <button type="button" onClick={() => copy('3001030620034', 'dbbl')} className="mt-2 inline-flex items-center gap-2 rounded-xl bg-amber-600 px-3 py-2 text-xs font-bold text-white hover:bg-amber-700">
               {copied === 'dbbl' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
