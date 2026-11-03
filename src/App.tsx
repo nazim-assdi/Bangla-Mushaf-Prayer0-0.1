@@ -47,8 +47,16 @@ function AppContent() {
 
   useEffect(() => {
     const openDictionary = () => setIsDictionaryOpen(true);
+    const openDonation = () => {
+      setActiveTab('settings');
+      window.setTimeout(() => document.getElementById('donation-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 180);
+    };
     window.addEventListener('mushaf:open-dictionary', openDictionary);
-    return () => window.removeEventListener('mushaf:open-dictionary', openDictionary);
+    window.addEventListener('mushaf:open-donation', openDonation);
+    return () => {
+      window.removeEventListener('mushaf:open-dictionary', openDictionary);
+      window.removeEventListener('mushaf:open-donation', openDonation);
+    };
   }, []);
 
   // Settings & display state
