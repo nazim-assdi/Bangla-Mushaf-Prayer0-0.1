@@ -55,13 +55,13 @@ export const SideMenu: React.FC<SideMenuProps> = ({
     onClose();
   };
 
-  const showDonationNotice = () => {
+  const openDonation = () => {
     onClose();
-    window.setTimeout(() => window.alert('অনুদান গ্রহণের কোনো মোবাইল ব্যাংকিং বা অনলাইন অ্যাকাউন্ট এখনো যুক্ত করা হয়নি। ব্যবস্থা চালু হলে এখানে জানানো হবে।'), 100);
+    window.dispatchEvent(new CustomEvent('mushaf:open-donation'));
   };
 
   const items = [
-    { label: translateUi(uiLanguage, 'donate'), icon: Heart, action: showDonationNotice },
+    { label: translateUi(uiLanguage, 'donate'), icon: Heart, action: openDonation },
     { label: translateUi(uiLanguage, 'jumpAyah'), icon: MapPin, action: onGoToAyah },
     { label: translateUi(uiLanguage, 'notifications'), icon: Bell, action: () => { onClose(); window.dispatchEvent(new CustomEvent('mushaf:open-notifications')); } },
     { label: translateUi(uiLanguage, 'salatTimes'), icon: Clock3, action: onPrayer },
