@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { CheckCircle2, Download, HardDrive, LoaderCircle, Trash2, Flower2 } from 'lucide-react';
 import { clearOfflineLanguageCache, downloadFullQuranOffline, QURAN_LANGUAGES, QuranLanguage } from '../services/multiLangQuran';
 import { deleteOfflineLanguage, getOfflineSurahCount } from '../services/offlineQuranStore';
-import { DonationCard } from './DonationCard';
 import { UiLanguage, translateUi } from '../services/i18n';
 
 const languageNote: Partial<Record<QuranLanguage, string>> = {
@@ -105,7 +104,6 @@ export const OfflineQuranDownload: React.FC<{ uiLanguage: UiLanguage }> = ({ uiL
           <p className="mt-2 text-[11px] leading-relaxed text-stone-500 dark:text-stone-400">প্রথম ডাউনলোডে ইন্টারনেট ও পর্যাপ্ত স্টোরেজ লাগবে। অডিও আলাদাভাবে ডাউনলোড হয় না। আরবি মূল পাঠ আলাদা; এই তালিকায় শুধু অনুবাদের রিসোর্স রাখা হয়েছে।</p>
         </div>
       </div>
-      <DonationCard />
     </section>
   );
 };
