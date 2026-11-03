@@ -31,9 +31,6 @@ import {
   AdhkarCategory,
   MasnunDhikr,
 } from '../data/masnunAdhkar';
-import { useAuth } from '../context/AuthContext';
-import { saveDhikrProgress } from '../services/firebase';
-import { saveDhikrToCloudSQL } from '../services/apiSync';
 
 export const DailyDhikrView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLanguage }) => {
   const [selectedCategory, setSelectedCategory] = useState<AdhkarCategory>('morning');
@@ -47,7 +44,6 @@ export const DailyDhikrView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLanguag
   const [autoAdvance, setAutoAdvance] = useState<boolean>(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const { user } = useAuth();
   const [counts, setCounts] = useState<{ [key: string]: number }>(() => {
     try {
       const saved = localStorage.getItem('bangla_mushaf_masnun_counts_v2');
@@ -81,17 +77,6 @@ export const DailyDhikrView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLanguag
       [targetId]: newCount,
     }));
 
-    if (user) {
-      const numericId = parseInt(targetId.replace(/\D/g, ''), 10) || 1;
-      saveDhikrProgress(user.uid, numericId, newCount, targetDhikr.targetCount, reached);
-      saveDhikrToCloudSQL(user, {
-        dhikrId: numericId,
-        count: newCount,
-        target: targetDhikr.targetCount,
-        completed: reached,
-      });
-    }
-
     // Auto-advance to next dhikr in current category if target just reached
     if (reached && autoAdvance && !dhikrId) {
       const currentIndex = filteredAdhkar.findIndex((d) => d.id === targetId);
@@ -111,16 +96,6 @@ export const DailyDhikrView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLanguag
       [target]: 0,
     }));
 
-    if (user) {
-      const numericId = parseInt(target.replace(/\D/g, ''), 10) || 1;
-      saveDhikrProgress(user.uid, numericId, 0, targetDhikr.targetCount, false);
-      saveDhikrToCloudSQL(user, {
-        dhikrId: numericId,
-        count: 0,
-        target: targetDhikr.targetCount,
-        completed: false,
-      });
-    }
   };
 
   // Filtered adhkar based on category & search
