@@ -261,7 +261,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
       audioUrl = new URL(word.audioUrl);
     } catch {
       setActiveWordId(null);
-      console.warn('Word audio skipped: invalid audio URL', word.verseKey, word.position);
+      console.warn('Word audio skipped: invalid audio URL', ayah.verseKey, word.position);
       return;
     }
     if (
