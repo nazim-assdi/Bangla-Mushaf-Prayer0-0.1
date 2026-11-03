@@ -3,7 +3,6 @@ import { UiLanguage, translateUi } from '../services/i18n';
 import { BookOpen, Clock, Compass, Bookmark, Settings, Search, MoreVertical } from 'lucide-react';
 import { toBanglaNumber } from '../utils/banglaNumbers';
 import { PWAInstallButton } from './PWAInstallButton';
-import { AuthButton } from './AuthButton';
 
 export type ActiveTab = 'mushaf' | 'prayer' | 'qibla' | 'dhikr' | 'bookmarks' | 'settings' | 'planner';
 export type ThemeMode = 'emerald' | 'dark' | 'sepia' | 'softblue' | 'eyecare';
@@ -76,15 +75,13 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <div className="hidden sm:flex items-center gap-2">
             <PWAInstallButton />
-            <AuthButton />
           </div>
 
           <button onClick={onOpenMenu} className="p-2 rounded-xl bg-amber-400 text-emerald-950 hover:bg-amber-300 shadow-sm" aria-label={translateUi(uiLanguage, 'menu')} title={translateUi(uiLanguage, 'menu')}><MoreVertical className="w-5 h-5" /></button>
 
-          {/* Mobile Quick Action Buttons (PWA Install, Auth, Search & Theme) */}
+          {/* Mobile Quick Actions */}
           <div className="flex sm:hidden items-center gap-1">
             <PWAInstallButton />
-            <AuthButton />
             <button
               onClick={onOpenGlobalSearch}
               className="p-2 rounded-lg bg-emerald-800/80 text-amber-300 hover:bg-emerald-700 transition-colors"
