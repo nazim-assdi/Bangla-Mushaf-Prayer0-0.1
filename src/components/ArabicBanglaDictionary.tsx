@@ -28,7 +28,7 @@ export const ArabicBanglaDictionary: React.FC<Props> = ({ onClose }) => {
     }).slice(0, 100);
   }, [query, mode, category]);
   const speak = (entry: DictionaryEntry) => {
-    if (!('speechSynthesis' in window)) { window.alert('এই ডিভাইসে আরবি উচ্চারণ সুবিধা পাওয়া যাচ্ছে না।'); return; }
+    if (typeof window.speechSynthesis === 'undefined') { window.alert('এই ডিভাইসে আরবি উচ্চারণ সুবিধা পাওয়া যাচ্ছে না।'); return; }
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(entry.arabic);
     utterance.lang = 'ar-SA';
