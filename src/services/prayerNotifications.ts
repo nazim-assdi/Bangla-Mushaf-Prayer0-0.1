@@ -79,7 +79,8 @@ export async function schedulePrayerAlerts(options: PrayerAlertOptions, requestP
     const add = (index: number, at: Date, title: string, body: string) => {
       if (at.getTime() <= now.getTime()) return;
       notifications.push({
-        // Keep every generated ID inside the managed range so old alarms can be cancelled reliably.\n        id: ID_START + (dateKey % 12_500_000) * 8 + index,
+        // Keep every generated ID inside the managed range so old alarms can be cancelled reliably.
+        id: ID_START + (dateKey % 12_500_000) * 8 + index,
         title,
         body: body + ' · নির্ধারিত সময়: ' + at.toLocaleString('bn-BD', options.timeZoneId ? { timeZone: options.timeZoneId } : undefined),
         channelId: CHANNEL_ID,
