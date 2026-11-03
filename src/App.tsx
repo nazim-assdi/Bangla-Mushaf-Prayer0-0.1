@@ -25,6 +25,7 @@ import { LanguageSelectionScreen } from './components/LanguageSelectionScreen';
 import { ReadingPlanner } from './components/ReadingPlanner';
 import { ARABIC_FONTS } from './services/arabicFonts';
 import { OfflineIndicator } from './components/OfflineIndicator';
+import { ArabicBanglaDictionary } from './components/ArabicBanglaDictionary';
 
 interface BookmarkItem {
   id?: string;
@@ -42,6 +43,13 @@ function AppContent() {
   const [isSurahDrawerOpen, setIsSurahDrawerOpen] = useState<boolean>(false);
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState<boolean>(false);
   const [isSideMenuOpen, setIsSideMenuOpen] = useState<boolean>(false);
+  const [isDictionaryOpen, setIsDictionaryOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    const openDictionary = () => setIsDictionaryOpen(true);
+    window.addEventListener('mushaf:open-dictionary', openDictionary);
+    return () => window.removeEventListener('mushaf:open-dictionary', openDictionary);
+  }, []);
 
   // Settings & display state
   const [theme, setTheme] = useState<ThemeMode>(() => {
@@ -366,6 +374,8 @@ function AppContent() {
         onGoToAyah={() => { setIsSideMenuOpen(false); setIsSurahDrawerOpen(true); }}
         uiLanguage={activeUiLanguage}
       />
+
+      {isDictionaryOpen && <ArabicBanglaDictionary onClose={() => setIsDictionaryOpen(false)} />}
 
       {/* Surah & Juz Selection Drawer Modal */}
       <SurahDrawer
