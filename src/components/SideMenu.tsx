@@ -3,7 +3,7 @@ import { UiLanguage, translateUi } from '../services/i18n';
 import { Capacitor } from '@capacitor/core';
 import { Share } from '@capacitor/share';
 import {
-  X, UserRoundPlus, Heart, MapPin, Bell, Clock3, Languages, Settings,
+  X, Heart, MapPin, Bell, Clock3, Languages, Settings,
   Star, Share2, MessageCircle, MessageSquare, BarChart3, Search,
   Bookmark, BookOpen
 } from 'lucide-react';
@@ -55,14 +55,13 @@ export const SideMenu: React.FC<SideMenuProps> = ({
     onClose();
   };
 
-  const jumpToDonation = () => {
+  const showDonationNotice = () => {
     onClose();
-    window.setTimeout(() => document.getElementById('donation-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
+    window.setTimeout(() => window.alert('অনুদান গ্রহণের কোনো মোবাইল ব্যাংকিং বা অনলাইন অ্যাকাউন্ট এখনো যুক্ত করা হয়নি। ব্যবস্থা চালু হলে এখানে জানানো হবে।'), 100);
   };
 
   const items = [
-    { label: translateUi(uiLanguage, 'onlineLogin'), icon: UserRoundPlus, action: () => { onClose(); document.querySelector<HTMLButtonElement>('[aria-label*="সাইন"], [aria-label*="Sign"], button[title*="Sign"]')?.click(); } },
-    { label: translateUi(uiLanguage, 'donate'), icon: Heart, action: jumpToDonation },
+    { label: translateUi(uiLanguage, 'donate'), icon: Heart, action: showDonationNotice },
     { label: translateUi(uiLanguage, 'jumpAyah'), icon: MapPin, action: onGoToAyah },
     { label: translateUi(uiLanguage, 'notifications'), icon: Bell, action: () => { onClose(); window.dispatchEvent(new CustomEvent('mushaf:open-notifications')); } },
     { label: translateUi(uiLanguage, 'salatTimes'), icon: Clock3, action: onPrayer },
