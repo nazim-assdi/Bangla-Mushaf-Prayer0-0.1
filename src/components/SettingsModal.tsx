@@ -355,7 +355,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </label>
         <div className="flex items-center justify-between gap-4 rounded-xl bg-stone-50 p-3 dark:bg-stone-800">
           <span><span className="block text-sm font-semibold text-stone-900 dark:text-white">পরবর্তী আয়াত স্বয়ংক্রিয় চালু</span><span className="text-xs text-stone-500">একটি আয়াত শেষ হলে পরেরটি চালু হবে</span></span>
-          <button type="button" role="switch" aria-checked={autoPlayNextAyah} onClick={() => setAutoPlayNextAyah((value) => !value)} className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${autoPlayNextAyah ? 'bg-emerald-600' : 'bg-stone-300 dark:bg-stone-700'}`}>
+          <button type="button" role="switch" aria-checked={autoPlayNextAyah} onClick={() => setAutoPlayNextAyah(!autoPlayNextAyah)} className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${autoPlayNextAyah ? 'bg-emerald-600' : 'bg-stone-300 dark:bg-stone-700'}`}>
             <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-transform ${autoPlayNextAyah ? 'translate-x-6' : 'translate-x-1'}`} />
           </button>
         </div>
