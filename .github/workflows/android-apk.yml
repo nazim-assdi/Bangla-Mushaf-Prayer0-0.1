@@ -1,91 +1,53 @@
 name: Build Android APK
 
 on:
-  push:
   workflow_dispatch:
-
-concurrency:
-  group: android-apk-${{ github.ref }}
-  cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
-  build-apk:
-    name: Build debug APK on personal PC
-    runs-on: [self-hosted, Windows, X64]
+  build-android:
+    name: Build Android debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
     steps:
-      - name: Checkout source
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: 22
+          cache: npm
 
       - name: Set up Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          packages: platform-tools platforms;android-35 build-tools;35.0.0
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
 
-      - name: Install JavaScript dependencies
-        run: npm install --legacy-peer-deps
-
-      - name: TypeScript validation (non-blocking)
-        run: npm run lint
-        continue-on-error: true
-
-      - name: Unit tests
+      - name: Run tests
         run: npm test
 
       - name: Build web app
         run: npm run build
 
-      - name: Generate Android project
-        run: npx cap add android
-
-      - name: Generate branded Android launcher icons
-        run: node scripts/create-android-icons.cjs
-
-      - name: Add runtime permissions for Android
-        shell: pwsh
-        run: |
-          $manifest = "android/app/src/main/AndroidManifest.xml"
-          $source = Get-Content $manifest -Raw
-          $permissions = @(
-            "android.permission.ACCESS_COARSE_LOCATION",
-            "android.permission.ACCESS_FINE_LOCATION",
-            "android.permission.POST_NOTIFICATIONS",
-            "android.permission.RECEIVE_BOOT_COMPLETED",
-            "android.permission.WAKE_LOCK",
-            "android.permission.SCHEDULE_EXACT_ALARM"
-          )
-          foreach ($permission in $permissions) {
-            if ($source -notmatch [regex]::Escape("android:name=`"$permission`"")) {
-              $source = $source -replace '(<manifest[^>]*>)', ('$1' + "`n    <uses-permission android:name=`"' + $permission + '`" />')
-            }
-          }
-          Set-Content -Path $manifest -Value $source -NoNewline
-
-      - name: Copy web build into Android project
+      - name: Sync Capacitor Android
         run: npx cap sync android
 
-      - name: Build debug APK
+      - name: Build Android APK
         working-directory: android
-        shell: pwsh
-        run: .\gradlew.bat assembleDebug
+        run: chmod +x gradlew && ./gradlew assembleDebug --no-daemon
 
-      - name: Upload APK artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: bangla-mushaf-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: bangla-mushaf-prayer-debug-apk
+          path: android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 14
