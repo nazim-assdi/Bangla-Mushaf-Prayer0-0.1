@@ -255,8 +255,8 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#071321] text-slate-900 dark:text-slate-100"><div className="mx-auto w-full max-w-6xl px-3 py-5 pb-28 font-bangla sm:px-5 sm:py-7 space-y-5">\n      <div className="relative overflow-hidden rounded-[2rem] border border-slate-200 dark:border-cyan-900/50 bg-gradient-to-r from-[#0b1f33] via-[#123b50] to-[#075b59] px-5 py-5 sm:px-7 sm:py-6 text-white shadow-xl"><div className="absolute -right-10 -top-16 h-52 w-52 rounded-full border border-white/10" /><div className="relative flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-cyan-200">GLOBAL • SALAH • PRAYER TIMES</p><h1 className="mt-1 text-2xl font-bold sm:text-3xl">নামাজের সময়সূচি <span className="text-cyan-200">/ Prayer Schedule</span></h1><p className="mt-1 text-xs text-slate-200">Worldwide GPS · Local time zone · Daily prayer tracker</p></div><div className="flex items-center gap-2 text-xs text-cyan-100"><span className="rounded-full border border-cyan-200/30 bg-white/10 px-3 py-1.5">International Edition</span><span className="rounded-full border border-emerald-200/30 bg-emerald-400/10 px-3 py-1.5">IANA Time Zone</span></div></div></div>
       {/* Location Selector Bar */}
-      <div className="bg-white dark:bg-[#102235] rounded-2xl p-4 sm:p-5 shadow-lg shadow-slate-200/50 dark:shadow-black/20 border border-slate-200 dark:border-slate-700/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      <div className="w-full min-w-0 bg-white dark:bg-[#102235] rounded-2xl p-3 sm:p-5 shadow-md shadow-slate-200/40 dark:shadow-black/20 border border-slate-200 dark:border-slate-700/80 flex flex-col gap-3 sm:gap-4">
+        <div className="flex min-w-0 items-start sm:items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 flex items-center justify-center shrink-0">
             <MapPin className="w-5 h-5" />
           </div>
@@ -270,12 +270,12 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex w-full min-w-0 items-stretch gap-2 sm:justify-end">
           {/* 64 Districts Dropdown */}
           <select
             value={customCoords ? '' : selectedDistrictId}
             onChange={(e) => handleSelectDistrict(e.target.value)}
-            className="px-3 py-2 rounded-xl bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-800 dark:text-stone-200 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="min-w-0 flex-1 sm:flex-none sm:max-w-[16rem] px-3 py-2 rounded-xl bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-800 dark:text-stone-200 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500"
             aria-label={translateUi(uiLanguage, 'districtFallback')}
           >
             {divisions.map((div) => (
@@ -293,7 +293,7 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
           <button
             onClick={handleUseGPS}
             disabled={geoLoading}
-            className="px-3 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-colors shrink-0 shadow-xs"
+            className="shrink-0 px-3 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white text-xs sm:text-sm font-medium flex items-center gap-1.5 transition-colors shadow-xs"
             aria-label={translateUi(uiLanguage, 'useGps')}
           >
             <RefreshCw className={`w-3.5 h-3.5 ${geoLoading ? 'animate-spin' : ''}`} />
@@ -526,11 +526,11 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
       </section>
 
       {/* Calculation Settings Options */}
-      <div className="bg-white dark:bg-[#102235] rounded-2xl p-4 border border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div className="w-full min-w-0 bg-white dark:bg-[#102235] rounded-2xl p-3 sm:p-4 border border-slate-200 dark:border-slate-700 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
         {/* Asr Juristic School Toggle */}
-        <div className="flex items-center gap-2">
-          <span className="text-stone-600 dark:text-stone-400 font-medium">আসর মাযহাব:</span>
-          <div className="flex items-center bg-stone-100 dark:bg-stone-800 p-0.5 rounded-lg border border-stone-200 dark:border-stone-700">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <span className="shrink-0 text-stone-600 dark:text-stone-400 font-medium">আসর মাযহাব:</span>
+          <div className="flex min-w-0 flex-wrap items-center bg-stone-100 dark:bg-stone-800 p-0.5 rounded-lg border border-stone-200 dark:border-stone-700">
             <button
               onClick={() => setAsrJuristic('hanafi')}
               className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
@@ -555,12 +555,12 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
         </div>
 
         {/* Calculation method */}
-        <div className="flex items-center gap-2">
-          <span className="text-stone-600 dark:text-stone-400 font-medium">পদ্ধতি:</span>
+        <div className="flex min-w-0 flex-wrap items-center gap-2 sm:justify-end">
+          <span className="shrink-0 text-stone-600 dark:text-stone-400 font-medium">পদ্ধতি:</span>
           <select
             value={calculationMethod}
             onChange={(e) => setCalculationMethod(e.target.value)}
-            className="px-2 py-1 rounded-lg bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-800 dark:text-stone-200 focus:outline-none"
+            className="min-w-0 max-w-full flex-1 sm:flex-none sm:max-w-[15rem] px-2 py-2 rounded-lg bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-800 dark:text-stone-200 focus:outline-none"
             aria-label="নামাজ গণনার পদ্ধতি"
           >
             {Object.keys(CALCULATION_METHODS).map((k) => (
