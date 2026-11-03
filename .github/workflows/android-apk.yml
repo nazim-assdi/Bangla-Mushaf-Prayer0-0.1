@@ -46,6 +46,9 @@ jobs:
       - name: Sync Capacitor Android
         run: npx cap sync android
 
+      - name: Generate Android launcher icons
+        run: node scripts/create-android-icons.cjs
+
       - name: Build Android APK
         working-directory: android
         run: chmod +x gradlew && ./gradlew assembleDebug --no-daemon
