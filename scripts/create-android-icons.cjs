@@ -3,16 +3,24 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 (async () => {
-  const svg = fs.readFileSync(path.join(__dirname, '../public/icon.svg'));
+  const imagePath = path.join(__dirname, '../public/icon.jpg');
+  const imageMetadata = await sharp(imagePath).metadata();
+  if (imageMetadata.format !== 'jpeg' || !imageMetadata.width || !imageMetadata.height) {
+    throw new Error('The realistic Quran icon image is missing or invalid');
+  }
+  const imageStats = await sharp(imagePath).stats();
+  if (imageStats.channels.slice(0, 3).every(channel => channel.stdev < 2)) {
+    throw new Error('The realistic Quran icon image appears blank');
+  }
   const root = path.join(__dirname, '../android/app/src/main/res');
 
   // Reuse the same Quran SVG artwork for web, PWA, Apple and desktop assets.
   const publicDir = path.join(__dirname, '../public');
-  await sharp(svg).resize(192, 192).png().toFile(path.join(publicDir, 'pwa-192x192.png'));
-  await sharp(svg).resize(512, 512).png().toFile(path.join(publicDir, 'pwa-512x512.png'));
-  await sharp(svg).resize(512, 512).png().toFile(path.join(publicDir, 'pwa-maskable-512x512.png'));
-  await sharp(svg).resize(180, 180).png().toFile(path.join(publicDir, 'apple-touch-icon.png'));
-  await sharp(svg).resize(64, 64).png().toFile(path.join(publicDir, 'favicon.png'));
+  await sharp(imagePath).resize(192, 192).png().toFile(path.join(publicDir, 'pwa-192x192.png'));
+  await sharp(imagePath).resize(512, 512).png().toFile(path.join(publicDir, 'pwa-512x512.png'));
+  await sharp(imagePath).resize(512, 512).png().toFile(path.join(publicDir, 'pwa-maskable-512x512.png'));
+  await sharp(imagePath).resize(180, 180).png().toFile(path.join(publicDir, 'apple-touch-icon.png'));
+  await sharp(imagePath).resize(64, 64).png().toFile(path.join(publicDir, 'favicon.png'));
 
 
   // Legacy launcher icons for Android versions below Android 8.
@@ -28,7 +36,7 @@ const path = require('node:path');
     const dir = path.join(root, folder);
     fs.mkdirSync(dir, { recursive: true });
     for (const name of ['ic_launcher.png', 'ic_launcher_round.png']) {
-      await sharp(svg).resize(size, size).png().toFile(path.join(dir, name));
+      await sharp(imagePath).resize(size, size).png().toFile(path.join(dir, name));
     }
   }
 
@@ -36,7 +44,7 @@ const path = require('node:path');
   // foreground back to @mipmap/ic_launcher creates a resource self-reference.
   const drawable = path.join(root, 'drawable-nodpi');
   fs.mkdirSync(drawable, { recursive: true });
-  await sharp(svg).resize(432, 432).png()
+  await sharp(imagePath).resize(432, 432).png()
     .toFile(path.join(drawable, 'ic_launcher_foreground.png'));
 
   const adaptiveDir = path.join(root, 'mipmap-anydpi-v26');
