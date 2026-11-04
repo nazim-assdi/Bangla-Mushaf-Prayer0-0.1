@@ -7,3 +7,7 @@ This project is a React/Vite web app packaged for Android with Capacitor.
 - GitHub Actions builds a **debug APK** on every push and on manual workflow dispatch.
 - Download the APK from the workflow run's **Artifacts** section. Debug APK is for testing/sideloading, not a Play Store release.
 - Google sign-in, GPS/compass sensors, audio playback, and API/backend-dependent functions must be tested on a real Android phone. A release-signed APK/AAB and Play Store configuration are separate steps.
+
+## Launcher icon
+
+The Android launcher icon artwork is sourced from `public/icon.jpg`. The GitHub Actions build generates legacy, adaptive, and round launcher resources from that image. The adaptive foreground uses the dedicated `@drawable/quran_launcher_foreground` resource to avoid resource-name collisions.
