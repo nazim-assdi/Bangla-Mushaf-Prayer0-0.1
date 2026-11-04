@@ -304,7 +304,7 @@ function AppContent() {
       <OfflineIndicator />
 
       {/* Main View Area */}
-      <Suspense fallback={<div className="min-h-[45vh] grid place-items-center" role="status" aria-label="Content loading"><div className="h-8 w-8 animate-spin rounded-full border-[3px] border-emerald-700/15 border-t-emerald-700 dark:border-emerald-300/20 dark:border-t-emerald-300" /></div>}>
+      <Suspense fallback={null}>
       <main className="transition-all" data-active-screen={activeTab}>
         {activeTab === 'mushaf' && (
           <MushafReader
