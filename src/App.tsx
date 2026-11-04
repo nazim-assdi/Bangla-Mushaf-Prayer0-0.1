@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Geolocation } from '@capacitor/geolocation';
 import { getTimeZoneForCoordinates } from './services/worldTimeZone';
@@ -26,6 +26,18 @@ import { ReadingPlanner } from './components/ReadingPlanner';
 import { ARABIC_FONTS } from './services/arabicFonts';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { ArabicBanglaDictionary } from './components/ArabicBanglaDictionary';
+
+const MushafReader = lazy(() => import('./components/MushafReader').then((module) => ({ default: module.MushafReader })));
+const SurahDrawer = lazy(() => import('./components/SurahDrawer').then((module) => ({ default: module.SurahDrawer })));
+const PrayerTimesView = lazy(() => import('./components/PrayerTimesView').then((module) => ({ default: module.PrayerTimesView })));
+const QiblaCompassView = lazy(() => import('./components/QiblaCompassView').then((module) => ({ default: module.QiblaCompassView })));
+const BookmarksView = lazy(() => import('./components/BookmarksView').then((module) => ({ default: module.BookmarksView })));
+const SettingsModal = lazy(() => import('./components/SettingsModal').then((module) => ({ default: module.SettingsModal })));
+const DailyDhikrView = lazy(() => import('./components/DailyDhikrView').then((module) => ({ default: module.DailyDhikrView })));
+const GlobalSearchModal = lazy(() => import('./components/GlobalSearchModal').then((module) => ({ default: module.GlobalSearchModal })));
+const SideMenu = lazy(() => import('./components/SideMenu').then((module) => ({ default: module.SideMenu })));
+const ReadingPlanner = lazy(() => import('./components/ReadingPlanner').then((module) => ({ default: module.ReadingPlanner })));
+const ArabicBanglaDictionary = lazy(() => import('./components/ArabicBanglaDictionary').then((module) => ({ default: module.ArabicBanglaDictionary })));
 
 interface BookmarkItem {
   id?: string;
@@ -303,6 +315,7 @@ function AppContent() {
       <OfflineIndicator />
 
       {/* Main View Area */}
+      <Suspense fallback={<div className="min-h-[45vh] grid place-items-center text-emerald-700" role="status">লোড হচ্ছে…</div>}>
       <main className="transition-all" data-active-screen={activeTab}>
         {activeTab === 'mushaf' && (
           <MushafReader
@@ -370,6 +383,7 @@ function AppContent() {
           />
         )}
       </main>
+      </Suspense>
 
       {/* Main side menu */}
       <SideMenu
