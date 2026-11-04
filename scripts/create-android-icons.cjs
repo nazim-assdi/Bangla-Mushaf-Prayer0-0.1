@@ -45,14 +45,14 @@ const path = require('node:path');
   const drawable = path.join(root, 'drawable-nodpi');
   fs.mkdirSync(drawable, { recursive: true });
   await sharp(imagePath).resize(432, 432).png()
-    .toFile(path.join(drawable, 'ic_launcher_foreground.png'));
+    .toFile(path.join(drawable, 'quran_launcher_foreground.png'));
 
   const adaptiveDir = path.join(root, 'mipmap-anydpi-v26');
   fs.mkdirSync(adaptiveDir, { recursive: true });
   const adaptiveXml =
     '<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">' +
     '<background android:drawable="@color/ic_launcher_background"/>' +
-    '<foreground android:drawable="@drawable/ic_launcher_foreground"/>' +
+    '<foreground android:drawable="@drawable/quran_launcher_foreground"/>' +
     '</adaptive-icon>';
 
   fs.writeFileSync(path.join(adaptiveDir, 'ic_launcher.xml'), adaptiveXml);
