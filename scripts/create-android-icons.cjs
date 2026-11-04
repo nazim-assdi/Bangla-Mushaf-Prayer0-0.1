@@ -115,6 +115,34 @@ const path = require('node:path');
     throw new Error('Android application tag not found in manifest');
   }
   fs.writeFileSync(manifest, manifestXml);
+
+  // Fail the APK build if Android's launcher resources do not point to the
+  // user-provided Quran artwork in every @mipmap density and adaptive variant.
+  const launcherManifest = manifestXml.match(/<application\\b[^>]*>/s)?.[0] || '';
+  if (!launcherManifest.includes('android:icon="@mipmap/ic_launcher"') ||
+      !launcherManifest.includes('android:roundIcon="@mipmap/ic_launcher_round"')) {
+    throw new Error('AndroidManifest.xml is not bound to the generated @mipmap launcher icons');
+  }
+  for (const [folder, size] of Object.entries(sizes)) {
+    for (const name of ['ic_launcher.png', 'ic_launcher_round.png']) {
+      const file = path.join(root, folder, name);
+      if (!fs.existsSync(file) || fs.statSync(file).size < 1000) {
+        throw new Error('Missing or invalid @mipmap launcher image: ' + folder + '/' + name);
+      }
+    }
+  }
+  for (const name of ['ic_launcher.xml', 'ic_launcher_round.xml']) {
+    const xmlPath = path.join(adaptiveDir, name);
+    const xml = fs.readFileSync(xmlPath, 'utf8');
+    if (!xml.includes('@drawable/quran_launcher_foreground')) {
+      throw new Error('Adaptive @mipmap icon does not use the Quran foreground: ' + name);
+    }
+  }
+  const foregroundPath = path.join(drawable, 'quran_launcher_foreground.png');
+  if (!fs.existsSync(foregroundPath) || fs.statSync(foregroundPath).size < 1000) {
+    throw new Error('The adaptive Quran launcher foreground image is missing or invalid');
+  }
+  console.log('Verified Quran launcher artwork in @mipmap density icons, adaptive icons, and AndroidManifest.xml.');
 })().catch(error => {
   console.error(error);
   process.exit(1);
