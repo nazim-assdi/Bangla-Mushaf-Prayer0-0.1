@@ -6,6 +6,15 @@ const path = require('node:path');
   const svg = fs.readFileSync(path.join(__dirname, '../public/icon.svg'));
   const root = path.join(__dirname, '../android/app/src/main/res');
 
+  // Reuse the same Quran SVG artwork for web, PWA, Apple and desktop assets.
+  const publicDir = path.join(__dirname, '../public');
+  await sharp(svg).resize(192, 192).png().toFile(path.join(publicDir, 'pwa-192x192.png'));
+  await sharp(svg).resize(512, 512).png().toFile(path.join(publicDir, 'pwa-512x512.png'));
+  await sharp(svg).resize(512, 512).png().toFile(path.join(publicDir, 'pwa-maskable-512x512.png'));
+  await sharp(svg).resize(180, 180).png().toFile(path.join(publicDir, 'apple-touch-icon.png'));
+  await sharp(svg).resize(64, 64).png().toFile(path.join(publicDir, 'favicon.png'));
+
+
   // Legacy launcher icons for Android versions below Android 8.
   const sizes = {
     'mipmap-mdpi': 48,
