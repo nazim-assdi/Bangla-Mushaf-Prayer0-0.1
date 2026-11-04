@@ -10,7 +10,7 @@ import { getTimeZoneForCoordinates } from './services/worldTimeZone';
 import { BookOpen, Compass, Clock3, CircleDot, CalendarDays, Search, Bookmark } from 'lucide-react';
 import { Navbar, ActiveTab, ThemeMode } from './components/Navbar';
 import { SURAH_LIST } from './data/quranMetadata';
-import { QURAN_LANGUAGES, QuranLanguage } from './services/multiLangQuran';
+import { QURAN_LANGUAGES, QuranLanguage, downloadFullQuranOffline } from './services/multiLangQuran';
 import { UiLanguage, translateUi } from './services/i18n';
 import { LanguageSelectionScreen } from './components/LanguageSelectionScreen';
 import { ARABIC_FONTS } from './services/arabicFonts';
@@ -88,6 +88,7 @@ function AppContent() {
     return saved === 'bn' || saved === 'en' || saved === 'ar' || saved === 'hi' || saved === 'ur' || saved === 'tr' ? saved : null;
   });
   const [languageDraft, setLanguageDraft] = useState<UiLanguage>('en');
+  const [offlineLanguageProgress, setOfflineLanguageProgress] = useState<{ language: QuranLanguage; done: number; total: number; error?: string } | null>(null);
 
   // Bookmarks & last read state with localStorage sync
   const [bookmarks, setBookmarks] = useState<BookmarkItem[]>(() => {
@@ -171,12 +172,43 @@ function AppContent() {
     setUiLanguage(language);
     setLanguageDraft(language);
     localStorage.setItem('mushaf_ui_language', language);
-    if (!localStorage.getItem('mushaf_quran_language')) {
-      const translationLanguage: QuranLanguage = language === 'ar' ? 'en' : language;
-      setCurrentLanguage(translationLanguage);
-      localStorage.setItem('mushaf_quran_language', translationLanguage);
-    }
+    const translationLanguage: QuranLanguage = language === 'ar' ? 'en' : language;
+    setCurrentLanguage(translationLanguage);
+    localStorage.setItem('mushaf_quran_language', translationLanguage);
   };
+
+  // Automatically cache the complete translation AND word-by-word data for the
+  // selected Quran language. Recitation audio is intentionally not downloaded.
+  useEffect(() => {
+    let cancelled = false;
+    let running = false;
+    const downloadSelectedLanguage = async () => {
+      if (running || !navigator.onLine) return;
+      running = true;
+      setOfflineLanguageProgress({ language: currentLanguage, done: 0, total: 114 });
+      try {
+        await downloadFullQuranOffline(currentLanguage, (done, total) => {
+          if (!cancelled) setOfflineLanguageProgress({ language: currentLanguage, done, total });
+        });
+        if (!cancelled) setOfflineLanguageProgress({ language: currentLanguage, done: 114, total: 114 });
+      } catch (error) {
+        if (!cancelled) setOfflineLanguageProgress({
+          language: currentLanguage,
+          done: 0,
+          total: 114,
+          error: error instanceof Error ? error.message : 'ডাউনলোড সম্পন্ন হয়নি। ইন্টারনেট পেলে আবার চেষ্টা হবে।',
+        });
+      } finally {
+        running = false;
+      }
+    };
+    void downloadSelectedLanguage();
+    window.addEventListener('online', downloadSelectedLanguage);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('online', downloadSelectedLanguage);
+    };
+  }, [currentLanguage]);
 
   useEffect(() => {
     const font = ARABIC_FONTS.find((item) => item.id === arabicFontId) ?? ARABIC_FONTS[0];
@@ -302,6 +334,20 @@ function AppContent() {
 
       {/* Offline Status Banner */}
       <OfflineIndicator />
+      {offlineLanguageProgress && offlineLanguageProgress.done < offlineLanguageProgress.total && (
+        <div className="mx-auto mt-2 w-full max-w-5xl px-3 sm:px-6" role="status" aria-live="polite">
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-100">
+            <div className="flex items-center justify-between gap-3">
+              <span className="font-semibold">{offlineLanguageProgress.error ? 'অফলাইন ডাউনলোড বিরতি' : 'নির্বাচিত ভাষার অনুবাদ ও শব্দে-শব্দে ডেটা সংরক্ষণ হচ্ছে'}</span>
+              <span className="shrink-0 font-bold tabular-nums">{offlineLanguageProgress.done}/{offlineLanguageProgress.total}</span>
+            </div>
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-emerald-200 dark:bg-emerald-900">
+              <div className="h-full rounded-full bg-emerald-600 transition-all" style={{ width: `${Math.round(offlineLanguageProgress.done / offlineLanguageProgress.total * 100)}%` }} />
+            </div>
+            {offlineLanguageProgress.error && <p className="mt-2 text-xs">{offlineLanguageProgress.error} ইন্টারনেট সংযোগ ফিরলে আবার চেষ্টা করুন।</p>}
+          </div>
+        </div>
+      )}
 
       {/* Main View Area */}
       <main className="transition-all" data-active-screen={activeTab}>
