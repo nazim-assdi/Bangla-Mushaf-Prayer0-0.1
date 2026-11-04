@@ -121,7 +121,6 @@ function AppContent() {
   useEffect(() => {
     if (!uiLanguage || Capacitor.getPlatform() !== 'android') return;
     if (localStorage.getItem('mushaf_android_location_prompted') === 'true') return;
-    localStorage.setItem('mushaf_android_location_prompted', 'true');
     const requestLocation = async () => {
       try {
         let permission = await Geolocation.checkPermissions();
@@ -130,6 +129,7 @@ function AppContent() {
         const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 20000, maximumAge: 60000 });
         const point = { lat: position.coords.latitude, lng: position.coords.longitude, accuracy: position.coords.accuracy, nameBn: 'বর্তমান GPS অবস্থান' };
         localStorage.setItem('mushaf_gps_location', JSON.stringify(point));
+        localStorage.setItem('mushaf_android_location_prompted', 'true');
         try {
           const zone = await getTimeZoneForCoordinates(point.lat, point.lng);
           localStorage.setItem('mushaf_gps_timezone', zone);
