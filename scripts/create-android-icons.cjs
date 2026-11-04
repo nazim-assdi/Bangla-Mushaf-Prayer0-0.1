@@ -53,9 +53,9 @@ const path = require('node:path');
     ? fs.readFileSync(strings, 'utf8')
     : '<resources></resources>';
 
-  if (/<string name="app_name">[\\s\\S]*?<\\/string>/.test(stringsXml)) {
+  if (/<string name="app_name">[\s\S]*?<\/string>/.test(stringsXml)) {
     stringsXml = stringsXml.replace(
-      /<string name="app_name">[\\s\\S]*?<\\/string>/,
+      /<string name="app_name">[\s\S]*?<\/string>/,
       '<string name="app_name">Bangla Mushaf Prayer</string>'
     );
   } else {
