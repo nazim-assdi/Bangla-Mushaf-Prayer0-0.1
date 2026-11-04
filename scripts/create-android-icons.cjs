@@ -14,7 +14,7 @@ const path = require('node:path');
   }
   const root = path.join(__dirname, '../android/app/src/main/res');
 
-  // Reuse the same Quran SVG artwork for web, PWA, Apple and desktop assets.
+  // Generate Android, PWA, Apple and desktop icons from the user-provided Quran image in public/icon.jpg.
   const publicDir = path.join(__dirname, '../public');
   await sharp(imagePath).resize(192, 192).png().toFile(path.join(publicDir, 'pwa-192x192.png'));
   await sharp(imagePath).resize(512, 512).png().toFile(path.join(publicDir, 'pwa-512x512.png'));
