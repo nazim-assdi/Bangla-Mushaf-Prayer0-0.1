@@ -54,6 +54,7 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
   const [gpsLive, setGpsLive] = useState(false);
   const [lastGpsUpdate, setLastGpsUpdate] = useState<Date | null>(null);
   const watchIdRef = useRef<number | null>(null);
+  const nativeWatchIdRef = useRef<string | null>(null);
   const [prayerAlerts, setPrayerAlerts] = useState(() => localStorage.getItem('mushaf_prayer_alerts') === 'true');
   const [makruhAlerts, setMakruhAlerts] = useState(() => localStorage.getItem('mushaf_makruh_alerts') === 'true');
   const [alarmMessage, setAlarmMessage] = useState('');
@@ -98,6 +99,7 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
 
   useEffect(() => () => {
     if (watchIdRef.current !== null && navigator.geolocation) navigator.geolocation.clearWatch(watchIdRef.current);
+    if (nativeWatchIdRef.current) void Geolocation.clearWatch({ id: nativeWatchIdRef.current });
   }, []);
 
   const currentDistrict = useMemo(() => {
@@ -156,18 +158,36 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
         let permission = await Geolocation.checkPermissions();
         if (permission.location !== 'granted') permission = await Geolocation.requestPermissions();
         if (permission.location !== 'granted') throw new Error('Location permission দেওয়া হয়নি। Android Settings থেকে অনুমতি দিন।');
-        const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, maximumAge: 10000, timeout: 30000 });
-        const point = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy, nameBn: 'বর্তমান GPS অবস্থান' };
-        setCustomCoords(point);
-        setLastGpsUpdate(new Date(pos.timestamp));
-        try {
-          const zone = await getTimeZoneForCoordinates(point.lat, point.lng);
-          setTimeZoneId(zone);
-        } catch { setTimeZoneId(Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Dhaka'); }
-        setGpsLive(true);
+        if (nativeWatchIdRef.current) await Geolocation.clearWatch({ id: nativeWatchIdRef.current });
+        const watchId = await Geolocation.watchPosition(
+          { enableHighAccuracy: true, maximumAge: 10000, timeout: 30000 },
+          async (pos, err) => {
+            if (err) {
+              setGeoError('GPS সংযোগ পাওয়া যাচ্ছে না। ফোনের Location চালু করে খোলা জায়গায় আবার চেষ্টা করুন।');
+              setGpsLive(false);
+              setGeoLoading(false);
+              return;
+            }
+            if (!pos) return;
+            const point = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy, nameBn: 'বর্তমান GPS অবস্থান' };
+            setCustomCoords(point);
+            setLastGpsUpdate(new Date(pos.timestamp));
+            try {
+              const zone = await getTimeZoneForCoordinates(point.lat, point.lng);
+              setTimeZoneId(zone);
+            } catch {
+              setTimeZoneId(Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Dhaka');
+            }
+            setGpsLive(true);
+            setGeoError('');
+            setGeoLoading(false);
+          }
+        );
+        nativeWatchIdRef.current = watchId;
       } catch (error) {
         setGeoError(error instanceof Error ? error.message : 'GPS অবস্থান পাওয়া যায়নি।');
-      } finally { setGeoLoading(false); }
+        setGeoLoading(false);
+      }
       return;
     }
     if (!navigator.geolocation) {
@@ -238,6 +258,10 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
   };
 
   const handleSelectDistrict = (districtId: string) => {
+    if (nativeWatchIdRef.current) {
+      void Geolocation.clearWatch({ id: nativeWatchIdRef.current });
+      nativeWatchIdRef.current = null;
+    }
     if (watchIdRef.current !== null && navigator.geolocation) {
       navigator.geolocation.clearWatch(watchIdRef.current);
       watchIdRef.current = null;
