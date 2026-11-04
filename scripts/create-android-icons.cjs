@@ -118,7 +118,7 @@ const path = require('node:path');
 
   // Fail the APK build if Android's launcher resources do not point to the
   // user-provided Quran artwork in every @mipmap density and adaptive variant.
-  const launcherManifest = manifestXml.match(/<application\\b[^>]*>/s)?.[0] || '';
+  const launcherManifest = manifestXml.match(/<application\b[^>]*>/s)?.[0] || '';
   if (!launcherManifest.includes('android:icon="@mipmap/ic_launcher"') ||
       !launcherManifest.includes('android:roundIcon="@mipmap/ic_launcher_round"')) {
     throw new Error('AndroidManifest.xml is not bound to the generated @mipmap launcher icons');
