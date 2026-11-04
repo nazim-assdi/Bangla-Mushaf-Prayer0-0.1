@@ -131,14 +131,14 @@ export async function fetchVersesByLanguage(
   const cacheKey = `${surahId}_${lang}`;
   const expectedVerseCount = SURAH_LIST.find((surah) => surah.id === surahId)?.versesCount;
   if (multiLangCache[cacheKey] && multiLangCache[cacheKey].length === expectedVerseCount) {
-    return multiLangCache[cacheKey];
+    return multiLangCache[cacheKey].map((ayah) => ({ ...ayah, audioUrl: getAyahAudioUrl(surahId, ayah.verseNumber, reciterId) }));
   }
 
   // IndexedDB has enough room for the complete Quran and is preferred over localStorage.
   const offlineItem = await getOfflineSurah(surahId, lang).catch(() => null);
   if (offlineItem && offlineItem.length === expectedVerseCount) {
     multiLangCache[cacheKey] = offlineItem;
-    return offlineItem;
+    return offlineItem.map((ayah) => ({ ...ayah, audioUrl: getAyahAudioUrl(surahId, ayah.verseNumber, reciterId) }));
   }
 
   const langMeta = QURAN_LANGUAGES.find((l) => l.code === lang) || QURAN_LANGUAGES[0];
