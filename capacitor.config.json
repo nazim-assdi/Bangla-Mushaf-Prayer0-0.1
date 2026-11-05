@@ -1,6 +1,6 @@
 {
   "appId": "com.nazimassdi.banglamushaf",
-  "appName": "Bangla Mushaf Prayer",
+  "appName": "Al Quran & Prayer",
   "webDir": "dist",
   "bundledWebRuntime": false,
   "android": {
