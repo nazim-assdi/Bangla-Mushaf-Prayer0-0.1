@@ -73,12 +73,12 @@ const path = require('node:path');
   if (/<string name="app_name">[\s\S]*?<\/string>/.test(stringsXml)) {
     stringsXml = stringsXml.replace(
       /<string name="app_name">[\s\S]*?<\/string>/,
-      '<string name="app_name">Bangla Mushaf Prayer</string>'
+      '<string name="app_name">Al Quran &amp; Prayer</string>'
     );
   } else {
     stringsXml = stringsXml.replace(
       '</resources>',
-      '<string name="app_name">Bangla Mushaf Prayer</string></resources>'
+      '<string name="app_name">Al Quran &amp; Prayer</string></resources>'
     );
   }
   fs.writeFileSync(strings, stringsXml);
