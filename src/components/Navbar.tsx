@@ -40,9 +40,9 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="flex items-center gap-2.5 text-left group focus:outline-none focus:ring-2 focus:ring-emerald-400 rounded-lg p-1"
               aria-label="হোমপেজ ও মুসহাফে ফিরে যান"
             >
-              <img src="/icon.svg" alt="Bangla Mushaf app logo" className="h-11 w-11 shrink-0 rounded-2xl shadow-xl ring-2 ring-amber-300/50 transition-transform group-hover:scale-105" />
+              <img src="/icon.svg" alt="Al Quran & Prayer app logo" className="h-11 w-11 shrink-0 rounded-2xl shadow-xl ring-2 ring-amber-300/50 transition-transform group-hover:scale-105" />
               <div className="min-w-0 leading-tight">
-                <div className="font-serif text-[15px] sm:text-lg font-extrabold tracking-tight text-[#f0cf8b]">Bangla Mushaf Prayer</div>
+                <div className="font-serif text-[15px] sm:text-lg font-extrabold tracking-tight text-[#f0cf8b]">Al Quran &amp; Prayer</div>
                 <p className="hidden text-[10px] tracking-[0.16em] text-cyan-100/80 sm:block">QURAN · PRAYER · PEACE</p>
               </div>
             </button>
