@@ -1,7 +1,7 @@
 const { app, BrowserWindow, shell } = require('electron');
 const path = require('node:path');
 function createWindow() {
-  const win = new BrowserWindow({ width:1280, height:850, minWidth:360, minHeight:600, title:'Al Quran & Prayer', autoHideMenuBar:true, webPreferences:{ preload:path.join(__dirname,'preload.cjs'), contextIsolation:true, nodeIntegration:false, sandbox:true } });
+  const win = new BrowserWindow({ width:1280, height:850, minWidth:360, minHeight:600, title:'Al Quran & Prayer', icon:path.join(__dirname,'assets','AlQuranPrayer.ico'), autoHideMenuBar:true, webPreferences:{ preload:path.join(__dirname,'preload.cjs'), contextIsolation:true, nodeIntegration:false, sandbox:true } });
   win.loadFile(path.join(__dirname,'..','dist','index.html'));
   win.webContents.setWindowOpenHandler(({url}) => { if (url.startsWith('https://')) shell.openExternal(url); return {action:'deny'}; });
 }
