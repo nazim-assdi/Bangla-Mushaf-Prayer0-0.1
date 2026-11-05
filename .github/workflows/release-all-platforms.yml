@@ -183,15 +183,16 @@ jobs:
         if: matrix.platform == 'windows'
         shell: pwsh
         run: |
-          $executables = @(Get-ChildItem -Path release -File -Filter '*.exe')
+          $executables = @(Get-ChildItem -Path release -File -Filter '*.exe' |
+            Where-Object { $_.Name -notmatch '__uninstaller' })
           if ($executables.Count -lt 2) {
             throw "Expected both NSIS setup and portable EXE in release/. Found: $($executables.Count)"
           }
-          $setup = $executables | Where-Object { $_.Name -match 'Setup' } | Select-Object -First 1
+          $setup = $executables | Where-Object { $_.Name -match 'Setup' -and $_.Name -notmatch '__uninstaller' } | Select-Object -First 1
           if (-not $setup) {
             throw "NSIS Setup EXE was not found. Files: $($executables.Name -join ', ')"
           }
-          $portable = $executables | Where-Object { $_.FullName -ne $setup.FullName } | Select-Object -First 1
+          $portable = $executables | Where-Object { $_.FullName -ne $setup.FullName -and $_.Name -notmatch 'Setup' } | Select-Object -First 1
           if (-not $portable) { throw "Portable EXE was not found." }
 
           foreach ($file in @($setup, $portable)) {
