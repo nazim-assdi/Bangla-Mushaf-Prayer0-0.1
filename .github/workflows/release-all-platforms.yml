@@ -172,14 +172,65 @@ jobs:
           NODE
           iconutil -c icns build/AlQuranPrayer.iconset -o build/AlQuranPrayer.icns
 
+      - name: Generate Windows ICO from the Quran artwork
+        if: matrix.platform == 'windows'
+        run: node scripts/create-windows-icon.cjs
+
       - name: Build desktop installer
         run: npx electron-builder ${{ matrix.args }} --publish never
+
+      - name: Smoke-test the Windows installer and stage EXEs
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: |
+          $executables = @(Get-ChildItem -Path release -File -Filter '*.exe')
+          if ($executables.Count -lt 2) {
+            throw "Expected both NSIS setup and portable EXE in release/. Found: $($executables.Count)"
+          }
+          $setup = $executables | Where-Object { $_.Name -match 'Setup' } | Select-Object -First 1
+          if (-not $setup) {
+            throw "NSIS Setup EXE was not found. Files: $($executables.Name -join ', ')"
+          }
+          $portable = $executables | Where-Object { $_.FullName -ne $setup.FullName } | Select-Object -First 1
+          if (-not $portable) { throw "Portable EXE was not found." }
+
+          foreach ($file in @($setup, $portable)) {
+            if ($file.Length -lt 10MB) { throw "EXE is unexpectedly small: $($file.Name)" }
+            $stream = [System.IO.File]::OpenRead($file.FullName)
+            try {
+              if ($stream.ReadByte() -ne 0x4D -or $stream.ReadByte() -ne 0x5A) {
+                throw "Invalid Windows PE executable signature: $($file.Name)"
+              }
+            } finally { $stream.Dispose() }
+          }
+
+          $installDir = Join-Path $env:RUNNER_TEMP 'AlQuranPrayerSmokeInstall'
+          if (Test-Path $installDir) { Remove-Item $installDir -Recurse -Force }
+          $installerProcess = Start-Process -FilePath $setup.FullName -ArgumentList "/S /D=$installDir" -Wait -PassThru
+          if ($installerProcess.ExitCode -ne 0) {
+            throw "Silent NSIS installation failed with exit code $($installerProcess.ExitCode)"
+          }
+          $installedAsar = Join-Path $installDir 'resources\app.asar'
+          if (-not (Test-Path $installedAsar)) {
+            throw "Installer exited successfully but resources\app.asar was not installed at $installDir"
+          }
+          $installedApp = Get-ChildItem -Path $installDir -File -Filter '*.exe' |
+            Where-Object { $_.Name -notmatch 'Uninstall' } | Select-Object -First 1
+          if (-not $installedApp) { throw "Installed Al Quran & Prayer application EXE is missing." }
+
+          $staging = Join-Path 'release' 'windows'
+          New-Item -ItemType Directory -Path $staging -Force | Out-Null
+          Copy-Item $setup.FullName (Join-Path $staging 'Al-Quran-and-Prayer-Setup.exe') -Force
+          Copy-Item $portable.FullName (Join-Path $staging 'Al-Quran-and-Prayer-Portable.exe') -Force
+          Write-Host "Windows install smoke-test passed. Installed: $($installedApp.FullName)"
+          Get-FileHash (Join-Path $staging 'Al-Quran-and-Prayer-Setup.exe') -Algorithm SHA256
+          Get-FileHash (Join-Path $staging 'Al-Quran-and-Prayer-Portable.exe') -Algorithm SHA256
 
       - name: Upload desktop package
         uses: actions/upload-artifact@v4
         with:
           name: al-quran-prayer-${{ matrix.platform }}
-          path: release/*
+          path: ${{ matrix.platform == 'windows' && 'release/windows/*' || 'release/*' }}
           if-no-files-found: error
           retention-days: 30
 
