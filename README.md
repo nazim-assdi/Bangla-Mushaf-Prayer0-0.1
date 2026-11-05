@@ -1,4 +1,6 @@
-# বাংলা কুরআন ও নামাজের সময় (Bangla Mushaf & Prayer)
+# Al Quran & Prayer
+
+বাংলা কুরআন, অনুবাদ, তাফসির, নামাজের সময় ও কিবলা সহায়ক অ্যাপ।
 
 React + TypeScript + Vite ভিত্তিক ওয়েব অ্যাপ এবং PWA। এটি এখনো native Android Studio project নয়।
 
