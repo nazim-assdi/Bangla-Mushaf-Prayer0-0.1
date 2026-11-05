@@ -15,8 +15,8 @@ export default defineConfig(() => {
         includeAssets: ['favicon.png', 'apple-touch-icon.png', 'icon.svg', 'icon.jpg', 'pwa-192x192.png', 'pwa-512x512.png', 'pwa-maskable-512x512.png'],
         manifest: {
           id: '/',
-          name: 'Bangla Mushaf Prayer',
-          short_name: 'Bangla Mushaf',
+          name: 'Al Quran & Prayer',
+          short_name: 'Al Quran',
           description: 'A multilingual Quran and prayer companion with offline translations, tafsir, reading tools, prayer times and Qibla.',
           theme_color: '#064e3b',
           background_color: '#064e3b',
