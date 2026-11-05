@@ -1,7 +1,7 @@
 {
   "name": "al-quran-prayer",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
@@ -89,7 +89,8 @@
         "dmg",
         "zip"
       ],
-      "category": "public.app-category.education"
+      "category": "public.app-category.education",
+      "icon": "build/AlQuranPrayer.icns"
     },
     "win": {
       "target": [
@@ -105,7 +106,7 @@
       ],
       "category": "Education",
       "icon": "public",
-      "maintainer": "Bangla Mushaf Prayer Team"
+      "maintainer": "Al Quran & Prayer Team"
     },
     "nsis": {
       "oneClick": false,
