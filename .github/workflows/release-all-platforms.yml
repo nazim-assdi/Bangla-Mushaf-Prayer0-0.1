@@ -211,8 +211,9 @@ jobs:
 
       - name: Compile iPhone device app
         run: |
+          test -d ios/App/App.xcworkspace
           xcodebuild \
-            -project ios/App/App.xcodeproj \
+            -workspace ios/App/App.xcworkspace \
             -scheme App \
             -sdk iphoneos \
             -configuration Release \
