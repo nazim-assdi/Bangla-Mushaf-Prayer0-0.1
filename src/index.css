@@ -1,6 +1,9 @@
 
 @import "tailwindcss";
 
+/* Drive Tailwind dark: utilities from the app-selected html.dark class, not the OS setting. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   html, body, #root { width: 100%; min-height: 100%; margin: 0; }
   body { overflow-x: hidden; }
@@ -261,4 +264,49 @@ html.eyecare .app-shell { background-color: #13251e; }
   .app-shell main[data-active-screen] { padding-bottom: 6.5rem; }
   .app-shell main[data-active-screen="qibla"] .qibla-screen > div.rounded-3xl { min-height: 0; padding-block: 1.5rem; }
   .app-shell main[data-active-screen="dhikr"] > div > div:nth-child(2) { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+
+
+/* Theme-aware text contrast and native controls.
+   Some screens have muted labels without an explicit dark:text-* class;
+   brighten only those labels so intentional light-surface previews stay unchanged. */
+html.dark {
+  color-scheme: dark;
+}
+
+html.sepia {
+  color-scheme: light;
+}
+
+html.dark .app-shell {
+  color: #e5edf2;
+}
+
+html.dark .app-shell :where(
+  .text-stone-500, .text-stone-600,
+  .text-slate-500, .text-slate-600,
+  .text-gray-500, .text-gray-600
+):not([class*="dark:text-"]) {
+  color: #c4d3dc !important;
+}
+
+html.dark .app-shell :where(
+  .text-stone-700, .text-slate-700, .text-gray-700
+):not([class*="dark:text-"]) {
+  color: #dbe5eb !important;
+}
+
+/* Ensure fields and their placeholders remain readable in every dark theme. */
+html.dark .app-shell :where(input, select, textarea) {
+  color: #e5edf2;
+}
+
+html.dark .app-shell :where(input, textarea)::placeholder {
+  color: #a9bdc8;
+  opacity: 1;
+}
+
+html.dark .app-shell option {
+  color: #e5edf2;
+  background: #102633;
 }
