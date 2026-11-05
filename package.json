@@ -115,7 +115,7 @@
       "perMachine": false,
       "allowToChangeInstallationDirectory": true
     },
-    "artifactName": "Al-Quran-and-Prayer-${version}-${arch}.${ext}",
-    "desktopName": "al-quran-prayer"
-  }
+    "artifactName": "Al-Quran-and-Prayer-${version}-${arch}.${ext}"
+  },
+  "desktopName": "al-quran-prayer"
 }
