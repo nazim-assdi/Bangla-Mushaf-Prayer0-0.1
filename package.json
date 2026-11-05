@@ -126,7 +126,6 @@
       "runAfterFinish": true,
       "deleteAppDataOnUninstall": false
     },
-    "artifactName": "Al-Quran-and-Prayer-${version}-${arch}.${ext}",
     "portable": {
       "requestExecutionLevel": "user"
     }
