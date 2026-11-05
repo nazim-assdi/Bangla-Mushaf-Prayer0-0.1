@@ -105,13 +105,17 @@
         "deb"
       ],
       "category": "Education",
-      "icon": "public",
-      "maintainer": "Al Quran & Prayer Team"
+      "icon": "public/pwa-512x512.png",
+      "maintainer": "Al Quran & Prayer Team",
+      "executableName": "Al-Quran-and-Prayer",
+      "syncDesktopName": true
     },
     "nsis": {
       "oneClick": false,
       "perMachine": false,
       "allowToChangeInstallationDirectory": true
-    }
+    },
+    "artifactName": "Al-Quran-and-Prayer-${version}-${arch}.${ext}",
+    "desktopName": "al-quran-prayer"
   }
 }
