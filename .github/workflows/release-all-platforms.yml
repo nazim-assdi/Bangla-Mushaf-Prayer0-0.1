@@ -1,0 +1,236 @@
+name: Release Al Quran & Prayer - All Platforms
+
+on:
+  push:
+    branches:
+      - feature/android-qibla-auto-location-new-icon
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: al-quran-prayer-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  android:
+    name: Android release APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Test and build web app
+        run: |
+          npm test
+          npm run build
+
+      - name: Generate Capacitor Android project
+        run: |
+          npx cap add android
+          npx cap sync android
+          node scripts/create-android-icons.cjs
+
+      - name: Prepare APK signing identity
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          mkdir -p "$HOME/.android" "$GITHUB_WORKSPACE/release/android"
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+            test -n "$ANDROID_KEY_ALIAS" || { echo "ANDROID_KEY_ALIAS secret is required with ANDROID_KEYSTORE_BASE64"; exit 1; }
+            test -n "$ANDROID_KEYSTORE_PASSWORD" || { echo "ANDROID_KEYSTORE_PASSWORD secret is required with ANDROID_KEYSTORE_BASE64"; exit 1; }
+            test -n "$ANDROID_KEY_PASSWORD" || { echo "ANDROID_KEY_PASSWORD secret is required with ANDROID_KEYSTORE_BASE64"; exit 1; }
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/al-quran-release.jks"
+            echo "APK_KEYSTORE_FILE=$RUNNER_TEMP/al-quran-release.jks" >> "$GITHUB_ENV"
+            echo "APK_KEY_ALIAS=$ANDROID_KEY_ALIAS" >> "$GITHUB_ENV"
+            echo "APK_KEYSTORE_PASSWORD=$ANDROID_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+            echo "APK_KEY_PASSWORD=$ANDROID_KEY_PASSWORD" >> "$GITHUB_ENV"
+            echo "APK_SIGNING_MODE=persistent repository signing key" >> "$GITHUB_ENV"
+          else
+            keytool -genkeypair -v \
+              -keystore "$RUNNER_TEMP/al-quran-ci-temporary.jks" \
+              -storepass android -alias alquranrelease -keypass android \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname "CN=Al Quran and Prayer CI,O=Temporary Build,C=US" -noprompt
+            echo "APK_KEYSTORE_FILE=$RUNNER_TEMP/al-quran-ci-temporary.jks" >> "$GITHUB_ENV"
+            echo "APK_KEY_ALIAS=alquranrelease" >> "$GITHUB_ENV"
+            echo "APK_KEYSTORE_PASSWORD=android" >> "$GITHUB_ENV"
+            echo "APK_KEY_PASSWORD=android" >> "$GITHUB_ENV"
+            echo "APK_SIGNING_MODE=temporary CI signing key; configure repository signing secrets for future upgrade-compatible releases" >> "$GITHUB_ENV"
+          fi
+
+      - name: Build Android debug and release variants
+        working-directory: android
+        run: chmod +x gradlew && ./gradlew assembleDebug assembleRelease --no-daemon
+
+      - name: Sign and verify release APK
+        env:
+          APK_KEYSTORE_FILE: ${{ env.APK_KEYSTORE_FILE }}
+          APK_KEY_ALIAS: ${{ env.APK_KEY_ALIAS }}
+          APK_KEYSTORE_PASSWORD: ${{ env.APK_KEYSTORE_PASSWORD }}
+          APK_KEY_PASSWORD: ${{ env.APK_KEY_PASSWORD }}
+        run: |
+          BUILD_TOOLS="$ANDROID_HOME/build-tools/35.0.0"
+          UNSIGNED="android/app/build/outputs/apk/release/app-release-unsigned.apk"
+          test -f "$UNSIGNED"
+          "$BUILD_TOOLS/zipalign" -f -p 4 "$UNSIGNED" "$RUNNER_TEMP/al-quran-aligned.apk"
+          "$BUILD_TOOLS/apksigner" sign \
+            --ks "$APK_KEYSTORE_FILE" \
+            --ks-key-alias "$APK_KEY_ALIAS" \
+            --ks-pass "pass:$APK_KEYSTORE_PASSWORD" \
+            --key-pass "pass:$APK_KEY_PASSWORD" \
+            --out "release/android/Al-Quran-and-Prayer-release.apk" \
+            "$RUNNER_TEMP/al-quran-aligned.apk"
+          "$BUILD_TOOLS/apksigner" verify --verbose "release/android/Al-Quran-and-Prayer-release.apk"
+          cp android/app/build/outputs/apk/debug/app-debug.apk "release/android/Al-Quran-and-Prayer-debug.apk"
+          printf 'App: Al Quran & Prayer\nVersion: %s\nSigning: %s\n' "$(node -p "require('./package.json').version")" "$APK_SIGNING_MODE" > release/android/BUILD-INFO.txt
+
+      - name: Upload Android APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: al-quran-prayer-android-apks
+          path: release/android/*
+          if-no-files-found: error
+          retention-days: 30
+
+  desktop:
+    name: Desktop release - ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows
+            os: windows-latest
+            args: --win nsis portable
+          - platform: macos
+            os: macos-latest
+            args: --mac dmg zip
+          - platform: linux
+            os: ubuntu-latest
+            args: --linux AppImage deb
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Create macOS app icon
+        if: matrix.platform == 'macos'
+        run: |
+          mkdir -p build/AlQuranPrayer.iconset
+          node --input-type=module <<'NODE'
+          import sharp from 'sharp';
+          import fs from 'node:fs';
+          const input = 'public/icon.jpg';
+          const out = 'build/AlQuranPrayer.iconset';
+          const sizes = [
+            ['icon_16x16.png', 16], ['icon_16x16@2x.png', 32],
+            ['icon_32x32.png', 32], ['icon_32x32@2x.png', 64],
+            ['icon_128x128.png', 128], ['icon_128x128@2x.png', 256],
+            ['icon_256x256.png', 256], ['icon_256x256@2x.png', 512],
+            ['icon_512x512.png', 512], ['icon_512x512@2x.png', 1024]
+          ];
+          for (const [name, size] of sizes) {
+            await sharp(input).resize(size, size).png().toFile(`${out}/${name}`);
+          }
+          console.log('Generated macOS iconset from the selected Quran artwork.');
+          NODE
+          iconutil -c icns build/AlQuranPrayer.iconset -o build/AlQuranPrayer.icns
+
+      - name: Build desktop installer
+        run: npx electron-builder ${{ matrix.args }} --publish never
+
+      - name: Upload desktop package
+        uses: actions/upload-artifact@v4
+        with:
+          name: al-quran-prayer-${{ matrix.platform }}
+          path: release/*
+          if-no-files-found: error
+          retention-days: 30
+
+  ios:
+    name: iPhone / iOS device build (unsigned)
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Test and build web app
+        run: |
+          npm test
+          npm run build
+
+      - name: Generate Capacitor iOS project
+        run: |
+          npx cap add ios
+          npx cap sync ios
+
+      - name: Compile iPhone device app
+        run: |
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -sdk iphoneos \
+            -configuration Release \
+            -derivedDataPath "$RUNNER_TEMP/al-quran-ios-build" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+          APP_PATH="$RUNNER_TEMP/al-quran-ios-build/Build/Products/Release-iphoneos/App.app"
+          test -d "$APP_PATH"
+          mkdir -p "$RUNNER_TEMP/ios-ipa/Payload"
+          cp -R "$APP_PATH" "$RUNNER_TEMP/ios-ipa/Payload/App.app"
+          ditto -c -k --sequesterRsrc --keepParent \
+            "$RUNNER_TEMP/ios-ipa/Payload" \
+            "$GITHUB_WORKSPACE/Al-Quran-and-Prayer-iOS-unsigned.ipa"
+          unzip -l "$GITHUB_WORKSPACE/Al-Quran-and-Prayer-iOS-unsigned.ipa" | head -30
+
+      - name: Upload unsigned iOS device package
+        uses: actions/upload-artifact@v4
+        with:
+          name: al-quran-prayer-ios-unsigned-ipa
+          path: Al-Quran-and-Prayer-iOS-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 30
