@@ -13,7 +13,8 @@
     "lint": "tsc --noEmit",
     "android:sync": "cap sync android",
     "desktop:dev": "npm run build && electron .",
-    "desktop:dist": "npm run build && electron-builder"
+    "desktop:dist": "npm run build && electron-builder",
+    "build:windows-icon": "node scripts/create-windows-icon.cjs"
   },
   "dependencies": {
     "@capacitor/android": "^7.0.0",
@@ -97,7 +98,8 @@
         "nsis",
         "portable"
       ],
-      "icon": "public/pwa-512x512.png"
+      "icon": "electron/assets/AlQuranPrayer.ico",
+      "forceCodeSigning": false
     },
     "linux": {
       "target": [
@@ -113,9 +115,21 @@
     "nsis": {
       "oneClick": false,
       "perMachine": false,
-      "allowToChangeInstallationDirectory": true
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Al Quran & Prayer",
+      "installerIcon": "electron/assets/AlQuranPrayer.ico",
+      "uninstallerIcon": "electron/assets/AlQuranPrayer.ico",
+      "installerHeaderIcon": "electron/assets/AlQuranPrayer.ico",
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false
     },
-    "artifactName": "Al-Quran-and-Prayer-${version}-${arch}.${ext}"
+    "artifactName": "Al-Quran-and-Prayer-${version}-${arch}.${ext}",
+    "portable": {
+      "requestExecutionLevel": "user"
+    }
   },
   "desktopName": "al-quran-prayer"
 }
