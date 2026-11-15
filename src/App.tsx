@@ -111,10 +111,13 @@ function AppContent() {
     return () => unsubscribe();
   }, [user]);
 
-  // Sync to Firestore and Cloud SQL on user settings and last read changes
+  // Debounce cloud writes: quick navigation and repeated setting changes should
+  // not send a Firestore + API request for every intermediate state.
   useEffect(() => {
-    if (user && lastRead) {
-      saveUserProfile(user.uid, {
+    if (!user || !lastRead) return;
+
+    const timer = window.setTimeout(() => {
+      void saveUserProfile(user.uid, {
         lastRead,
         theme,
         arabicFontSize,
@@ -122,7 +125,7 @@ function AppContent() {
         selectedReciterId,
         currentLanguage,
       });
-      syncSettingsToCloudSQL(user, {
+      void syncSettingsToCloudSQL(user, {
         theme,
         arabicFontSize,
         banglaFontSize,
@@ -132,7 +135,9 @@ function AppContent() {
         lastReadAyahNumber: lastRead.ayahNumber,
         lastReadSurahNameBn: lastRead.surahNameBn,
       });
-    }
+    }, 650);
+
+    return () => window.clearTimeout(timer);
   }, [lastRead, theme, arabicFontSize, banglaFontSize, selectedReciterId, currentLanguage, user]);
 
   useEffect(() => {
