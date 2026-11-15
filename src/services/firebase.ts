@@ -89,8 +89,7 @@ export async function testConnection() {
   }
 }
 
-// Test connection on startup
-testConnection();
+// Call testConnection() explicitly from a diagnostics screen when needed.
 
 /**
  * Sign in using Google Auth popup
