@@ -92,7 +92,7 @@ export const PrayerTimesView: React.FC = () => {
         setGeoError(messages[err.code] || 'GPS অবস্থান পাওয়া যায়নি।');
         setGeoLoading(false);
       },
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
+      { enableHighAccuracy: true, maximumAge: 30000, timeout: 15000 }
     );
   };
 
