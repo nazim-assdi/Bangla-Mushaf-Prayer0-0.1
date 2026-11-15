@@ -27,6 +27,7 @@ export const QiblaCompassView: React.FC = () => {
   const isAligned = deviation !== null && Math.abs(deviation) <= 5;
   const latestHeadingRef = useRef<number | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const orientationListenerRef = useRef<EventListener | null>(null);
 
   // Device sensors can emit dozens of events per second. Update React once per
   // animation frame and ignore sub-degree noise to keep the compass smooth.
@@ -84,6 +85,12 @@ export const QiblaCompassView: React.FC = () => {
         setSensorError('এই ডিভাইসে ব্রাউজার কম্পাস সেন্সর পাওয়া যায়নি।');
         return;
       }
+      if (!orientationListenerRef.current) {
+        const listener: EventListener = (event) => handleOrientation(event as DeviceOrientationEvent);
+        orientationListenerRef.current = listener;
+        window.addEventListener('deviceorientation', listener, true);
+        window.addEventListener('deviceorientationabsolute' as keyof WindowEventMap, listener, true);
+      }
       setSensorError('ফোনটি সমতল করে ধরে ধীরে ধীরে ৮ আকৃতিতে ঘুরিয়ে কম্পাস ক্যালিব্রেট করুন।');
     } catch {
       setSensorError('কম্পাস চালু করা যায়নি। ব্রাউজারের সেন্সর অনুমতি পরীক্ষা করুন।');
@@ -91,12 +98,15 @@ export const QiblaCompassView: React.FC = () => {
   };
 
   useEffect(() => {
-    const listener = (event: DeviceOrientationEvent) => handleOrientation(event);
-    window.addEventListener('deviceorientation', listener, true);
-    window.addEventListener('deviceorientationabsolute' as keyof WindowEventMap, listener as EventListener, true);
+    // iOS requires the sensor listener to be attached after the user grants
+    // permission from a direct button interaction.
     return () => {
-      window.removeEventListener('deviceorientation', listener, true);
-      window.removeEventListener('deviceorientationabsolute' as keyof WindowEventMap, listener as EventListener, true);
+      const listener = orientationListenerRef.current;
+      if (listener) {
+        window.removeEventListener('deviceorientation', listener, true);
+        window.removeEventListener('deviceorientationabsolute' as keyof WindowEventMap, listener, true);
+        orientationListenerRef.current = null;
+      }
       if (animationFrameRef.current !== null) {
         window.cancelAnimationFrame(animationFrameRef.current);
         animationFrameRef.current = null;
@@ -130,7 +140,7 @@ export const QiblaCompassView: React.FC = () => {
         setGeoError(messages[error.code] || 'GPS অবস্থান পাওয়া যায়নি।');
         setGeoLoading(false);
       },
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
+      { enableHighAccuracy: true, maximumAge: 30000, timeout: 15000 }
     );
   };
 
