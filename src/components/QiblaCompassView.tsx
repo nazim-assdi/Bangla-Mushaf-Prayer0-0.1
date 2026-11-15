@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Compass, MapPin, RefreshCw, CheckCircle2, AlertTriangle, Info, Smartphone } from 'lucide-react';
 import { BANGLADESH_DISTRICTS } from '../utils/prayerTimes';
 import { calculateQiblaDirection, calculateDistanceToKaaba, getHeadingDeviation } from '../utils/qibla';
@@ -25,11 +25,33 @@ export const QiblaCompassView: React.FC = () => {
   const distanceKm = useMemo(() => calculateDistanceToKaaba(activeLat, activeLng), [activeLat, activeLng]);
   const deviation = deviceHeading === null ? null : getHeadingDeviation(deviceHeading, qiblaBearing);
   const isAligned = deviation !== null && Math.abs(deviation) <= 5;
+  const latestHeadingRef = useRef<number | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const orientationListenerRef = useRef<EventListener | null>(null);
+
+  // Device sensors can emit dozens of events per second. Update React once per
+  // animation frame and ignore sub-degree noise to keep the compass smooth.
+  const queueHeadingUpdate = (heading: number) => {
+    latestHeadingRef.current = heading;
+    if (animationFrameRef.current !== null) return;
+
+    animationFrameRef.current = window.requestAnimationFrame(() => {
+      animationFrameRef.current = null;
+      const nextHeading = latestHeadingRef.current;
+      if (nextHeading === null) return;
+
+      setDeviceHeading((current) => {
+        if (current === null) return nextHeading;
+        const delta = Math.abs(((nextHeading - current + 540) % 360) - 180);
+        return delta >= 1 ? nextHeading : current;
+      });
+    });
+  };
 
   const handleOrientation = (event: DeviceOrientationEvent) => {
     const iosHeading = (event as DeviceOrientationEvent & { webkitCompassHeading?: number }).webkitCompassHeading;
     if (typeof iosHeading === 'number' && Number.isFinite(iosHeading)) {
-      setDeviceHeading((iosHeading + 360) % 360);
+      queueHeadingUpdate((iosHeading + 360) % 360);
       setSensorError('');
       return;
     }
@@ -37,7 +59,7 @@ export const QiblaCompassView: React.FC = () => {
     if (event.absolute && event.alpha !== null && Number.isFinite(event.alpha)) {
       const screenAngle = window.screen.orientation?.angle ?? 0;
       const heading = (360 - event.alpha + screenAngle + 360) % 360;
-      setDeviceHeading(heading);
+      queueHeadingUpdate(heading);
       setSensorError('');
     }
   };
@@ -45,6 +67,10 @@ export const QiblaCompassView: React.FC = () => {
   const enableCompass = async () => {
     setSensorError('');
     try {
+      if (typeof DeviceOrientationEvent === 'undefined') {
+        setSensorError('এই ডিভাইসে ব্রাউজার কম্পাস সেন্সর পাওয়া যায়নি।');
+        return;
+      }
       const orientationApi = DeviceOrientationEvent as typeof DeviceOrientationEvent & {
         requestPermission?: () => Promise<'granted' | 'denied'>;
       };
@@ -59,6 +85,12 @@ export const QiblaCompassView: React.FC = () => {
         setSensorError('এই ডিভাইসে ব্রাউজার কম্পাস সেন্সর পাওয়া যায়নি।');
         return;
       }
+      if (!orientationListenerRef.current) {
+        const listener: EventListener = (event) => handleOrientation(event as DeviceOrientationEvent);
+        orientationListenerRef.current = listener;
+        window.addEventListener('deviceorientation', listener, true);
+        window.addEventListener('deviceorientationabsolute' as keyof WindowEventMap, listener as EventListener, true);
+      }
       setSensorError('ফোনটি সমতল করে ধরে ধীরে ধীরে ৮ আকৃতিতে ঘুরিয়ে কম্পাস ক্যালিব্রেট করুন।');
     } catch {
       setSensorError('কম্পাস চালু করা যায়নি। ব্রাউজারের সেন্সর অনুমতি পরীক্ষা করুন।');
@@ -66,12 +98,19 @@ export const QiblaCompassView: React.FC = () => {
   };
 
   useEffect(() => {
-    const listener = (event: DeviceOrientationEvent) => handleOrientation(event);
-    window.addEventListener('deviceorientation', listener, true);
-    window.addEventListener('deviceorientationabsolute' as keyof WindowEventMap, listener as EventListener, true);
+    // iOS requires the sensor listener to be attached after the user grants
+    // permission from a direct button interaction.
     return () => {
-      window.removeEventListener('deviceorientation', listener, true);
-      window.removeEventListener('deviceorientationabsolute' as keyof WindowEventMap, listener as EventListener, true);
+      const listener = orientationListenerRef.current;
+      if (listener) {
+        window.removeEventListener('deviceorientation', listener, true);
+        window.removeEventListener('deviceorientationabsolute' as keyof WindowEventMap, listener as EventListener, true);
+        orientationListenerRef.current = null;
+      }
+      if (animationFrameRef.current !== null) {
+        window.cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
     };
   }, []);
 
@@ -101,7 +140,7 @@ export const QiblaCompassView: React.FC = () => {
         setGeoError(messages[error.code] || 'GPS অবস্থান পাওয়া যায়নি।');
         setGeoLoading(false);
       },
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
+      { enableHighAccuracy: true, maximumAge: 30000, timeout: 15000 }
     );
   };
 

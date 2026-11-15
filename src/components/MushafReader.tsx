@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Play,
   Pause,
@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { QuranAyah, QuranWord } from '../data/quranSampleData';
 import { SURAH_LIST } from '../data/quranMetadata';
-import { RECITERS } from '../services/quranApi';
+import { RECITERS, getAyahAudioUrl } from '../services/quranApi';
 import { QURAN_LANGUAGES, QuranLanguage, fetchVersesByLanguage, ensureDefaultOfflineQuranDownloaded } from '../services/multiLangQuran';
 import { toBanglaNumber, toArabicNumber } from '../utils/banglaNumbers';
 import { TafsirModal } from './TafsirModal';
@@ -75,25 +75,56 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
   useEffect(() => {
     try {
       const stored = localStorage.getItem('mushaf_ayah_study_v1');
-      if (stored) setStudyRecords(JSON.parse(stored));
+      if (stored) {
+        const parsed: unknown = JSON.parse(stored);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          setStudyRecords(parsed as Record<string, { read: boolean; note: string }>);
+        }
+      }
     } catch (error) {
       console.warn('Could not restore reading notes:', error);
     }
   }, []);
 
+  // Debounce local persistence so typing a note does not synchronously serialize
+  // the complete notes object on every keystroke.
+  useEffect(() => {
+    const persist = () => {
+      try {
+        localStorage.setItem('mushaf_ayah_study_v1', JSON.stringify(studyRecords));
+      } catch (error) {
+        console.warn('Could not save reading notes:', error);
+      }
+    };
+    const timer = window.setTimeout(persist, 300);
+    window.addEventListener('pagehide', persist);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener('pagehide', persist);
+    };
+  }, [studyRecords]);
+
   const updateStudyRecord = (verseKey: string, patch: Partial<{ read: boolean; note: string }>) => {
-    setStudyRecords((previous) => {
-      const next = { ...previous, [verseKey]: { read: previous[verseKey]?.read ?? false, note: previous[verseKey]?.note ?? '', ...patch } };
-      try { localStorage.setItem('mushaf_ayah_study_v1', JSON.stringify(next)); } catch (error) { console.warn('Could not save reading notes:', error); }
-      return next;
-    });
+    setStudyRecords((previous) => ({
+      ...previous,
+      [verseKey]: {
+        read: previous[verseKey]?.read ?? false,
+        note: previous[verseKey]?.note ?? '',
+        ...patch,
+      },
+    }));
   };
 
-  const readCount = ayahs.filter((ayah) => studyRecords[ayah.verseKey]?.read).length;
+  const readCount = useMemo(
+    () => ayahs.reduce((count, ayah) => count + (studyRecords[ayah.verseKey]?.read ? 1 : 0), 0),
+    [ayahs, studyRecords]
+  );
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const wordAudioRef = useRef<HTMLAudioElement | null>(null);
   const autoDownloadAttemptedRef = useRef(false);
+  const autoDownloadRetryRef = useRef<number | null>(null);
+  const autoDownloadRetryCountRef = useRef(0);
 
   const currentSurah = SURAH_LIST.find((s) => s.id === surahId) || SURAH_LIST[0];
 
@@ -102,13 +133,14 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
     let isMounted = true;
     setLoading(true);
     setAyahs([]);
+    setActiveWordId(null);
     if (audioRef.current) {
       audioRef.current.pause();
       setIsPlaying(false);
       setPlayingAyahKey(null);
     }
 
-    fetchVersesByLanguage(surahId, currentLanguage, selectedReciterId)
+    fetchVersesByLanguage(surahId, currentLanguage)
       .then((data) => {
         if (isMounted) {
           setAyahs(data);
@@ -122,8 +154,10 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
 
     return () => {
       isMounted = false;
+      audioRef.current?.pause();
+      wordAudioRef.current?.pause();
     };
-  }, [surahId, currentLanguage, selectedReciterId]);
+  }, [surahId, currentLanguage]);
 
   // Start the first-run Bengali offline download after the initial chapter fetch has settled.
   // It runs quietly in the background, skips verified IndexedDB chapters, and resumes missing chapters.
@@ -132,21 +166,40 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
       if (loading || autoDownloadAttemptedRef.current) return;
       if (typeof navigator !== 'undefined' && !navigator.onLine) return;
 
+      if (autoDownloadRetryRef.current !== null) {
+        window.clearTimeout(autoDownloadRetryRef.current);
+        autoDownloadRetryRef.current = null;
+      }
       autoDownloadAttemptedRef.current = true;
       void ensureDefaultOfflineQuranDownloaded()
         .then(() => {
+          autoDownloadRetryCountRef.current = 0;
           window.dispatchEvent(new Event('offline-quran-updated'));
         })
         .catch((error) => {
           autoDownloadAttemptedRef.current = false;
           window.dispatchEvent(new Event('offline-quran-updated'));
-          console.warn('Background Quran download paused and will resume when online or on next launch:', error);
+          console.warn('Background Quran download paused and will retry quietly:', error);
+
+          // Recover from short API/network errors without requiring an app restart.
+          const delay = Math.min(30_000 * (2 ** Math.min(autoDownloadRetryCountRef.current, 4)), 5 * 60_000);
+          autoDownloadRetryCountRef.current += 1;
+          autoDownloadRetryRef.current = window.setTimeout(() => {
+            autoDownloadRetryRef.current = null;
+            startBackgroundDownload();
+          }, delay);
         });
     };
 
     startBackgroundDownload();
     window.addEventListener('online', startBackgroundDownload);
-    return () => window.removeEventListener('online', startBackgroundDownload);
+    return () => {
+      window.removeEventListener('online', startBackgroundDownload);
+      if (autoDownloadRetryRef.current !== null) {
+        window.clearTimeout(autoDownloadRetryRef.current);
+        autoDownloadRetryRef.current = null;
+      }
+    };
   }, [loading, ayahs.length]);
 
   // Handle play/pause of full Ayah audio
@@ -161,10 +214,13 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
     setCurrentRepeat(1);
 
     if (audioRef.current) {
-      audioRef.current.src = ayah.audioUrl;
+      audioRef.current.src = getAyahAudioUrl(surahId, ayah.verseNumber, selectedReciterId);
       audioRef.current.playbackRate = 1;
-      audioRef.current.play().catch((e) => console.warn('Audio play error:', e));
-      setIsPlaying(true);
+      audioRef.current.play().catch((error) => {
+        console.warn('Audio play error:', error);
+        setIsPlaying(false);
+        setPlayingAyahKey(null);
+      });
     }
   };
 
@@ -196,7 +252,10 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
       wordAudioRef.current = new Audio();
     }
     wordAudioRef.current.src = word.audioUrl;
-    wordAudioRef.current.play().catch((err) => console.warn('Word audio error:', err));
+    wordAudioRef.current.play().catch((error) => {
+      console.warn('Word audio error:', error);
+      setActiveWordId(null);
+    });
     wordAudioRef.current.onended = () => {
       setActiveWordId(null);
     };

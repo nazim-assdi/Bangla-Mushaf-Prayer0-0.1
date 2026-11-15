@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Navbar, ActiveTab, ThemeMode } from './components/Navbar';
 import { MushafReader } from './components/MushafReader';
 import { SurahDrawer } from './components/SurahDrawer';
@@ -39,9 +39,44 @@ interface BookmarkItem {
   addedAt: string;
 }
 
+interface LastReadPosition {
+  surahId: number;
+  ayahNumber: number;
+  surahNameBn: string;
+}
+
+function getInitialLastRead(): LastReadPosition {
+  try {
+    const raw = localStorage.getItem('bangla_mushaf_last_read');
+    if (raw) {
+      const value = JSON.parse(raw) as Partial<LastReadPosition>;
+      const surahId = Number(value.surahId);
+      const ayahNumber = Number(value.ayahNumber);
+      const surah = SURAH_LIST.find((item) => item.id === surahId);
+      if (
+        surah &&
+        Number.isInteger(ayahNumber) &&
+        ayahNumber >= 1 &&
+        ayahNumber <= surah.versesCount
+      ) {
+        return {
+          surahId,
+          ayahNumber,
+          surahNameBn: typeof value.surahNameBn === 'string' ? value.surahNameBn : surah.nameBengali,
+        };
+      }
+    }
+  } catch (error) {
+    console.warn('Could not restore last reading position:', error);
+  }
+  return { surahId: 1, ayahNumber: 1, surahNameBn: 'আল-ফাতিহা' };
+}
+
 function AppContent() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('mushaf');
-  const [currentSurahId, setCurrentSurahId] = useState<number>(1);
+  const [currentSurahId, setCurrentSurahId] = useState<number>(() => getInitialLastRead().surahId);
+  const [navigationRequestId, setNavigationRequestId] = useState(0);
+  const navigationTimeoutRef = useRef<number | null>(null);
   const [isSurahDrawerOpen, setIsSurahDrawerOpen] = useState<boolean>(false);
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState<boolean>(false);
 
@@ -70,17 +105,7 @@ function AppContent() {
     return [];
   });
 
-  const [lastRead, setLastRead] = useState<{
-    surahId: number;
-    ayahNumber: number;
-    surahNameBn: string;
-  } | null>(() => {
-    try {
-      const saved = localStorage.getItem('bangla_mushaf_last_read');
-      if (saved) return JSON.parse(saved);
-    } catch (e) {}
-    return { surahId: 1, ayahNumber: 1, surahNameBn: 'আল-ফাতিহা' };
-  });
+  const [lastRead, setLastRead] = useState<LastReadPosition>(() => getInitialLastRead());
 
   // Firestore is the source of truth for a signed-in account.
   // Always apply snapshots, including empty ones, so another account's local data
@@ -105,16 +130,33 @@ function AppContent() {
         if (profile.banglaFontSize) setBanglaFontSize(profile.banglaFontSize);
         if (profile.selectedReciterId) setSelectedReciterId(profile.selectedReciterId);
         if (profile.currentLanguage) setCurrentLanguage(profile.currentLanguage as QuranLanguage);
-        if (profile.lastRead) setLastRead(profile.lastRead);
+        if (profile.lastRead) {
+          const surah = SURAH_LIST.find((item) => item.id === Number(profile.lastRead?.surahId));
+          const ayahNumber = Number(profile.lastRead.ayahNumber);
+          if (surah && Number.isInteger(ayahNumber) && ayahNumber >= 1 && ayahNumber <= surah.versesCount) {
+            const position: LastReadPosition = {
+              surahId: surah.id,
+              ayahNumber,
+              surahNameBn: typeof profile.lastRead.surahNameBn === 'string'
+                ? profile.lastRead.surahNameBn
+                : surah.nameBengali,
+            };
+            setLastRead(position);
+            setCurrentSurahId(position.surahId);
+          }
+        }
       }
     });
     return () => unsubscribe();
   }, [user]);
 
-  // Sync to Firestore and Cloud SQL on user settings and last read changes
+  // Debounce cloud writes: quick navigation and repeated setting changes should
+  // not send a Firestore + API request for every intermediate state.
   useEffect(() => {
-    if (user && lastRead) {
-      saveUserProfile(user.uid, {
+    if (!user || !lastRead) return;
+
+    const timer = window.setTimeout(() => {
+      void saveUserProfile(user.uid, {
         lastRead,
         theme,
         arabicFontSize,
@@ -122,7 +164,7 @@ function AppContent() {
         selectedReciterId,
         currentLanguage,
       });
-      syncSettingsToCloudSQL(user, {
+      void syncSettingsToCloudSQL(user, {
         theme,
         arabicFontSize,
         banglaFontSize,
@@ -132,7 +174,9 @@ function AppContent() {
         lastReadAyahNumber: lastRead.ayahNumber,
         lastReadSurahNameBn: lastRead.surahNameBn,
       });
-    }
+    }, 650);
+
+    return () => window.clearTimeout(timer);
   }, [lastRead, theme, arabicFontSize, banglaFontSize, selectedReciterId, currentLanguage, user]);
 
   useEffect(() => {
@@ -216,25 +260,62 @@ function AppContent() {
     setActiveTab('mushaf');
 
     const s = SURAH_LIST.find((item) => item.id === surahId);
-    if (s) {
-      setLastRead({
-        surahId,
-        ayahNumber: targetAyah || 1,
-        surahNameBn: s.nameBengali,
-      });
-    }
+    if (!s) return;
 
-    if (targetAyah) {
-      setTimeout(() => {
-        const el = document.getElementById(`ayah-${targetAyah}`);
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 500);
-    } else {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    const validAyah = Number.isInteger(targetAyah) && (targetAyah as number) >= 1 && (targetAyah as number) <= s.versesCount
+      ? targetAyah as number
+      : 1;
+
+    setLastRead({
+      surahId,
+      ayahNumber: validAyah,
+      surahNameBn: s.nameBengali,
+    });
+    // A request counter retriggers scrolling even when the same verse is selected twice.
+    setNavigationRequestId((current) => current + 1);
   };
+
+  useEffect(() => {
+    if (activeTab !== 'mushaf' || currentSurahId !== lastRead.surahId) return;
+
+    let attempts = 0;
+    const scrollToLastRead = () => {
+      if (lastRead.ayahNumber <= 1) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+
+      const element = document.getElementById(`ayah-${lastRead.ayahNumber}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+
+      // Wait for the selected chapter to render before giving up.
+      if (attempts < 32) {
+        attempts += 1;
+        navigationTimeoutRef.current = window.setTimeout(scrollToLastRead, 250);
+      } else {
+        navigationTimeoutRef.current = null;
+      }
+    };
+
+    navigationTimeoutRef.current = window.setTimeout(scrollToLastRead, 100);
+    return () => {
+      if (navigationTimeoutRef.current !== null) {
+        window.clearTimeout(navigationTimeoutRef.current);
+        navigationTimeoutRef.current = null;
+      }
+    };
+  }, [activeTab, currentSurahId, lastRead.surahId, lastRead.ayahNumber, navigationRequestId]);
+
+  useEffect(() => {
+    return () => {
+      if (navigationTimeoutRef.current !== null) {
+        window.clearTimeout(navigationTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div
