@@ -67,11 +67,11 @@ export const QiblaCompassView: React.FC = () => {
   const enableCompass = async () => {
     setSensorError('');
     try {
-      if (typeof window.DeviceOrientationEvent === 'undefined') {
+      if (typeof DeviceOrientationEvent === 'undefined') {
         setSensorError('এই ডিভাইসে ব্রাউজার কম্পাস সেন্সর পাওয়া যায়নি।');
         return;
       }
-      const orientationApi = window.DeviceOrientationEvent as typeof DeviceOrientationEvent & {
+      const orientationApi = DeviceOrientationEvent as typeof DeviceOrientationEvent & {
         requestPermission?: () => Promise<'granted' | 'denied'>;
       };
       if (typeof orientationApi.requestPermission === 'function') {
