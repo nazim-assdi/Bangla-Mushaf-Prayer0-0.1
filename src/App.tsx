@@ -129,7 +129,21 @@ function AppContent() {
         if (profile.banglaFontSize) setBanglaFontSize(profile.banglaFontSize);
         if (profile.selectedReciterId) setSelectedReciterId(profile.selectedReciterId);
         if (profile.currentLanguage) setCurrentLanguage(profile.currentLanguage as QuranLanguage);
-        if (profile.lastRead) setLastRead(profile.lastRead);
+        if (profile.lastRead) {
+          const surah = SURAH_LIST.find((item) => item.id === Number(profile.lastRead?.surahId));
+          const ayahNumber = Number(profile.lastRead.ayahNumber);
+          if (surah && Number.isInteger(ayahNumber) && ayahNumber >= 1 && ayahNumber <= surah.versesCount) {
+            const position: LastReadPosition = {
+              surahId: surah.id,
+              ayahNumber,
+              surahNameBn: typeof profile.lastRead.surahNameBn === 'string'
+                ? profile.lastRead.surahNameBn
+                : surah.nameBengali,
+            };
+            setLastRead(position);
+            setCurrentSurahId(position.surahId);
+          }
+        }
       }
     });
     return () => unsubscribe();
@@ -253,34 +267,43 @@ function AppContent() {
       surahNameBn: s.nameBengali,
     });
 
-    if (navigationTimeoutRef.current !== null) {
-      window.clearTimeout(navigationTimeoutRef.current);
-      navigationTimeoutRef.current = null;
-    }
-
-    if (targetAyah) {
-      let attempts = 0;
-      const scrollWhenReady = () => {
-        const element = document.getElementById(`ayah-${targetAyah}`);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          navigationTimeoutRef.current = null;
-          return;
-        }
-
-        // Quran data may take longer than a fixed 500 ms to arrive on a slow connection.
-        if (attempts < 24) {
-          attempts += 1;
-          navigationTimeoutRef.current = window.setTimeout(scrollWhenReady, 250);
-        } else {
-          navigationTimeoutRef.current = null;
-        }
-      };
-      navigationTimeoutRef.current = window.setTimeout(scrollWhenReady, 100);
-    } else {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    // The last-read effect below handles both immediate navigation and
+    // asynchronous chapter loading, including the initial restored position.
   };
+
+  useEffect(() => {
+    if (activeTab !== 'mushaf' || currentSurahId !== lastRead.surahId) return;
+
+    let attempts = 0;
+    const scrollToLastRead = () => {
+      if (lastRead.ayahNumber <= 1) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+
+      const element = document.getElementById(`ayah-${lastRead.ayahNumber}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+
+      // Wait for the selected chapter to render before giving up.
+      if (attempts < 32) {
+        attempts += 1;
+        navigationTimeoutRef.current = window.setTimeout(scrollToLastRead, 250);
+      } else {
+        navigationTimeoutRef.current = null;
+      }
+    };
+
+    navigationTimeoutRef.current = window.setTimeout(scrollToLastRead, 100);
+    return () => {
+      if (navigationTimeoutRef.current !== null) {
+        window.clearTimeout(navigationTimeoutRef.current);
+        navigationTimeoutRef.current = null;
+      }
+    };
+  }, [activeTab, currentSurahId, lastRead.surahId, lastRead.ayahNumber]);
 
   useEffect(() => {
     return () => {
