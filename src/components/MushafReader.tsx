@@ -123,6 +123,8 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const wordAudioRef = useRef<HTMLAudioElement | null>(null);
   const autoDownloadAttemptedRef = useRef(false);
+  const autoDownloadRetryRef = useRef<number | null>(null);
+  const autoDownloadRetryCountRef = useRef(0);
 
   const currentSurah = SURAH_LIST.find((s) => s.id === surahId) || SURAH_LIST[0];
 
@@ -161,21 +163,40 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
       if (loading || autoDownloadAttemptedRef.current) return;
       if (typeof navigator !== 'undefined' && !navigator.onLine) return;
 
+      if (autoDownloadRetryRef.current !== null) {
+        window.clearTimeout(autoDownloadRetryRef.current);
+        autoDownloadRetryRef.current = null;
+      }
       autoDownloadAttemptedRef.current = true;
       void ensureDefaultOfflineQuranDownloaded()
         .then(() => {
+          autoDownloadRetryCountRef.current = 0;
           window.dispatchEvent(new Event('offline-quran-updated'));
         })
         .catch((error) => {
           autoDownloadAttemptedRef.current = false;
           window.dispatchEvent(new Event('offline-quran-updated'));
-          console.warn('Background Quran download paused and will resume when online or on next launch:', error);
+          console.warn('Background Quran download paused and will retry quietly:', error);
+
+          // Recover from short API/network errors without requiring an app restart.
+          const delay = Math.min(30_000 * (2 ** Math.min(autoDownloadRetryCountRef.current, 4)), 5 * 60_000);
+          autoDownloadRetryCountRef.current += 1;
+          autoDownloadRetryRef.current = window.setTimeout(() => {
+            autoDownloadRetryRef.current = null;
+            startBackgroundDownload();
+          }, delay);
         });
     };
 
     startBackgroundDownload();
     window.addEventListener('online', startBackgroundDownload);
-    return () => window.removeEventListener('online', startBackgroundDownload);
+    return () => {
+      window.removeEventListener('online', startBackgroundDownload);
+      if (autoDownloadRetryRef.current !== null) {
+        window.clearTimeout(autoDownloadRetryRef.current);
+        autoDownloadRetryRef.current = null;
+      }
+    };
   }, [loading, ayahs.length]);
 
   // Handle play/pause of full Ayah audio
