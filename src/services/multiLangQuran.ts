@@ -53,6 +53,29 @@ export async function downloadFullQuranOffline(
   }
 }
 
+
+let bengaliAutoDownloadPromise: Promise<void> | null = null;
+let bengaliAutoDownloadComplete = false;
+
+/**
+ * Quietly ensure the default Bengali Quran is available offline.
+ * IndexedDB is checked chapter-by-chapter, so completed chapters are never fetched again.
+ */
+export function ensureDefaultOfflineQuranDownloaded(): Promise<void> {
+  if (bengaliAutoDownloadComplete) return Promise.resolve();
+  if (bengaliAutoDownloadPromise) return bengaliAutoDownloadPromise;
+
+  bengaliAutoDownloadPromise = downloadFullQuranOffline('bn')
+    .then(() => {
+      bengaliAutoDownloadComplete = true;
+    })
+    .finally(() => {
+      bengaliAutoDownloadPromise = null;
+    });
+
+  return bengaliAutoDownloadPromise;
+}
+
 /**
  * Fetch verses with translation in the specified language
  */
