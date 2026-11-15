@@ -60,26 +60,28 @@ export async function downloadFullQuranOffline(
   onProgress?: (completed: number, total: number) => void
 ): Promise<void> {
   const total = SURAH_LIST.length;
+  const batchSize = 3;
   let completed = 0;
   onProgress?.(completed, total);
 
-  for (const surah of SURAH_LIST) {
-    const cached = await getOfflineSurah(surah.id, lang).catch(() => null);
-    if (cached && cached.length === surah.versesCount) {
-      completed += 1;
-      onProgress?.(completed, total);
-      continue;
-    }
+  // A small bounded batch is faster than 114 serial requests without flooding
+  // the Quran API or creating too many simultaneous IndexedDB writes.
+  for (let start = 0; start < total; start += batchSize) {
+    const batch = SURAH_LIST.slice(start, start + batchSize);
+    await Promise.all(batch.map(async (surah) => {
+      const cached = await getOfflineSurah(surah.id, lang).catch(() => null);
+      if (cached && cached.length === surah.versesCount) return;
 
-    await fetchVersesByLanguage(surah.id, lang);
+      await fetchVersesByLanguage(surah.id, lang);
 
-    // A chapter is counted as downloaded only after IndexedDB confirms persistence.
-    const saved = await getOfflineSurah(surah.id, lang).catch(() => null);
-    if (!saved || saved.length !== surah.versesCount) {
-      throw new Error(`সূরা ${surah.id} ডিভাইসে সংরক্ষণ করা যায়নি। স্টোরেজ খালি করে আবার চেষ্টা করুন।`);
-    }
+      // A chapter is counted as downloaded only after IndexedDB confirms persistence.
+      const saved = await getOfflineSurah(surah.id, lang).catch(() => null);
+      if (!saved || saved.length !== surah.versesCount) {
+        throw new Error(`সূরা ${surah.id} ডিভাইসে সংরক্ষণ করা যায়নি। স্টোরেজ খালি করে আবার চেষ্টা করুন।`);
+      }
+    }));
 
-    completed += 1;
+    completed += batch.length;
     onProgress?.(completed, total);
   }
 }
