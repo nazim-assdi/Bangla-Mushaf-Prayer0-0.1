@@ -75,6 +75,7 @@ function getInitialLastRead(): LastReadPosition {
 function AppContent() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('mushaf');
   const [currentSurahId, setCurrentSurahId] = useState<number>(() => getInitialLastRead().surahId);
+  const [navigationRequestId, setNavigationRequestId] = useState(0);
   const navigationTimeoutRef = useRef<number | null>(null);
   const [isSurahDrawerOpen, setIsSurahDrawerOpen] = useState<boolean>(false);
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState<boolean>(false);
@@ -261,14 +262,17 @@ function AppContent() {
     const s = SURAH_LIST.find((item) => item.id === surahId);
     if (!s) return;
 
+    const validAyah = Number.isInteger(targetAyah) && (targetAyah as number) >= 1 && (targetAyah as number) <= s.versesCount
+      ? targetAyah as number
+      : 1;
+
     setLastRead({
       surahId,
-      ayahNumber: targetAyah || 1,
+      ayahNumber: validAyah,
       surahNameBn: s.nameBengali,
     });
-
-    // The last-read effect below handles both immediate navigation and
-    // asynchronous chapter loading, including the initial restored position.
+    // A request counter retriggers scrolling even when the same verse is selected twice.
+    setNavigationRequestId((current) => current + 1);
   };
 
   useEffect(() => {
@@ -303,7 +307,7 @@ function AppContent() {
         navigationTimeoutRef.current = null;
       }
     };
-  }, [activeTab, currentSurahId, lastRead.surahId, lastRead.ayahNumber]);
+  }, [activeTab, currentSurahId, lastRead.surahId, lastRead.ayahNumber, navigationRequestId]);
 
   useEffect(() => {
     return () => {
