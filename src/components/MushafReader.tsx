@@ -16,7 +16,7 @@ import {
 import { QuranAyah, QuranWord } from '../data/quranSampleData';
 import { SURAH_LIST } from '../data/quranMetadata';
 import { RECITERS } from '../services/quranApi';
-import { QURAN_LANGUAGES, QuranLanguage, fetchVersesByLanguage } from '../services/multiLangQuran';
+import { QURAN_LANGUAGES, QuranLanguage, fetchVersesByLanguage, ensureDefaultOfflineQuranDownloaded } from '../services/multiLangQuran';
 import { toBanglaNumber, toArabicNumber } from '../utils/banglaNumbers';
 import { TafsirModal } from './TafsirModal';
 import { OfflineQuranDownload } from './OfflineQuranDownload';
@@ -93,6 +93,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const wordAudioRef = useRef<HTMLAudioElement | null>(null);
+  const autoDownloadAttemptedRef = useRef(false);
 
   const currentSurah = SURAH_LIST.find((s) => s.id === surahId) || SURAH_LIST[0];
 
@@ -100,6 +101,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
+    setAyahs([]);
     if (audioRef.current) {
       audioRef.current.pause();
       setIsPlaying(false);
@@ -122,6 +124,30 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
       isMounted = false;
     };
   }, [surahId, currentLanguage, selectedReciterId]);
+
+  // Start the first-run Bengali offline download after the initial chapter fetch has settled.
+  // It runs quietly in the background, skips verified IndexedDB chapters, and resumes missing chapters.
+  useEffect(() => {
+    const startBackgroundDownload = () => {
+      if (loading || autoDownloadAttemptedRef.current) return;
+      if (typeof navigator !== 'undefined' && !navigator.onLine) return;
+
+      autoDownloadAttemptedRef.current = true;
+      void ensureDefaultOfflineQuranDownloaded()
+        .then(() => {
+          window.dispatchEvent(new Event('offline-quran-updated'));
+        })
+        .catch((error) => {
+          autoDownloadAttemptedRef.current = false;
+          window.dispatchEvent(new Event('offline-quran-updated'));
+          console.warn('Background Quran download paused and will resume when online or on next launch:', error);
+        });
+    };
+
+    startBackgroundDownload();
+    window.addEventListener('online', startBackgroundDownload);
+    return () => window.removeEventListener('online', startBackgroundDownload);
+  }, [loading, ayahs.length]);
 
   // Handle play/pause of full Ayah audio
   const handlePlayAyah = (ayah: QuranAyah) => {
@@ -395,16 +421,13 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
         </div>
       )}
 
-      {/* Loading State */}
-      {loading ? (
-        <div className="py-20 flex flex-col items-center justify-center gap-3 text-stone-500">
-          <div className="w-10 h-10 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-base font-semibold">কুরআনের আয়াত ও শব্দার্থ লোড হচ্ছে ({langMeta.nativeName})...</p>
-        </div>
-      ) : ayahs.length === 0 ? (
-        <div className="p-8 text-center bg-white dark:bg-stone-900 rounded-xl border border-stone-200">
-          <p>আয়াত লোড করা সম্ভব হয়নি।</p>
-        </div>
+      {/* Keep the app usable while local/API content is prepared; never block the screen with a spinner. */}
+      {ayahs.length === 0 ? (
+        loading ? null : (
+          <div className="p-8 text-center bg-white dark:bg-stone-900 rounded-xl border border-stone-200">
+            <p>আয়াত লোড করা সম্ভব হয়নি। ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।</p>
+          </div>
+        )
       ) : viewMode === 'mushaf' ? (
         <div className="bg-[#faf7ee] dark:bg-stone-900/90 text-stone-900 dark:text-stone-100 rounded-2xl p-6 sm:p-10 shadow-md border-2 border-amber-300/60 dark:border-stone-800 leading-[3.2rem]">
           <div className="text-justify font-arabic" style={{ fontSize: `${arabicFontSize + 6}px` }} dir="rtl">

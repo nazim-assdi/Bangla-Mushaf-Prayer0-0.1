@@ -5,7 +5,7 @@ import { QuranAyah, QuranWord, TafsirContent } from '../data/quranSampleData';
 import { SURAH_LIST } from '../data/quranMetadata';
 import { padNumber, getAyahAudioUrl } from './quranApi';
 import { toArabicNumber } from '../utils/banglaNumbers';
-import { getOfflineSurah, saveOfflineSurah } from './offlineQuranStore';
+import { getOfflineSurah, getOfflineSurahCount, saveOfflineSurah } from './offlineQuranStore';
 
 export type QuranLanguage = 'bn' | 'en' | 'ar' | 'hi' | 'ur' | 'tr';
 
@@ -51,6 +51,31 @@ export async function downloadFullQuranOffline(
     }
     onProgress?.(completed, total);
   }
+}
+
+
+let bengaliAutoDownloadPromise: Promise<void> | null = null;
+let bengaliAutoDownloadComplete = false;
+
+/**
+ * Quietly ensure the default Bengali Quran is available offline.
+ * IndexedDB is checked chapter-by-chapter, so completed chapters are never fetched again.
+ */
+export function ensureDefaultOfflineQuranDownloaded(): Promise<void> {
+  if (bengaliAutoDownloadComplete) return Promise.resolve();
+  if (bengaliAutoDownloadPromise) return bengaliAutoDownloadPromise;
+
+  bengaliAutoDownloadPromise = getOfflineSurahCount('bn')
+    .then(async (savedCount) => {
+      // A complete library needs only one small IndexedDB count check on later app launches.
+      if (savedCount < 114) await downloadFullQuranOffline('bn');
+      bengaliAutoDownloadComplete = true;
+    })
+    .finally(() => {
+      bengaliAutoDownloadPromise = null;
+    });
+
+  return bengaliAutoDownloadPromise;
 }
 
 /**

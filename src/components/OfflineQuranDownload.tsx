@@ -27,7 +27,12 @@ export const OfflineQuranDownload: React.FC = () => {
     setSaved(counts);
   };
 
-  useEffect(() => { void refreshCounts(); }, []);
+  useEffect(() => {
+    void refreshCounts();
+    const handleOfflineUpdate = () => { void refreshCounts(); };
+    window.addEventListener('offline-quran-updated', handleOfflineUpdate);
+    return () => window.removeEventListener('offline-quran-updated', handleOfflineUpdate);
+  }, []);
 
   const handleDownload = async (lang: QuranLanguage) => {
     if (downloading) return;
@@ -71,7 +76,7 @@ export const OfflineQuranDownload: React.FC = () => {
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"><HardDrive className="h-6 w-6" /></div>
             <div className="min-w-0 flex-1">
               <h3 className="text-lg font-extrabold text-stone-900 dark:text-white">🌸 Offline Quran Library</h3>
-              <p className="text-xs text-stone-600 dark:text-stone-400">প্রতিটি ভাষার ১১৪টি সূরা আলাদাভাবে ডাউনলোড ও মুছে ফেলুন</p>
+              <p className="text-xs text-stone-600 dark:text-stone-400">বাংলা কুরআন প্রথম অনলাইন চালুতে নীরবে সংরক্ষিত হয়; অন্য ভাষা এখান থেকে ডাউনলোড করুন</p>
             </div>
             <span className="hidden rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 sm:inline-flex"><Flower2 className="mr-1 h-3.5 w-3.5" />{totalSaved} সূরা-ভাষা সংরক্ষিত</span>
           </div>
