@@ -133,6 +133,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
     let isMounted = true;
     setLoading(true);
     setAyahs([]);
+    setActiveWordId(null);
     if (audioRef.current) {
       audioRef.current.pause();
       setIsPlaying(false);
