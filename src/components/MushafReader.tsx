@@ -125,11 +125,11 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
     };
   }, [surahId, currentLanguage, selectedReciterId]);
 
-  // Start the first-run Bengali offline download only after the current chapter is readable.
+  // Start the first-run Bengali offline download after the initial chapter fetch has settled.
   // It runs quietly in the background, skips verified IndexedDB chapters, and resumes missing chapters.
   useEffect(() => {
     const startBackgroundDownload = () => {
-      if (loading || ayahs.length === 0 || autoDownloadAttemptedRef.current) return;
+      if (loading || autoDownloadAttemptedRef.current) return;
       if (typeof navigator !== 'undefined' && !navigator.onLine) return;
 
       autoDownloadAttemptedRef.current = true;
