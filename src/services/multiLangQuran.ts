@@ -62,11 +62,11 @@ function expectedAyahCount(surahId: number): number | undefined {
 }
 
 function withReciterAudio(ayahs: QuranAyah[], surahId: number, reciterId: string): QuranAyah[] {
-  if (reciterId === 'alafasy') return ayahs;
-  return ayahs.map((ayah) => ({
-    ...ayah,
-    audioUrl: getAyahAudioUrl(surahId, ayah.verseNumber, reciterId),
-  }));
+  return ayahs.map((ayah) => {
+    const audioUrl = getAyahAudioUrl(surahId, ayah.verseNumber, reciterId);
+    // Older offline records may contain URLs for a previously selected reciter.
+    return ayah.audioUrl === audioUrl ? ayah : { ...ayah, audioUrl };
+  });
 }
 
 export async function downloadFullQuranOffline(
