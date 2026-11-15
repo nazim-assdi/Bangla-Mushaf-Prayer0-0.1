@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Play,
   Pause,
@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { QuranAyah, QuranWord } from '../data/quranSampleData';
 import { SURAH_LIST } from '../data/quranMetadata';
-import { RECITERS } from '../services/quranApi';
+import { RECITERS, getAyahAudioUrl } from '../services/quranApi';
 import { QURAN_LANGUAGES, QuranLanguage, fetchVersesByLanguage, ensureDefaultOfflineQuranDownloaded } from '../services/multiLangQuran';
 import { toBanglaNumber, toArabicNumber } from '../utils/banglaNumbers';
 import { TafsirModal } from './TafsirModal';
@@ -75,21 +75,50 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
   useEffect(() => {
     try {
       const stored = localStorage.getItem('mushaf_ayah_study_v1');
-      if (stored) setStudyRecords(JSON.parse(stored));
+      if (stored) {
+        const parsed: unknown = JSON.parse(stored);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          setStudyRecords(parsed as Record<string, { read: boolean; note: string }>);
+        }
+      }
     } catch (error) {
       console.warn('Could not restore reading notes:', error);
     }
   }, []);
 
+  // Debounce local persistence so typing a note does not synchronously serialize
+  // the complete notes object on every keystroke.
+  useEffect(() => {
+    const persist = () => {
+      try {
+        localStorage.setItem('mushaf_ayah_study_v1', JSON.stringify(studyRecords));
+      } catch (error) {
+        console.warn('Could not save reading notes:', error);
+      }
+    };
+    const timer = window.setTimeout(persist, 300);
+    window.addEventListener('pagehide', persist);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener('pagehide', persist);
+    };
+  }, [studyRecords]);
+
   const updateStudyRecord = (verseKey: string, patch: Partial<{ read: boolean; note: string }>) => {
-    setStudyRecords((previous) => {
-      const next = { ...previous, [verseKey]: { read: previous[verseKey]?.read ?? false, note: previous[verseKey]?.note ?? '', ...patch } };
-      try { localStorage.setItem('mushaf_ayah_study_v1', JSON.stringify(next)); } catch (error) { console.warn('Could not save reading notes:', error); }
-      return next;
-    });
+    setStudyRecords((previous) => ({
+      ...previous,
+      [verseKey]: {
+        read: previous[verseKey]?.read ?? false,
+        note: previous[verseKey]?.note ?? '',
+        ...patch,
+      },
+    }));
   };
 
-  const readCount = ayahs.filter((ayah) => studyRecords[ayah.verseKey]?.read).length;
+  const readCount = useMemo(
+    () => ayahs.reduce((count, ayah) => count + (studyRecords[ayah.verseKey]?.read ? 1 : 0), 0),
+    [ayahs, studyRecords]
+  );
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const wordAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -108,7 +137,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
       setPlayingAyahKey(null);
     }
 
-    fetchVersesByLanguage(surahId, currentLanguage, selectedReciterId)
+    fetchVersesByLanguage(surahId, currentLanguage)
       .then((data) => {
         if (isMounted) {
           setAyahs(data);
@@ -123,7 +152,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [surahId, currentLanguage, selectedReciterId]);
+  }, [surahId, currentLanguage]);
 
   // Start the first-run Bengali offline download after the initial chapter fetch has settled.
   // It runs quietly in the background, skips verified IndexedDB chapters, and resumes missing chapters.
@@ -161,10 +190,13 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
     setCurrentRepeat(1);
 
     if (audioRef.current) {
-      audioRef.current.src = ayah.audioUrl;
+      audioRef.current.src = getAyahAudioUrl(surahId, ayah.verseNumber, selectedReciterId);
       audioRef.current.playbackRate = 1;
-      audioRef.current.play().catch((e) => console.warn('Audio play error:', e));
-      setIsPlaying(true);
+      audioRef.current.play().catch((error) => {
+        console.warn('Audio play error:', error);
+        setIsPlaying(false);
+        setPlayingAyahKey(null);
+      });
     }
   };
 
