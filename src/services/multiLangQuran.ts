@@ -30,6 +30,19 @@ export const QURAN_LANGUAGES: LanguageMeta[] = [
 const multiLangCache: Record<string, QuranAyah[]> = {};
 const persistedCacheKeys = new Set<string>();
 const inFlightLoads = new Map<string, Promise<QuranAyah[]>>();
+const MAX_IN_MEMORY_CHAPTERS = 6;
+
+function rememberSurah(cacheKey: string, ayahs: QuranAyah[]): void {
+  // Keep memory bounded on low-RAM phones even after all 114 chapters download.
+  delete multiLangCache[cacheKey];
+  multiLangCache[cacheKey] = ayahs;
+
+  while (Object.keys(multiLangCache).length > MAX_IN_MEMORY_CHAPTERS) {
+    const oldestKey = Object.keys(multiLangCache)[0];
+    delete multiLangCache[oldestKey];
+    persistedCacheKeys.delete(oldestKey);
+  }
+}
 
 let bengaliAutoDownloadPromise: Promise<void> | null = null;
 let bengaliAutoDownloadComplete = false;
@@ -49,6 +62,7 @@ function expectedAyahCount(surahId: number): number | undefined {
 }
 
 function withReciterAudio(ayahs: QuranAyah[], surahId: number, reciterId: string): QuranAyah[] {
+  if (reciterId === 'alafasy') return ayahs;
   return ayahs.map((ayah) => ({
     ...ayah,
     audioUrl: getAyahAudioUrl(surahId, ayah.verseNumber, reciterId),
@@ -113,7 +127,7 @@ async function loadSurahData(surahId: number, lang: QuranLanguage): Promise<Qura
 
   const offlineItem = await getOfflineSurah(surahId, lang).catch(() => null);
   if (offlineItem && offlineItem.length === expectedCount) {
-    multiLangCache[cacheKey] = offlineItem;
+    rememberSurah(cacheKey, offlineItem);
     persistedCacheKeys.add(cacheKey);
     return offlineItem;
   }
@@ -184,7 +198,7 @@ async function loadSurahData(surahId: number, lang: QuranLanguage): Promise<Qura
   }
 
   // Keep the online reader usable even when browser storage is full or unavailable.
-  multiLangCache[cacheKey] = parsedAyahs;
+  rememberSurah(cacheKey, parsedAyahs);
   try {
     await saveOfflineSurah(surahId, lang, parsedAyahs);
     persistedCacheKeys.add(cacheKey);
