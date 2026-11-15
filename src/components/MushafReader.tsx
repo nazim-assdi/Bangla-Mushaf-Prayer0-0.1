@@ -153,6 +153,8 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
 
     return () => {
       isMounted = false;
+      audioRef.current?.pause();
+      wordAudioRef.current?.pause();
     };
   }, [surahId, currentLanguage]);
 
@@ -249,7 +251,10 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
       wordAudioRef.current = new Audio();
     }
     wordAudioRef.current.src = word.audioUrl;
-    wordAudioRef.current.play().catch((err) => console.warn('Word audio error:', err));
+    wordAudioRef.current.play().catch((error) => {
+      console.warn('Word audio error:', error);
+      setActiveWordId(null);
+    });
     wordAudioRef.current.onended = () => {
       setActiveWordId(null);
     };
