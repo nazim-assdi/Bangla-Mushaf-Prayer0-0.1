@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Navbar, ActiveTab, ThemeMode } from './components/Navbar';
 import { MushafReader } from './components/MushafReader';
 import { SurahDrawer } from './components/SurahDrawer';
@@ -39,9 +39,43 @@ interface BookmarkItem {
   addedAt: string;
 }
 
+interface LastReadPosition {
+  surahId: number;
+  ayahNumber: number;
+  surahNameBn: string;
+}
+
+function getInitialLastRead(): LastReadPosition {
+  try {
+    const raw = localStorage.getItem('bangla_mushaf_last_read');
+    if (raw) {
+      const value = JSON.parse(raw) as Partial<LastReadPosition>;
+      const surahId = Number(value.surahId);
+      const ayahNumber = Number(value.ayahNumber);
+      const surah = SURAH_LIST.find((item) => item.id === surahId);
+      if (
+        surah &&
+        Number.isInteger(ayahNumber) &&
+        ayahNumber >= 1 &&
+        ayahNumber <= surah.versesCount
+      ) {
+        return {
+          surahId,
+          ayahNumber,
+          surahNameBn: typeof value.surahNameBn === 'string' ? value.surahNameBn : surah.nameBengali,
+        };
+      }
+    }
+  } catch (error) {
+    console.warn('Could not restore last reading position:', error);
+  }
+  return { surahId: 1, ayahNumber: 1, surahNameBn: 'আল-ফাতিহা' };
+}
+
 function AppContent() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('mushaf');
-  const [currentSurahId, setCurrentSurahId] = useState<number>(1);
+  const [currentSurahId, setCurrentSurahId] = useState<number>(() => getInitialLastRead().surahId);
+  const navigationTimeoutRef = useRef<number | null>(null);
   const [isSurahDrawerOpen, setIsSurahDrawerOpen] = useState<boolean>(false);
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState<boolean>(false);
 
@@ -70,17 +104,7 @@ function AppContent() {
     return [];
   });
 
-  const [lastRead, setLastRead] = useState<{
-    surahId: number;
-    ayahNumber: number;
-    surahNameBn: string;
-  } | null>(() => {
-    try {
-      const saved = localStorage.getItem('bangla_mushaf_last_read');
-      if (saved) return JSON.parse(saved);
-    } catch (e) {}
-    return { surahId: 1, ayahNumber: 1, surahNameBn: 'আল-ফাতিহা' };
-  });
+  const [lastRead, setLastRead] = useState<LastReadPosition>(() => getInitialLastRead());
 
   // Firestore is the source of truth for a signed-in account.
   // Always apply snapshots, including empty ones, so another account's local data
@@ -221,25 +245,50 @@ function AppContent() {
     setActiveTab('mushaf');
 
     const s = SURAH_LIST.find((item) => item.id === surahId);
-    if (s) {
-      setLastRead({
-        surahId,
-        ayahNumber: targetAyah || 1,
-        surahNameBn: s.nameBengali,
-      });
+    if (!s) return;
+
+    setLastRead({
+      surahId,
+      ayahNumber: targetAyah || 1,
+      surahNameBn: s.nameBengali,
+    });
+
+    if (navigationTimeoutRef.current !== null) {
+      window.clearTimeout(navigationTimeoutRef.current);
+      navigationTimeoutRef.current = null;
     }
 
     if (targetAyah) {
-      setTimeout(() => {
-        const el = document.getElementById(`ayah-${targetAyah}`);
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      let attempts = 0;
+      const scrollWhenReady = () => {
+        const element = document.getElementById(`ayah-${targetAyah}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          navigationTimeoutRef.current = null;
+          return;
         }
-      }, 500);
+
+        // Quran data may take longer than a fixed 500 ms to arrive on a slow connection.
+        if (attempts < 24) {
+          attempts += 1;
+          navigationTimeoutRef.current = window.setTimeout(scrollWhenReady, 250);
+        } else {
+          navigationTimeoutRef.current = null;
+        }
+      };
+      navigationTimeoutRef.current = window.setTimeout(scrollWhenReady, 100);
     } else {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (navigationTimeoutRef.current !== null) {
+        window.clearTimeout(navigationTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div
