@@ -89,7 +89,7 @@ export const QiblaCompassView: React.FC = () => {
         const listener: EventListener = (event) => handleOrientation(event as DeviceOrientationEvent);
         orientationListenerRef.current = listener;
         window.addEventListener('deviceorientation', listener, true);
-        window.addEventListener('deviceorientationabsolute' as keyof WindowEventMap, listener, true);
+        window.addEventListener('deviceorientationabsolute' as keyof WindowEventMap, listener as EventListener, true);
       }
       setSensorError('ফোনটি সমতল করে ধরে ধীরে ধীরে ৮ আকৃতিতে ঘুরিয়ে কম্পাস ক্যালিব্রেট করুন।');
     } catch {
@@ -104,7 +104,7 @@ export const QiblaCompassView: React.FC = () => {
       const listener = orientationListenerRef.current;
       if (listener) {
         window.removeEventListener('deviceorientation', listener, true);
-        window.removeEventListener('deviceorientationabsolute' as keyof WindowEventMap, listener, true);
+        window.removeEventListener('deviceorientationabsolute' as keyof WindowEventMap, listener as EventListener, true);
         orientationListenerRef.current = null;
       }
       if (animationFrameRef.current !== null) {
