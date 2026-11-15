@@ -1,9 +1,11 @@
 /**
- * Multi-language Quran Service supporting Bengali, English, Arabic, Hindi, Urdu, and Turkish translations and tafsirs
+ * Multi-language Quran service with memory + IndexedDB caching.
+ * Duplicate requests for the same chapter are shared, while reciter audio URLs
+ * are derived at playback time so changing reciters never reloads Quran text.
  */
-import { QuranAyah, QuranWord, TafsirContent } from '../data/quranSampleData';
+import { QuranAyah, QuranWord } from '../data/quranSampleData';
 import { SURAH_LIST } from '../data/quranMetadata';
-import { padNumber, getAyahAudioUrl } from './quranApi';
+import { getAyahAudioUrl } from './quranApi';
 import { toArabicNumber } from '../utils/banglaNumbers';
 import { getOfflineSurah, getOfflineSurahCount, saveOfflineSurah } from './offlineQuranStore';
 
@@ -13,53 +15,78 @@ export interface LanguageMeta {
   code: QuranLanguage;
   name: string;
   nativeName: string;
-  translationId: number; // Quran.com API translation resource ID
+  translationId: number;
 }
 
 export const QURAN_LANGUAGES: LanguageMeta[] = [
   { code: 'bn', name: 'Bengali', nativeName: 'বাংলা', translationId: 163 },
-  { code: 'en', name: 'English', nativeName: 'English', translationId: 131 }, // Sahih International
-  { code: 'ar', name: 'Arabic', nativeName: 'العربية (التفسير الميسر)', translationId: 16 }, // Tafsir Al-Muyassar
-  { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', translationId: 122 }, // Suhel Farooq Khan
-  { code: 'ur', name: 'Urdu', nativeName: 'اردو', translationId: 97 }, // Jalandhry
-  { code: 'tr', name: 'Turkish', nativeName: 'Türkçe', translationId: 77 }, // Diyanet İşleri
+  { code: 'en', name: 'English', nativeName: 'English', translationId: 131 },
+  { code: 'ar', name: 'Arabic', nativeName: 'العربية (التفسير الميسر)', translationId: 16 },
+  { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', translationId: 122 },
+  { code: 'ur', name: 'Urdu', nativeName: 'اردو', translationId: 97 },
+  { code: 'tr', name: 'Turkish', nativeName: 'Türkçe', translationId: 77 },
 ];
 
-const multiLangCache: { [key: string]: QuranAyah[] } = {};
+const multiLangCache: Record<string, QuranAyah[]> = {};
+const persistedCacheKeys = new Set<string>();
+const inFlightLoads = new Map<string, Promise<QuranAyah[]>>();
+
+let bengaliAutoDownloadPromise: Promise<void> | null = null;
+let bengaliAutoDownloadComplete = false;
 
 export function clearOfflineLanguageCache(lang: QuranLanguage): void {
   Object.keys(multiLangCache).forEach((key) => {
-    if (key.endsWith(`_${lang}`)) delete multiLangCache[key];
+    if (key.endsWith(`_${lang}`)) {
+      delete multiLangCache[key];
+      persistedCacheKeys.delete(key);
+    }
   });
+  if (lang === 'bn') bengaliAutoDownloadComplete = false;
+}
+
+function expectedAyahCount(surahId: number): number | undefined {
+  return SURAH_LIST.find((surah) => surah.id === surahId)?.versesCount;
+}
+
+function withReciterAudio(ayahs: QuranAyah[], surahId: number, reciterId: string): QuranAyah[] {
+  return ayahs.map((ayah) => ({
+    ...ayah,
+    audioUrl: getAyahAudioUrl(surahId, ayah.verseNumber, reciterId),
+  }));
 }
 
 export async function downloadFullQuranOffline(
   lang: QuranLanguage,
   onProgress?: (completed: number, total: number) => void
 ): Promise<void> {
-  const total = 114;
+  const total = SURAH_LIST.length;
   let completed = 0;
   onProgress?.(completed, total);
-  for (let surahId = 1; surahId <= total; surahId += 1) {
-    const expected = SURAH_LIST.find((surah) => surah.id === surahId)?.versesCount;
-    const cached = await getOfflineSurah(surahId, lang);
-    if (cached && expected && cached.length === expected) {
+
+  for (const surah of SURAH_LIST) {
+    const cached = await getOfflineSurah(surah.id, lang).catch(() => null);
+    if (cached && cached.length === surah.versesCount) {
       completed += 1;
-    } else {
-      await fetchVersesByLanguage(surahId, lang);
-      completed += 1;
+      onProgress?.(completed, total);
+      continue;
     }
+
+    await fetchVersesByLanguage(surah.id, lang);
+
+    // A chapter is counted as downloaded only after IndexedDB confirms persistence.
+    const saved = await getOfflineSurah(surah.id, lang).catch(() => null);
+    if (!saved || saved.length !== surah.versesCount) {
+      throw new Error(`সূরা ${surah.id} ডিভাইসে সংরক্ষণ করা যায়নি। স্টোরেজ খালি করে আবার চেষ্টা করুন।`);
+    }
+
+    completed += 1;
     onProgress?.(completed, total);
   }
 }
 
-
-let bengaliAutoDownloadPromise: Promise<void> | null = null;
-let bengaliAutoDownloadComplete = false;
-
 /**
- * Quietly ensure the default Bengali Quran is available offline.
- * IndexedDB is checked chapter-by-chapter, so completed chapters are never fetched again.
+ * Automatically cache Bengali Quran once, quietly and resumably.
+ * A single IndexedDB count check is used on later launches.
  */
 export function ensureDefaultOfflineQuranDownloaded(): Promise<void> {
   if (bengaliAutoDownloadComplete) return Promise.resolve();
@@ -67,8 +94,7 @@ export function ensureDefaultOfflineQuranDownloaded(): Promise<void> {
 
   bengaliAutoDownloadPromise = getOfflineSurahCount('bn')
     .then(async (savedCount) => {
-      // A complete library needs only one small IndexedDB count check on later app launches.
-      if (savedCount < 114) await downloadFullQuranOffline('bn');
+      if (savedCount < SURAH_LIST.length) await downloadFullQuranOffline('bn');
       bengaliAutoDownloadComplete = true;
     })
     .finally(() => {
@@ -78,8 +104,97 @@ export function ensureDefaultOfflineQuranDownloaded(): Promise<void> {
   return bengaliAutoDownloadPromise;
 }
 
+async function loadSurahData(surahId: number, lang: QuranLanguage): Promise<QuranAyah[]> {
+  const cacheKey = `${surahId}_${lang}`;
+  const expectedCount = expectedAyahCount(surahId);
+  if (!expectedCount) throw new Error(`অজানা সূরা নম্বর: ${surahId}`);
+
+  const offlineItem = await getOfflineSurah(surahId, lang).catch(() => null);
+  if (offlineItem && offlineItem.length === expectedCount) {
+    multiLangCache[cacheKey] = offlineItem;
+    persistedCacheKeys.add(cacheKey);
+    return offlineItem;
+  }
+
+  const language = QURAN_LANGUAGES.find((item) => item.code === lang) || QURAN_LANGUAGES[0];
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+  let data: any;
+  try {
+    const response = await fetch(
+      `https://api.quran.com/api/v4/verses/by_chapter/${surahId}?language=${lang}&words=true&translations=${language.translationId}&word_fields=text_uthmani,location,audio_url&per_page=300`,
+      { signal: controller.signal }
+    );
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    data = await response.json();
+  } finally {
+    clearTimeout(timeoutId);
+  }
+
+  if (!Array.isArray(data?.verses)) {
+    throw new Error(`সূরা ${surahId}-এর আয়াত পাওয়া যায়নি।`);
+  }
+
+  const parsedAyahs: QuranAyah[] = data.verses.map((verse: any) => {
+    const verseNumber = Number(verse.verse_number);
+    const words: QuranWord[] = (Array.isArray(verse.words) ? verse.words : []).map((word: any, index: number) => {
+      const rawTranslation = word.translation?.text || '';
+      const isVerseMarker = word.char_type_name === 'end' || /^[0-9٠-٩০-৯()]+$/.test(rawTranslation.trim());
+      const markerText = isVerseMarker ? `﴿${toArabicNumber(verseNumber)}﴾` : rawTranslation;
+      return {
+        id: word.id || index + 1,
+        position: word.position || index + 1,
+        textUthmani: isVerseMarker ? toArabicNumber(verseNumber) : (word.text_uthmani || word.text || ''),
+        transliterationBn: isVerseMarker ? '' : (word.transliteration?.text || ''),
+        translationBn: lang === 'bn' || isVerseMarker ? markerText : '',
+        translationEn: lang === 'en' || isVerseMarker ? markerText : '',
+        translationUr: lang === 'ur' || isVerseMarker ? markerText : undefined,
+        translationHi: lang === 'hi' || isVerseMarker ? markerText : undefined,
+        translationTr: lang === 'tr' || isVerseMarker ? markerText : undefined,
+        audioUrl: word.audio_url ? `https://audio.qurancdn.com/${word.audio_url}` : '',
+      };
+    });
+
+    const rawTranslation = verse.translations?.[0]?.text || '';
+    const translatedText = rawTranslation.replace(/<[^>]*>?/gm, '');
+    return {
+      id: verse.id,
+      verseNumber,
+      verseKey: verse.verse_key || `${surahId}:${verseNumber}`,
+      textUthmani: verse.text_uthmani || words.map((word) => word.textUthmani).join(' '),
+      translationBn: lang === 'bn' ? translatedText : '',
+      translationEn: lang === 'en' ? translatedText : '',
+      transliterationBn: '',
+      audioUrl: getAyahAudioUrl(surahId, verseNumber, 'alafasy'),
+      juzNumber: verse.juz_number || 1,
+      pageNumber: verse.page_number || 1,
+      words: words.filter((word) => word.textUthmani && word.textUthmani !== '۝'),
+      ...(lang === 'hi' ? { translationHi: translatedText } : {}),
+      ...(lang === 'ur' ? { translationUr: translatedText } : {}),
+      ...(lang === 'tr' ? { translationTr: translatedText } : {}),
+      ...(lang === 'ar' ? { tafsirAr: translatedText } : {}),
+    } as QuranAyah;
+  });
+
+  if (parsedAyahs.length !== expectedCount || parsedAyahs.some((ayah) => !ayah.textUthmani || !Number.isFinite(ayah.verseNumber))) {
+    throw new Error(`সূরা ${surahId}-এর সম্পূর্ণ আয়াত পাওয়া যায়নি (${parsedAyahs.length}/${expectedCount})।`);
+  }
+
+  // Keep the online reader usable even when browser storage is full or unavailable.
+  multiLangCache[cacheKey] = parsedAyahs;
+  try {
+    await saveOfflineSurah(surahId, lang, parsedAyahs);
+    persistedCacheKeys.add(cacheKey);
+  } catch (error) {
+    console.warn(`Could not cache Surah ${surahId} offline:`, error);
+  }
+
+  return parsedAyahs;
+}
+
 /**
- * Fetch verses with translation in the specified language
+ * Fetch verses with request de-duplication and reciter-specific audio URLs.
  */
 export async function fetchVersesByLanguage(
   surahId: number,
@@ -87,93 +202,34 @@ export async function fetchVersesByLanguage(
   reciterId: string = 'alafasy'
 ): Promise<QuranAyah[]> {
   const cacheKey = `${surahId}_${lang}`;
-  const expectedVerseCount = SURAH_LIST.find((surah) => surah.id === surahId)?.versesCount;
-  if (multiLangCache[cacheKey] && multiLangCache[cacheKey].length === expectedVerseCount) {
-    return multiLangCache[cacheKey];
+  const expectedCount = expectedAyahCount(surahId);
+
+  const cached = multiLangCache[cacheKey];
+  if (cached && cached.length === expectedCount) {
+    if (!persistedCacheKeys.has(cacheKey)) {
+      try {
+        await saveOfflineSurah(surahId, lang, cached);
+        persistedCacheKeys.add(cacheKey);
+      } catch (error) {
+        console.warn(`Could not cache Surah ${surahId} offline:`, error);
+      }
+    }
+    return withReciterAudio(cached, surahId, reciterId);
   }
 
-  // IndexedDB has enough room for the complete Quran and is preferred over localStorage.
-  const offlineItem = await getOfflineSurah(surahId, lang).catch(() => null);
-  if (offlineItem && offlineItem.length === expectedVerseCount) {
-    multiLangCache[cacheKey] = offlineItem;
-    return offlineItem;
+  let pending = inFlightLoads.get(cacheKey);
+  if (!pending) {
+    pending = loadSurahData(surahId, lang);
+    inFlightLoads.set(cacheKey, pending);
   }
-
-  const langMeta = QURAN_LANGUAGES.find((l) => l.code === lang) || QURAN_LANGUAGES[0];
 
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
-
-    const res = await fetch(
-      `https://api.quran.com/api/v4/verses/by_chapter/${surahId}?language=${lang}&words=true&translations=${langMeta.translationId}&word_fields=text_uthmani,location,audio_url&per_page=300`,
-      { signal: controller.signal }
-    );
-    clearTimeout(timeoutId);
-
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-
-    if (data.verses && Array.isArray(data.verses)) {
-      const parsedAyahs: QuranAyah[] = data.verses.map((v: any) => {
-        const verseNum = v.verse_number;
-        const words: QuranWord[] = (v.words || []).map((w: any, index: number) => {
-          const audioPath = w.audio_url ? `https://audio.qurancdn.com/${w.audio_url}` : '';
-          const rawText = w.translation?.text || '';
-          const isVerseMarker = w.char_type_name === 'end' || /^[0-9٠-٩০-৯()]+$/.test(rawText.trim());
-          const wordText = isVerseMarker ? `﴿${toArabicNumber(verseNum)}﴾` : rawText;
-          return {
-            id: w.id || index + 1,
-            position: w.position || index + 1,
-            textUthmani: isVerseMarker ? toArabicNumber(verseNum) : (w.text_uthmani || w.text || ''),
-            transliterationBn: isVerseMarker ? '' : (w.transliteration?.text || ''),
-            translationBn: lang === 'bn' ? wordText : (isVerseMarker ? wordText : (w.translation?.text || '')),
-            translationEn: lang === 'en' ? wordText : (isVerseMarker ? wordText : ''),
-            translationUr: lang === 'ur' ? wordText : (isVerseMarker ? wordText : undefined),
-            translationHi: lang === 'hi' ? wordText : (isVerseMarker ? wordText : undefined),
-            translationTr: lang === 'tr' ? wordText : (isVerseMarker ? wordText : undefined),
-            audioUrl: audioPath,
-          };
-        });
-
-        let translatedText = '';
-        if (v.translations && v.translations[0]) {
-          translatedText = v.translations[0].text.replace(/<[^>]*>?/gm, '');
-        }
-
-        // Map translation field based on language
-        return {
-          id: v.id,
-          verseNumber: verseNum,
-          verseKey: v.verse_key || `${surahId}:${verseNum}`,
-          textUthmani: v.text_uthmani || words.map((w) => w.textUthmani).join(' '),
-          translationBn: lang === 'bn' ? translatedText : '',
-          translationEn: lang === 'en' ? translatedText : '',
-          transliterationBn: '',
-          audioUrl: getAyahAudioUrl(surahId, verseNum, reciterId),
-          juzNumber: v.juz_number || 1,
-          pageNumber: v.page_number || 1,
-          words: words.filter((w) => w.textUthmani && w.textUthmani !== '۝'),
-          // Attach multi-lang translation property dynamically
-          ...(lang === 'hi' ? { translationHi: translatedText } : {}),
-          ...(lang === 'ur' ? { translationUr: translatedText } : {}),
-          ...(lang === 'tr' ? { translationTr: translatedText } : {}),
-          ...(lang === 'ar' ? { tafsirAr: translatedText } : {}),
-        } as any;
-      });
-
-      if (!expectedVerseCount || parsedAyahs.length !== expectedVerseCount) {
-        throw new Error(`সূরা ${surahId}-এর সম্পূর্ণ আয়াত পাওয়া যায়নি (${parsedAyahs.length}/${expectedVerseCount ?? 'unknown'}).`);
-      }
-      multiLangCache[cacheKey] = parsedAyahs;
-      await saveOfflineSurah(surahId, lang, parsedAyahs);
-      return parsedAyahs;
-    }
-  } catch (err) {
-    console.warn(`Could not fetch multi-lang verses for Surah ${surahId} in ${lang}:`, err);
+    const ayahs = await pending;
+    return withReciterAudio(ayahs, surahId, reciterId);
+  } catch (error) {
+    console.warn(`Could not fetch Surah ${surahId} in ${lang}:`, error);
+    throw new Error(`সূরা ${surahId} লোড করা যায়নি। ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।`);
+  } finally {
+    if (inFlightLoads.get(cacheKey) === pending) inFlightLoads.delete(cacheKey);
   }
-
-  // Never substitute partial/sample text for a complete Quran chapter.
-  // The reader can now show a clear unavailable state instead of misleading content.
-  throw new Error(`সূরা ${surahId} লোড করা যায়নি। ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।`);
 }
