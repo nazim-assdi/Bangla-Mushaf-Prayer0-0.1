@@ -163,7 +163,7 @@ async function loadSurahData(surahId: number, lang: QuranLanguage): Promise<Qura
         position: word.position || index + 1,
         textUthmani: isVerseMarker ? toArabicNumber(verseNumber) : (word.text_uthmani || word.text || ''),
         transliterationBn: isVerseMarker ? '' : (word.transliteration?.text || ''),
-        translationBn: lang === 'bn' || isVerseMarker ? markerText : '',
+        translationBn: lang === 'bn' || lang === 'ar' || isVerseMarker ? markerText : '',
         translationEn: lang === 'en' || isVerseMarker ? markerText : '',
         translationUr: lang === 'ur' || isVerseMarker ? markerText : undefined,
         translationHi: lang === 'hi' || isVerseMarker ? markerText : undefined,
