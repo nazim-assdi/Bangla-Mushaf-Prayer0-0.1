@@ -210,7 +210,11 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
   };
 
   // Handle play/pause of full Ayah audio
-  const handlePlayAyah = (ayah: QuranAyah) => {
+  const handlePlayAyah = (ayah: QuranAyah, continueRange = false) => {
+    if (!continueRange) {
+      setRepeatRangeEnabled(false);
+      setCompletedRangeCycles(0);
+    }
     if (playingAyahKey === ayah.verseKey && isPlaying) {
       audioRef.current?.pause();
       setIsPlaying(false);
@@ -259,7 +263,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
         if (step.nextAyahNumber !== null) {
           const nextAyah = ayahs.find((ayah) => ayah.verseNumber === step.nextAyahNumber);
           if (nextAyah) {
-            handlePlayAyah(nextAyah);
+            handlePlayAyah(nextAyah, true);
             return;
           }
           setAudioError('নির্বাচিত Hifz range-এর পরের আয়াত পাওয়া যায়নি।');
@@ -291,7 +295,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
     setRepeatRangeEnabled(true);
     setCompletedRangeCycles(0);
     setAudioError(null);
-    handlePlayAyah(firstAyah);
+    handlePlayAyah(firstAyah, true);
   };
 
   const handlePlayWord = (word: QuranWord, ayah: QuranAyah, e: React.MouseEvent) => {
