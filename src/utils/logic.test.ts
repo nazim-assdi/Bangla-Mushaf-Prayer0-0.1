@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { toBanglaNumber, toEnglishNumber, toArabicNumber, formatDurationToBangla } from './banglaNumbers';
 import { calculateQiblaDirection, calculateDistanceToKaaba, getHeadingDeviation } from './qibla';
-import { calculatePrayerTimes, BANGLADESH_DISTRICTS, getWaqtsStatus, formatTimeEn } from './prayerTimes';
+import { calculatePrayerTimes, BANGLADESH_DISTRICTS, getWaqtsStatus, formatTimeEn, formatTimeBn, CALCULATION_METHODS } from './prayerTimes';
 import { getTimeZoneOffsetHours, getDatePartsInTimeZone } from '../services/worldTimeZone';
 
 test('Bengali number conversion works correctly', () => {
@@ -154,4 +154,24 @@ test('Isha remains the current night interval before Fajr', () => {
   const waqts = getWaqtsStatus(times, beforeFajr);
   assert.equal(waqts.find((waqt) => waqt.isCurrent)?.key, 'isha');
   assert.equal(waqts.find((waqt) => waqt.isNext)?.key, 'fajr');
+});
+
+
+test('Bangla time-of-day label follows GPS time zone instead of device time zone', () => {
+  const instant = new Date('2026-11-17T00:30:00.000Z');
+  assert.equal(formatTimeBn(instant, 'Asia/Dhaka'), 'সকাল ৬:৩০');
+});
+
+test('Umm al-Qura uses a fixed 90-minute Isha interval after Maghrib', () => {
+  const date = new Date('2026-10-26T12:00:00.000Z');
+  const dhaka = BANGLADESH_DISTRICTS.find((d) => d.id === 'dhaka')!;
+  const method = CALCULATION_METHODS.UmmAlQura;
+  const times = calculatePrayerTimes(date, dhaka.lat, dhaka.lng, 6, {
+    fajrAngle: method.fajrAngle,
+    ishaAngle: method.ishaAngle,
+    ishaIntervalMinutes: method.ishaMinutes,
+    asrJuristic: 'hanafi',
+  });
+
+  assert.equal(times.isha.getTime() - times.maghrib.getTime(), 90 * 60000);
 });
