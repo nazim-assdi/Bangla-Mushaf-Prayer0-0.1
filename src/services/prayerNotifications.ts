@@ -56,10 +56,10 @@ export async function schedulePrayerAlerts(options: PrayerAlertOptions, requestP
 
   const notifications: LocalNotificationSchema[] = [];
   const now = new Date();
-  const methodAngles: Record<string, { fajrAngle: number; ishaAngle: number }> = {
+  const methodAngles: Record<string, { fajrAngle: number; ishaAngle: number; ishaMinutes?: number }> = {
     Karachi: { fajrAngle: 18, ishaAngle: 18 },
     MWL: { fajrAngle: 18, ishaAngle: 17 },
-    UmmAlQura: { fajrAngle: 18.5, ishaAngle: 19 },
+    UmmAlQura: { fajrAngle: 18.5, ishaAngle: 19, ishaMinutes: 90 },
     ISNA: { fajrAngle: 15, ishaAngle: 15 },
   };
   const angles = methodAngles[options.calculationMethod] || methodAngles.Karachi;
@@ -71,7 +71,9 @@ export async function schedulePrayerAlerts(options: PrayerAlertOptions, requestP
     const date = new Date(now.getTime() + day * 86400000);
     const dayOffset = options.timeZoneId ? getTimeZoneOffsetHours(date, options.timeZoneId) : timezoneOffsetHours;
     const times = calculatePrayerTimes(date, options.latitude, options.longitude, dayOffset, {
-      ...angles,
+      fajrAngle: angles.fajrAngle,
+      ishaAngle: angles.ishaAngle,
+      ishaIntervalMinutes: angles.ishaMinutes,
       asrJuristic: options.asrJuristic,
     }, options.timeZoneId);
     const localDate = options.timeZoneId ? getDatePartsInTimeZone(date, options.timeZoneId) : { year: date.getFullYear(), month: date.getMonth() + 1, day: date.getDate() };
