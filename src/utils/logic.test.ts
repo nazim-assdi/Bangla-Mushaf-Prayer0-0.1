@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { toBanglaNumber, toEnglishNumber, toArabicNumber, formatDurationToBangla } from './banglaNumbers';
 import { calculateQiblaDirection, calculateDistanceToKaaba, getHeadingDeviation } from './qibla';
-import { calculatePrayerTimes, BANGLADESH_DISTRICTS, getWaqtsStatus } from './prayerTimes';
+import { calculatePrayerTimes, BANGLADESH_DISTRICTS, getWaqtsStatus, CALCULATION_METHODS } from './prayerTimes';
 
 test('Bengali number conversion works correctly', () => {
   assert.equal(toBanglaNumber(12345), '১২৩৪৫');
@@ -85,4 +85,34 @@ test('Next prayer after Isha is tomorrow Fajr, not a passed Fajr today', () => {
   const next = waqts.find((waqt) => waqt.isNext);
   assert.equal(next?.key, 'fajr');
   assert.ok(next!.time.getTime() > afterIsha.getTime(), 'Next Fajr must be in the future');
+});
+
+
+test('Isha remains the current waqt between midnight and Fajr', () => {
+  const today = new Date(2026, 9, 26, 12, 0, 0);
+  const dhaka = BANGLADESH_DISTRICTS.find((d) => d.id === 'dhaka')!;
+  const times = calculatePrayerTimes(today, dhaka.lat, dhaka.lng, 6);
+  const beforeFajr = new Date(times.fajr.getTime() - 30 * 60000);
+  const waqts = getWaqtsStatus(times, beforeFajr);
+
+  const current = waqts.find((waqt) => waqt.isCurrent);
+  const next = waqts.find((waqt) => waqt.isNext);
+  assert.equal(current?.key, 'isha');
+  assert.equal(next?.key, 'fajr');
+  assert.ok(current!.time.getTime() < beforeFajr.getTime(), 'Previous Isha must be in the past');
+  assert.ok(next!.time.getTime() > beforeFajr.getTime(), 'Today Fajr must still be in the future');
+});
+
+test('Umm al-Qura uses its fixed 90-minute Isha interval', () => {
+  const date = new Date(2026, 9, 26, 12, 0, 0);
+  const dhaka = BANGLADESH_DISTRICTS.find((d) => d.id === 'dhaka')!;
+  const method = CALCULATION_METHODS.UmmAlQura;
+  const times = calculatePrayerTimes(date, dhaka.lat, dhaka.lng, 6, {
+    fajrAngle: method.fajrAngle,
+    ishaAngle: method.ishaAngle,
+    ishaIntervalMinutes: method.ishaMinutes,
+    asrJuristic: 'hanafi',
+  });
+
+  assert.equal(times.isha.getTime() - times.maghrib.getTime(), 90 * 60000);
 });
