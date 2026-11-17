@@ -201,4 +201,7 @@ test('Quran chapter integrity rejects missing, misordered, or empty verse conten
   assert.equal(validateQuranSurah([makeAyah(2), makeAyah(1)], 1, 2).reason, 'invalid-sequence');
   assert.equal(validateQuranSurah([makeAyah(1), makeAyah(2, { textUthmani: '  ' })], 1, 2).reason, 'missing-arabic');
   assert.equal(validateQuranSurah([makeAyah(1, { translationBn: '' }), makeAyah(2, { translationBn: '' })], 1, 2).reason, 'missing-translation');
+  assert.equal(validateQuranSurah(valid, 0, 2).reason, 'invalid-metadata');
+  assert.equal(validateQuranSurah([makeAyah(1), makeAyah(2, { id: 1 })], 1, 2).reason, 'duplicate-ayah-id');
+  assert.equal(validateQuranSurah(valid, 1, 2.5).reason, 'invalid-metadata');
 });
