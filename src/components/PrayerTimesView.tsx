@@ -130,9 +130,11 @@ export const PrayerTimesView: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLangua
   const timezoneOffsetHours = getTimeZoneOffsetHours(currentTime, timeZoneId);
   const timezoneLabel = `${timeZoneId} · UTC${timezoneOffsetHours >= 0 ? '+' : ''}${Number(timezoneOffsetHours.toFixed(2))}`;
 
+  const selectedPrayerMethod = CALCULATION_METHODS[calculationMethod] ?? CALCULATION_METHODS.Karachi;
   const config: PrayerTimeConfig = {
-    fajrAngle: CALCULATION_METHODS[calculationMethod]?.fajrAngle || 18,
-    ishaAngle: CALCULATION_METHODS[calculationMethod]?.ishaAngle || 18,
+    fajrAngle: selectedPrayerMethod.fajrAngle,
+    ishaAngle: selectedPrayerMethod.ishaAngle,
+    ishaIntervalMinutes: selectedPrayerMethod.ishaMinutes,
     asrJuristic,
   };
 
