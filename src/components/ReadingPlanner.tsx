@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, CheckCircle2, Target, Flame } from 'lucide-react';
 import { UiLanguage, translateUi } from '../services/i18n';
-import { getDailyReadCount, getLocalDateKey, getReadingStreak } from '../services/readingProgress';
+import { clearDailyReadActivity, getDailyReadCount, getLocalDateKey, getReadingStreak } from '../services/readingProgress';
 
 interface PlannerState {
   dailyAyahGoal: number;
@@ -75,7 +75,11 @@ export const ReadingPlanner: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLanguag
         <div className="mt-3 h-3 overflow-hidden rounded-full bg-stone-100 dark:bg-stone-800"><div className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-amber-400 transition-all" style={{ width: `${progress}%` }} /></div>
         <div className="mt-5 flex flex-wrap gap-2">
           {[1,5,10].map((n) => <button key={n} onClick={() => addAyahs(n)} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-600">+{n} {translateUi(uiLanguage, 'addAyah')}</button>)}
-          <button onClick={() => setPlan((current) => ({ ...current, completedAyahs: 0, updatedDate: today }))} className="rounded-xl border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-600 dark:border-stone-700 dark:text-stone-300">{translateUi(uiLanguage, 'resetToday')}</button>
+          <button onClick={() => {
+            clearDailyReadActivity();
+            setTrackedAyahs(0);
+            setPlan((current) => ({ ...current, completedAyahs: 0, updatedDate: today }));
+          }} className="rounded-xl border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-600 dark:border-stone-700 dark:text-stone-300">{translateUi(uiLanguage, 'resetToday')}</button>
         </div>
         {progress >= 100 && <p className="mt-4 flex items-center gap-2 text-sm font-semibold text-emerald-700 dark:text-emerald-300"><CheckCircle2 className="h-5 w-5" />{translateUi(uiLanguage, 'goalComplete')}</p>}
       </section>
