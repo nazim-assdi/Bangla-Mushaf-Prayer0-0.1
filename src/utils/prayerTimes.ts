@@ -6,10 +6,12 @@ import { getDatePartsInTimeZone, getTimeZoneOffsetHours } from '../services/worl
 export interface PrayerTimeConfig {
   fajrAngle: number;
   ishaAngle: number;
+  /** Fixed minutes after Maghrib for methods such as Umm al-Qura. */
+  ishaIntervalMinutes?: number;
   asrJuristic: 'hanafi' | 'shafii'; // Hanafi = 2x shadow, Shafi'i = 1x shadow
 }
 
-export const CALCULATION_METHODS: { [key: string]: { name: string; fajrAngle: number; ishaAngle: number } } = {
+export const CALCULATION_METHODS: { [key: string]: { name: string; fajrAngle: number; ishaAngle: number; ishaMinutes?: number } } = {
   Karachi: {
     name: 'করাচী (ইসলামিক সায়েন্সেস - বাংলাদেশ/ভারত/পাকিস্তান)',
     fajrAngle: 18,
@@ -23,7 +25,8 @@ export const CALCULATION_METHODS: { [key: string]: { name: string; fajrAngle: nu
   UmmAlQura: {
     name: 'উম্মুল কুরা (মক্কা)',
     fajrAngle: 18.5,
-    ishaAngle: 19, // 90 min after Maghrib
+    ishaAngle: 19,
+    ishaMinutes: 90, // Fixed interval after Maghrib
   },
   ISNA: {
     name: 'উত্তর আমেরিকা (ISNA)',
@@ -263,7 +266,13 @@ export function calculatePrayerTimes(
   const asrHour = dhuhrHour + haAsr / 15;
   const sunsetHour = dhuhrHour + haSunrise / 15;
   const maghribHour = sunsetHour;
-  const ishaHour = dhuhrHour + haIsha / 15;
+  const hasFixedIshaInterval =
+    typeof config.ishaIntervalMinutes === 'number' &&
+    Number.isFinite(config.ishaIntervalMinutes) &&
+    config.ishaIntervalMinutes > 0;
+  const ishaHour = hasFixedIshaInterval
+    ? maghribHour + config.ishaIntervalMinutes! / 60
+    : dhuhrHour + haIsha / 15;
 
   const toDate = (fractionalHours: number): Date => {
     const totalMinutes = Math.round(fractionalHours * 60);
@@ -322,7 +331,8 @@ function getClockParts(d: Date, timeZoneId?: string): { hours: number; minutes: 
 }
 
 export function formatTimeBn(d: Date, timeZoneId?: string): string {
-  let { hours, minutes } = getClockParts(d, timeZoneId);
+  const { hours: localHour, minutes } = getClockParts(d, timeZoneId);
+  let hours = localHour;
   const isPm = hours >= 12;
   hours = hours % 12 || 12;
 
@@ -332,7 +342,7 @@ export function formatTimeBn(d: Date, timeZoneId?: string): string {
   const periodBn = isPm ? 'অপরাহ্ন' : 'পূর্বাহ্ন';
   // Standard everyday Bangla prayer format (যেমন: ভোর ৫:১২, দুপুর ১২:১৫, বিকেল ৪:২৫ ইত্যাদি)
   let timeOfDayBn = '';
-  const fullHour = d.getHours();
+  const fullHour = localHour;
   if (fullHour >= 4 && fullHour < 6) timeOfDayBn = 'ভোর ';
   else if (fullHour >= 6 && fullHour < 12) timeOfDayBn = 'সকাল ';
   else if (fullHour >= 12 && fullHour < 15) timeOfDayBn = 'দুপুর ';
