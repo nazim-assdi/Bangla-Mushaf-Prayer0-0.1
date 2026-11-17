@@ -6,6 +6,7 @@ on:
     branches:
       - feature/android-qibla-auto-location-new-icon
       - fix/al-quran-prayer-timezone-and-isha
+      - feat/quran-platform-2026
 
 permissions:
   contents: read
