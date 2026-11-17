@@ -4,6 +4,8 @@ import { toBanglaNumber, toEnglishNumber, toArabicNumber, formatDurationToBangla
 import { calculateQiblaDirection, calculateDistanceToKaaba, getHeadingDeviation } from './qibla';
 import { calculatePrayerTimes, BANGLADESH_DISTRICTS, getWaqtsStatus, formatTimeEn, formatTimeBn, CALCULATION_METHODS } from './prayerTimes';
 import { getTimeZoneOffsetHours, getDatePartsInTimeZone } from '../services/worldTimeZone';
+import { validateQuranSurah } from '../services/quranIntegrity';
+import type { QuranAyah } from '../data/quranSampleData';
 
 test('Bengali number conversion works correctly', () => {
   assert.equal(toBanglaNumber(12345), '১২৩৪৫');
@@ -174,4 +176,29 @@ test('Umm al-Qura uses a fixed 90-minute Isha interval after Maghrib', () => {
   });
 
   assert.equal(times.isha.getTime() - times.maghrib.getTime(), 90 * 60000);
+});
+
+
+test('Quran chapter integrity rejects missing, misordered, or empty verse content', () => {
+  const makeAyah = (verseNumber: number, overrides: Partial<QuranAyah> = {}): QuranAyah => ({
+    id: verseNumber,
+    verseNumber,
+    verseKey: `1:${verseNumber}`,
+    textUthmani: 'بِسْمِ اللَّهِ',
+    translationBn: 'আল্লাহর নামে',
+    translationEn: '',
+    transliterationBn: '',
+    audioUrl: '',
+    juzNumber: 1,
+    pageNumber: 1,
+    words: [],
+    ...overrides,
+  });
+
+  const valid = [makeAyah(1), makeAyah(2)];
+  assert.equal(validateQuranSurah(valid, 1, 2).valid, true);
+  assert.equal(validateQuranSurah([makeAyah(1)], 1, 2).reason, 'invalid-count');
+  assert.equal(validateQuranSurah([makeAyah(2), makeAyah(1)], 1, 2).reason, 'invalid-sequence');
+  assert.equal(validateQuranSurah([makeAyah(1), makeAyah(2, { textUthmani: '  ' })], 1, 2).reason, 'missing-arabic');
+  assert.equal(validateQuranSurah([makeAyah(1, { translationBn: '' }), makeAyah(2, { translationBn: '' })], 1, 2).reason, 'missing-translation');
 });
