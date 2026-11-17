@@ -23,6 +23,7 @@ import { AyahStudyTools } from './AyahStudyTools';
 import { UiLanguage, formatUiNumber, translateUi } from '../services/i18n';
 import { getOfflineTafsirForSurah, OfflineTafsirRecord } from '../services/offlineTafsir';
 import { padNumber } from '../services/quranApi';
+import { recordAyahRead } from '../services/readingProgress';
 
 export type ViewMode = 'wbw' | 'verse' | 'mushaf';
 
@@ -103,6 +104,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
   }, [studyStorageKey]);
 
   const updateStudyRecord = (verseKey: string, patch: Partial<{ read: boolean; note: string }>) => {
+    if (patch.read === true) recordAyahRead(verseKey);
     setStudyRecords((previous) => {
       const next = { ...previous, [verseKey]: { read: previous[verseKey]?.read ?? false, note: previous[verseKey]?.note ?? '', ...patch } };
       try { localStorage.setItem(studyStorageKey, JSON.stringify(next)); } catch (error) { console.warn('Could not save reading notes:', error); }
