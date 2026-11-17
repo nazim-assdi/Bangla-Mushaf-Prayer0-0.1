@@ -12,6 +12,8 @@ import {
   Repeat,
   Sparkles,
   Globe,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { QuranAyah, QuranWord, TafsirContent } from '../data/quranSampleData';
 import { SURAH_LIST } from '../data/quranMetadata';
@@ -86,6 +88,8 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
   const [repeatRangeEnd, setRepeatRangeEnd] = useState(7);
   const [repeatRangeCycles, setRepeatRangeCycles] = useState(3);
   const [completedRangeCycles, setCompletedRangeCycles] = useState(0);
+  const [hifzTestMode, setHifzTestMode] = useState(false);
+  const [revealedAyahKeys, setRevealedAyahKeys] = useState<Set<string>>(() => new Set());
   const [copiedAyahKey, setCopiedAyahKey] = useState<string | null>(null);
   const [studyRecords, setStudyRecords] = useState<Record<string, { read: boolean; note: string }>>({});
   const [readerZoom, setReaderZoom] = useState(1);
@@ -646,6 +650,22 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
           <Play className="h-3.5 w-3.5" />
           {uiLanguage === 'bn' ? 'রেঞ্জ চালান' : uiLanguage === 'ar' || uiLanguage === 'ur' ? 'تشغيل النطاق' : 'Play range'}
         </button>
+        <button
+          type="button"
+          aria-pressed={hifzTestMode}
+          onClick={() => {
+            setHifzTestMode((enabled) => !enabled);
+            setRevealedAyahKeys(new Set());
+          }}
+          className={`inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-xs font-bold transition ${hifzTestMode
+            ? 'border-amber-500 bg-amber-100 text-amber-900 dark:border-amber-700 dark:bg-amber-950/50 dark:text-amber-200'
+            : 'border-stone-200 bg-white text-stone-700 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200'}`}
+        >
+          {hifzTestMode ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+          {uiLanguage === 'bn' ? (hifzTestMode ? 'টেস্ট মোড বন্ধ' : 'Hifz টেস্ট মোড')
+            : uiLanguage === 'ar' || uiLanguage === 'ur' ? (hifzTestMode ? 'إنهاء الاختبار' : 'اختبار الحفظ')
+            : (hifzTestMode ? 'Exit test mode' : 'Hifz test mode')}
+        </button>
         {repeatRangeEnabled && (
           <p className="w-full text-[11px] text-emerald-800 dark:text-emerald-300" aria-live="polite">
             {uiLanguage === 'bn'
@@ -688,9 +708,14 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
               <div className="text-justify font-arabic leading-[3.4rem] sm:leading-[4rem]" style={{ fontSize: `${arabicFontSize + 6}px` }} dir="rtl">
                 {pageAyahs.map((ayah) => {
                   const isPlaying = playingAyahKey === ayah.verseKey;
+                  const isHifzHidden = hifzTestMode && !revealedAyahKeys.has(ayah.verseKey);
                   return (
                     <span key={ayah.id} className={`inline cursor-pointer rounded px-1 py-0.5 transition-colors ${isPlaying ? 'bg-amber-300/50 text-emerald-950' : 'hover:bg-amber-100/50 dark:hover:bg-stone-800'}`} onClick={() => handlePlayAyah(ayah)}>
-                      {ayah.textUthmani}{' '}
+                      {isHifzHidden ? (
+                        <button type="button" onClick={(event) => { event.stopPropagation(); setRevealedAyahKeys((previous) => new Set(previous).add(ayah.verseKey)); }} className="mx-1 rounded-lg border border-amber-500/50 px-2 py-1 text-xs font-sans text-amber-800 dark:text-amber-200">
+                          {uiLanguage === 'bn' ? 'দেখুন' : 'Reveal'}
+                        </button>
+                      ) : ayah.textUthmani}{' '}
                       <span className="mx-1 inline-flex h-8 w-8 items-center justify-center rounded-full border border-current/40 align-middle text-sm font-bold">
                         {toArabicNumber(ayah.verseNumber)}
                       </span>{' '}
@@ -707,6 +732,7 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
           {ayahs.map((ayah) => {
             const isPlayingThisAyah = playingAyahKey === ayah.verseKey && isPlaying;
             const isBookmarked = bookmarks.includes(ayah.verseKey);
+            const isHifzHidden = hifzTestMode && !revealedAyahKeys.has(ayah.verseKey);
             const translationText = getAyahTranslation(ayah);
             const availableTafsirs = getTafsirsForAyah(ayah.verseKey);
 
@@ -790,6 +816,19 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
 
                 {/* Body Content */}
                 <div className="p-4 sm:p-6 space-y-4">
+                  {isHifzHidden ? (
+                    <button
+                      type="button"
+                      onClick={() => setRevealedAyahKeys((previous) => new Set(previous).add(ayah.verseKey))}
+                      className="flex min-h-20 w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-amber-400/70 bg-amber-50/60 px-4 py-5 text-sm font-bold text-amber-900 transition hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/20 dark:text-amber-200 dark:hover:bg-amber-950/40"
+                    >
+                      <Eye className="h-5 w-5" />
+                      {uiLanguage === 'bn' ? 'মনে মনে পড়ুন — উত্তর দেখতে চাপ দিন'
+                        : uiLanguage === 'ar' || uiLanguage === 'ur' ? 'اقرأ من الذاكرة ثم اضغط لإظهار الآية'
+                        : 'Recite from memory, then tap to reveal'}
+                    </button>
+                  ) : (
+                    <>
                   {viewMode === 'wbw' && ayah.words && ayah.words.length > 0 ? (
                     <div>
                       {/* Word by word cards (Right-to-Left / ডানে থেকে বাঁ দিক flow) */}
@@ -871,6 +910,8 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
                       )}
                       {showTranslation && !translationText && <p className="text-xs text-amber-700 dark:text-amber-300">{translateUi(uiLanguage, 'noTranslationAvailable')}</p>}
                     </div>
+                  )}
+                    </>
                   )}
                 </div>
                   {availableTafsirs.length > 0 && (
