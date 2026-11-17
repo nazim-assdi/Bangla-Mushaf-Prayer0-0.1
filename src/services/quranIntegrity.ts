@@ -4,7 +4,7 @@ export interface QuranIntegrityResult {
   valid: boolean;
   expected: number;
   actual: number;
-  reason?: 'invalid-count' | 'invalid-sequence' | 'missing-arabic' | 'missing-translation';
+  reason?: 'invalid-metadata' | 'invalid-count' | 'invalid-sequence' | 'duplicate-ayah-id' | 'missing-arabic' | 'missing-translation';
 }
 
 /**
@@ -22,16 +22,28 @@ export function validateQuranSurah(
   const result = (valid: boolean, reason?: QuranIntegrityResult['reason']): QuranIntegrityResult =>
     ({ valid, expected: expectedVerseCount, actual, ...(reason ? { reason } : {}) });
 
-  if (!Array.isArray(ayahs) || expectedVerseCount <= 0 || actual !== expectedVerseCount) {
+  if (!Number.isInteger(surahId) || surahId < 1 ||
+      !Number.isInteger(expectedVerseCount) || expectedVerseCount < 1) {
+    return result(false, 'invalid-metadata');
+  }
+  if (!Array.isArray(ayahs) || actual !== expectedVerseCount) {
     return result(false, 'invalid-count');
   }
 
+  const seenAyahIds = new Set<number>();
   for (let index = 0; index < ayahs.length; index += 1) {
     const ayah = ayahs[index];
     const expectedNumber = index + 1;
     if (!ayah || ayah.verseNumber !== expectedNumber || ayah.verseKey !== `${surahId}:${expectedNumber}`) {
       return result(false, 'invalid-sequence');
     }
+    if (!Number.isSafeInteger(ayah.id) || ayah.id <= 0) {
+      return result(false, 'invalid-metadata');
+    }
+    if (seenAyahIds.has(ayah.id)) {
+      return result(false, 'duplicate-ayah-id');
+    }
+    seenAyahIds.add(ayah.id);
     if (typeof ayah.textUthmani !== 'string' || ayah.textUthmani.trim().length === 0) {
       return result(false, 'missing-arabic');
     }
