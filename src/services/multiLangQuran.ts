@@ -6,6 +6,7 @@ import { SURAH_LIST } from '../data/quranMetadata';
 import { padNumber, getAyahAudioUrl } from './quranApi';
 import { toArabicNumber } from '../utils/banglaNumbers';
 import { getOfflineSurah, saveOfflineSurah } from './offlineQuranStore';
+import { validateQuranSurah } from './quranIntegrity';
 
 export type QuranLanguage =
   | 'bn' | 'en' | 'hi' | 'ur' | 'tr' | 'es' | 'fr' | 'bs' | 'ru' | 'ml'
@@ -110,7 +111,7 @@ export async function downloadFullQuranOffline(
   for (let surahId = 1; surahId <= total; surahId += 1) {
     const expected = SURAH_LIST.find((surah) => surah.id === surahId)?.versesCount;
     const cached = await getOfflineSurah(surahId, lang);
-    if (cached && expected && cached.length === expected) {
+    if (cached && expected && validateQuranSurah(cached, surahId, expected).valid) {
       completed += 1;
     } else {
       await fetchVersesByLanguage(surahId, lang);
@@ -130,13 +131,13 @@ export async function fetchVersesByLanguage(
 ): Promise<QuranAyah[]> {
   const cacheKey = `${surahId}_${lang}`;
   const expectedVerseCount = SURAH_LIST.find((surah) => surah.id === surahId)?.versesCount;
-  if (multiLangCache[cacheKey] && multiLangCache[cacheKey].length === expectedVerseCount) {
+  if (multiLangCache[cacheKey] && expectedVerseCount && validateQuranSurah(multiLangCache[cacheKey], surahId, expectedVerseCount).valid) {
     return multiLangCache[cacheKey].map((ayah) => ({ ...ayah, audioUrl: getAyahAudioUrl(surahId, ayah.verseNumber, reciterId) }));
   }
 
   // IndexedDB has enough room for the complete Quran and is preferred over localStorage.
   const offlineItem = await getOfflineSurah(surahId, lang).catch(() => null);
-  if (offlineItem && offlineItem.length === expectedVerseCount) {
+  if (offlineItem && expectedVerseCount && validateQuranSurah(offlineItem, surahId, expectedVerseCount).valid) {
     multiLangCache[cacheKey] = offlineItem;
     return offlineItem.map((ayah) => ({ ...ayah, audioUrl: getAyahAudioUrl(surahId, ayah.verseNumber, reciterId) }));
   }
@@ -224,8 +225,11 @@ export async function fetchVersesByLanguage(
         } as any;
       });
 
-      if (!expectedVerseCount || parsedAyahs.length !== expectedVerseCount) {
-        throw new Error(`সূরা ${surahId}-এর সম্পূর্ণ আয়াত পাওয়া যায়নি (${parsedAyahs.length}/${expectedVerseCount ?? 'unknown'}).`);
+      const integrity = expectedVerseCount
+        ? validateQuranSurah(parsedAyahs, surahId, expectedVerseCount)
+        : { valid: false, expected: 0, actual: parsedAyahs.length, reason: 'invalid-count' as const };
+      if (!integrity.valid) {
+        throw new Error(`সূরা ${surahId}-এর কনটেন্ট যাচাই হয়নি (${integrity.actual}/${integrity.expected}; ${integrity.reason}).`);
       }
       multiLangCache[cacheKey] = parsedAyahs;
       await saveOfflineSurah(surahId, lang, parsedAyahs);
