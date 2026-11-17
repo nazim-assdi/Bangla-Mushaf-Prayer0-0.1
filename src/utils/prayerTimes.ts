@@ -10,7 +10,7 @@ export interface PrayerTimeConfig {
   asrJuristic: 'hanafi' | 'shafii'; // Hanafi = 2x shadow, Shafi'i = 1x shadow
 }
 
-export const CALCULATION_METHODS: { [key: string]: { name: string; fajrAngle: number; ishaAngle: number } } = {
+export const CALCULATION_METHODS: { [key: string]: { name: string; fajrAngle: number; ishaAngle: number; ishaMinutes?: number } } = {
   Karachi: {
     name: 'করাচী (ইসলামিক সায়েন্সেস - বাংলাদেশ/ভারত/পাকিস্তান)',
     fajrAngle: 18,
