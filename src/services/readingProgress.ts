@@ -72,3 +72,18 @@ export function getReadingStreak(date: Date = new Date()): number {
   }
   return streak;
 }
+
+
+/** Reset today's counted reading activity without touching ayah notes or read markers. */
+export function clearDailyReadActivity(date: Date = new Date()): void {
+  const activity = readActivity();
+  const dateKey = getLocalDateKey(date);
+  delete activity[dateKey];
+  saveActivity(activity);
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('mushaf:reading-progress-updated', {
+      detail: { date: dateKey, completedAyahs: 0 },
+    }));
+  }
+}
