@@ -5,6 +5,8 @@
 export interface PrayerTimeConfig {
   fajrAngle: number;
   ishaAngle: number;
+  /** Fixed minutes after Maghrib for methods such as Umm al-Qura. */
+  ishaIntervalMinutes?: number;
   asrJuristic: 'hanafi' | 'shafii'; // Hanafi = 2x shadow, Shafi'i = 1x shadow
 }
 
@@ -22,7 +24,8 @@ export const CALCULATION_METHODS: { [key: string]: { name: string; fajrAngle: nu
   UmmAlQura: {
     name: 'উম্মুল কুরা (মক্কা)',
     fajrAngle: 18.5,
-    ishaAngle: 19, // 90 min after Maghrib
+    ishaAngle: 19,
+    ishaMinutes: 90, // Umm al-Qura uses a fixed 90-minute interval after Maghrib
   },
   ISNA: {
     name: 'উত্তর আমেরিকা (ISNA)',
@@ -229,7 +232,13 @@ export function calculatePrayerTimes(
   const asrHour = dhuhrHour + haAsr / 15;
   const sunsetHour = dhuhrHour + haSunrise / 15;
   const maghribHour = sunsetHour;
-  const ishaHour = dhuhrHour + haIsha / 15;
+  const hasFixedIshaInterval =
+    typeof config.ishaIntervalMinutes === 'number' &&
+    Number.isFinite(config.ishaIntervalMinutes) &&
+    config.ishaIntervalMinutes > 0;
+  const ishaHour = hasFixedIshaInterval
+    ? maghribHour + config.ishaIntervalMinutes! / 60
+    : dhuhrHour + haIsha / 15;
 
   const toDate = (fractionalHours: number): Date => {
     const result = new Date(date);
@@ -336,9 +345,15 @@ export function getWaqtsStatus(times: PrayerTimesResult, now: Date = new Date())
     { key: 'isha', nameBn: 'ইশা', nameEn: 'Isha', nameAr: 'العشاء', time: times.isha },
   ];
 
-  // After Isha, the next Fajr belongs to the following local day.
-  if (nowMs >= mainWaqts[5].time.getTime()) {
-    mainWaqts[0].time = new Date(mainWaqts[0].time.getTime() + 24 * 60 * 60 * 1000);
+  // Treat the night as a continuous Isha-to-Fajr period:
+  // after Isha, Fajr is tomorrow; before today's Fajr, Isha was yesterday.
+  const oneDayMs = 24 * 60 * 60 * 1000;
+  const fajrTime = mainWaqts[0].time.getTime();
+  const ishaTime = mainWaqts[5].time.getTime();
+  if (nowMs >= ishaTime) {
+    mainWaqts[0].time = new Date(fajrTime + oneDayMs);
+  } else if (nowMs < fajrTime) {
+    mainWaqts[5].time = new Date(ishaTime - oneDayMs);
   }
 
   // Determine current active prayer
