@@ -6,6 +6,7 @@ import { calculatePrayerTimes, BANGLADESH_DISTRICTS, getWaqtsStatus, formatTimeE
 import { getTimeZoneOffsetHours, getDatePartsInTimeZone } from '../services/worldTimeZone';
 import { validateQuranSurah } from '../services/quranIntegrity';
 import type { QuranAyah } from '../data/quranSampleData';
+import { getRepeatRangeNextStep } from '../services/hifzPlayback';
 
 test('Bengali number conversion works correctly', () => {
   assert.equal(toBanglaNumber(12345), '১২৩৪৫');
@@ -204,4 +205,44 @@ test('Quran chapter integrity rejects missing, misordered, or empty verse conten
   assert.equal(validateQuranSurah(valid, 0, 2).reason, 'invalid-metadata');
   assert.equal(validateQuranSurah([makeAyah(1), makeAyah(2, { id: 1 })], 1, 2).reason, 'duplicate-ayah-id');
   assert.equal(validateQuranSurah(valid, 1, 2.5).reason, 'invalid-metadata');
+});
+
+
+test('Hifz range playback advances through ayahs in order', () => {
+  assert.deepEqual(getRepeatRangeNextStep(3, 2, 5, 0, 3), {
+    nextAyahNumber: 4,
+    completedCycles: 0,
+    finished: false,
+  });
+});
+
+test('Hifz range playback loops back to the selected start until cycle target', () => {
+  assert.deepEqual(getRepeatRangeNextStep(5, 2, 5, 0, 3), {
+    nextAyahNumber: 2,
+    completedCycles: 1,
+    finished: false,
+  });
+  assert.deepEqual(getRepeatRangeNextStep(5, 2, 5, 1, 3), {
+    nextAyahNumber: 2,
+    completedCycles: 2,
+    finished: false,
+  });
+});
+
+test('Hifz range playback stops after the requested final cycle', () => {
+  assert.deepEqual(getRepeatRangeNextStep(5, 2, 5, 2, 3), {
+    nextAyahNumber: null,
+    completedCycles: 3,
+    finished: true,
+  });
+});
+
+test('Hifz range playback supports a single ayah and rejects invalid ranges', () => {
+  assert.deepEqual(getRepeatRangeNextStep(7, 7, 7, 0, 2), {
+    nextAyahNumber: 7,
+    completedCycles: 1,
+    finished: false,
+  });
+  assert.equal(getRepeatRangeNextStep(1, 4, 3, 0, 2).finished, true);
+  assert.equal(getRepeatRangeNextStep(9, 2, 5, 0, 2).finished, true);
 });
