@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { CalendarDays, CheckCircle2, Target } from 'lucide-react';
+import { CalendarDays, CheckCircle2, Target, Flame } from 'lucide-react';
 import { UiLanguage, translateUi } from '../services/i18n';
+import { getDailyReadCount, getLocalDateKey, getReadingStreak } from '../services/readingProgress';
 
 interface PlannerState {
   dailyAyahGoal: number;
@@ -11,7 +12,8 @@ interface PlannerState {
 const STORAGE_KEY = 'mushaf_reading_planner_v1';
 
 export const ReadingPlanner: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLanguage }) => {
-  const today = new Date().toISOString().slice(0, 10);
+  const [today, setToday] = useState(() => getLocalDateKey());
+  const [trackedAyahs, setTrackedAyahs] = useState(() => getDailyReadCount());
   const [plan, setPlan] = useState<PlannerState>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -31,7 +33,31 @@ export const ReadingPlanner: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLanguag
     catch (error) { console.warn('Could not save reading planner:', error); }
   }, [plan]);
 
-  const progress = useMemo(() => Math.min(100, Math.round(plan.completedAyahs / Math.max(1, plan.dailyAyahGoal) * 100)), [plan]);
+  useEffect(() => {
+    const refreshProgress = () => {
+      const nextDate = getLocalDateKey();
+      if (nextDate !== today) {
+        setToday(nextDate);
+        setPlan((current) => ({ ...current, completedAyahs: 0, updatedDate: nextDate }));
+      }
+      setTrackedAyahs(getDailyReadCount());
+    };
+    window.addEventListener('mushaf:reading-progress-updated', refreshProgress);
+    window.addEventListener('focus', refreshProgress);
+    document.addEventListener('visibilitychange', refreshProgress);
+    return () => {
+      window.removeEventListener('mushaf:reading-progress-updated', refreshProgress);
+      window.removeEventListener('focus', refreshProgress);
+      document.removeEventListener('visibilitychange', refreshProgress);
+    };
+  }, [today]);
+
+  const totalCompleted = trackedAyahs + plan.completedAyahs;
+  const streak = getReadingStreak();
+  const progress = useMemo(
+    () => Math.min(100, Math.round(totalCompleted / Math.max(1, plan.dailyAyahGoal) * 100)),
+    [totalCompleted, plan.dailyAyahGoal],
+  );
   const updateGoal = (value: number) => setPlan((current) => ({ ...current, dailyAyahGoal: value }));
   const addAyahs = (value: number) => setPlan((current) => ({ ...current, completedAyahs: Math.max(0, current.completedAyahs + value), updatedDate: today }));
 
@@ -42,10 +68,10 @@ export const ReadingPlanner: React.FC<{ uiLanguage: UiLanguage }> = ({ uiLanguag
         <p className="mt-3 text-sm text-emerald-100/80">{translateUi(uiLanguage, 'plannerDisclaimer')}</p>
       </header>
       <section className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm dark:border-stone-800 dark:bg-stone-900">
-        <div className="flex items-center justify-between gap-3"><h2 className="flex items-center gap-2 font-bold text-stone-900 dark:text-white"><Target className="h-5 w-5 text-emerald-600" />{translateUi(uiLanguage, 'setGoal')}</h2><span className="text-xs text-stone-500">{new Date().toLocaleDateString()}</span></div>
+        <div className="flex items-center justify-between gap-3"><h2 className="flex items-center gap-2 font-bold text-stone-900 dark:text-white"><Target className="h-5 w-5 text-emerald-600" />{translateUi(uiLanguage, 'setGoal')}</h2><div className="flex items-center gap-2"><span className="text-xs text-stone-500">{new Date().toLocaleDateString()}</span><span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-xs font-bold text-amber-800 dark:bg-amber-950/50 dark:text-amber-200"><Flame className="h-3.5 w-3.5" />{uiLanguage === 'bn' ? `টানা ${streak} দিন` : uiLanguage === 'ar' ? `${streak} يومًا متتاليًا` : `${streak}-day streak`}</span></div></div>
         <label className="mt-5 block text-sm text-stone-600 dark:text-stone-300">{translateUi(uiLanguage, 'ayahsPerDay')}: <strong>{plan.dailyAyahGoal}</strong></label>
         <input type="range" min="1" max="100" step="1" value={plan.dailyAyahGoal} onChange={(event) => updateGoal(Number(event.target.value))} className="mt-2 w-full accent-emerald-600" />
-        <div className="mt-5 flex items-end justify-between"><div><p className="text-3xl font-extrabold text-emerald-700 dark:text-emerald-300">{plan.completedAyahs}<span className="text-base font-medium text-stone-500"> / {plan.dailyAyahGoal}</span></p><p className="text-xs text-stone-500">{translateUi(uiLanguage, 'completedToday')}</p></div><span className="text-2xl font-extrabold text-amber-600">{progress}%</span></div>
+        <div className="mt-5 flex items-end justify-between"><div><p className="text-3xl font-extrabold text-emerald-700 dark:text-emerald-300">{totalCompleted}<span className="text-base font-medium text-stone-500"> / {plan.dailyAyahGoal}</span></p><p className="text-xs text-stone-500">{translateUi(uiLanguage, 'completedToday')}</p><p className="mt-1 text-[11px] text-emerald-700 dark:text-emerald-300">{uiLanguage === 'bn' ? `${trackedAyahs}টি আয়াত Reader থেকে স্বয়ংক্রিয়ভাবে গণনা হয়েছে` : uiLanguage === 'ar' ? `${trackedAyahs} آية سُجّلت تلقائيًا من القارئ` : `${trackedAyahs} ayahs auto-counted from Reader`}</p></div><span className="text-2xl font-extrabold text-amber-600">{progress}%</span></div>
         <div className="mt-3 h-3 overflow-hidden rounded-full bg-stone-100 dark:bg-stone-800"><div className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-amber-400 transition-all" style={{ width: `${progress}%` }} /></div>
         <div className="mt-5 flex flex-wrap gap-2">
           {[1,5,10].map((n) => <button key={n} onClick={() => addAyahs(n)} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-600">+{n} {translateUi(uiLanguage, 'addAyah')}</button>)}
