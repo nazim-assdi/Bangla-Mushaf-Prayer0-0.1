@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feature/android-qibla-auto-location-new-icon
+      - fix/al-quran-prayer-timezone-and-isha
   workflow_dispatch:
 
 permissions:
