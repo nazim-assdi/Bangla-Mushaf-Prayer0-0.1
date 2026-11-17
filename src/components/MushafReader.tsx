@@ -24,6 +24,7 @@ import { UiLanguage, formatUiNumber, translateUi } from '../services/i18n';
 import { getOfflineTafsirForSurah, OfflineTafsirRecord } from '../services/offlineTafsir';
 import { padNumber } from '../services/quranApi';
 import { recordAyahRead } from '../services/readingProgress';
+import { getRepeatRangeNextStep } from '../services/hifzPlayback';
 
 export type ViewMode = 'wbw' | 'verse' | 'mushaf';
 
@@ -80,6 +81,11 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
   const [activeWordId, setActiveWordId] = useState<number | null>(null);
   const [hifzRepeatCount, setHifzRepeatCount] = useState<number>(1);
   const [currentRepeat, setCurrentRepeat] = useState<number>(1);
+  const [repeatRangeEnabled, setRepeatRangeEnabled] = useState(false);
+  const [repeatRangeStart, setRepeatRangeStart] = useState(1);
+  const [repeatRangeEnd, setRepeatRangeEnd] = useState(7);
+  const [repeatRangeCycles, setRepeatRangeCycles] = useState(3);
+  const [completedRangeCycles, setCompletedRangeCycles] = useState(0);
   const [copiedAyahKey, setCopiedAyahKey] = useState<string | null>(null);
   const [studyRecords, setStudyRecords] = useState<Record<string, { read: boolean; note: string }>>({});
   const [readerZoom, setReaderZoom] = useState(1);
@@ -239,7 +245,26 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
     }
 
     if (playingAyahKey) {
-      if (autoPlayNextAyah) {
+      if (repeatRangeEnabled) {
+        const currentAyahNumber = Number(playingAyahKey.split(':')[1]);
+        const step = getRepeatRangeNextStep(
+          currentAyahNumber,
+          repeatRangeStart,
+          repeatRangeEnd,
+          completedRangeCycles,
+          repeatRangeCycles,
+        );
+        setCompletedRangeCycles(step.completedCycles);
+
+        if (step.nextAyahNumber !== null) {
+          const nextAyah = ayahs.find((ayah) => ayah.verseNumber === step.nextAyahNumber);
+          if (nextAyah) {
+            handlePlayAyah(nextAyah);
+            return;
+          }
+          setAudioError('নির্বাচিত Hifz range-এর পরের আয়াত পাওয়া যায়নি।');
+        }
+      } else if (autoPlayNextAyah) {
         const currentIndex = ayahs.findIndex((a) => a.verseKey === playingAyahKey);
         if (currentIndex >= 0 && currentIndex < ayahs.length - 1) {
           const nextAyah = ayahs[currentIndex + 1];
@@ -250,6 +275,23 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
       setIsPlaying(false);
       setPlayingAyahKey(null);
     }
+  };
+
+  const handlePlayRepeatRange = () => {
+    if (loading || ayahs.length === 0) return;
+    const start = Math.max(1, Math.min(ayahs.length, Math.floor(repeatRangeStart)));
+    const end = Math.max(start, Math.min(ayahs.length, Math.floor(repeatRangeEnd)));
+    const firstAyah = ayahs.find((ayah) => ayah.verseNumber === start);
+    if (!firstAyah) {
+      setAudioError('নির্বাচিত Hifz range পাওয়া যায়নি।');
+      return;
+    }
+    setRepeatRangeStart(start);
+    setRepeatRangeEnd(end);
+    setRepeatRangeEnabled(true);
+    setCompletedRangeCycles(0);
+    setAudioError(null);
+    handlePlayAyah(firstAyah);
   };
 
   const handlePlayWord = (word: QuranWord, ayah: QuranAyah, e: React.MouseEvent) => {
@@ -538,6 +580,76 @@ export const MushafReader: React.FC<MushafReaderProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Hifz range controls: repeat every ayah, then loop the selected range. */}
+      <section className="mb-4 flex flex-wrap items-end gap-2 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3 dark:border-emerald-900/70 dark:bg-emerald-950/20" aria-label="Hifz range practice">
+        <label className="flex min-h-10 items-center gap-2 text-xs font-bold text-emerald-900 dark:text-emerald-200">
+          <input
+            type="checkbox"
+            checked={repeatRangeEnabled}
+            onChange={(event) => {
+              setRepeatRangeEnabled(event.target.checked);
+              setCompletedRangeCycles(0);
+            }}
+            className="h-4 w-4 accent-emerald-700"
+          />
+          {uiLanguage === 'bn' ? 'Hifz Range' : uiLanguage === 'ar' || uiLanguage === 'ur' ? 'نطاق الحفظ' : 'Hifz range'}
+        </label>
+        <label className="flex flex-col gap-1 text-[11px] font-semibold text-stone-600 dark:text-stone-300">
+          {uiLanguage === 'bn' ? 'শুরু' : uiLanguage === 'ar' || uiLanguage === 'ur' ? 'من' : 'From'}
+          <input
+            type="number"
+            min={1}
+            max={Math.max(1, ayahs.length)}
+            value={repeatRangeStart}
+            onChange={(event) => setRepeatRangeStart(Math.max(1, Math.min(ayahs.length || 1, Number(event.target.value) || 1)))}
+            className="h-9 w-16 rounded-lg border border-emerald-200 bg-white px-2 text-sm font-bold text-stone-900 dark:border-stone-700 dark:bg-stone-900 dark:text-white"
+            aria-label="Starting ayah"
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-[11px] font-semibold text-stone-600 dark:text-stone-300">
+          {uiLanguage === 'bn' ? 'শেষ' : uiLanguage === 'ar' || uiLanguage === 'ur' ? 'إلى' : 'To'}
+          <input
+            type="number"
+            min={repeatRangeStart}
+            max={Math.max(1, ayahs.length)}
+            value={repeatRangeEnd}
+            onChange={(event) => setRepeatRangeEnd(Math.max(repeatRangeStart, Math.min(ayahs.length || 1, Number(event.target.value) || repeatRangeStart)))}
+            className="h-9 w-16 rounded-lg border border-emerald-200 bg-white px-2 text-sm font-bold text-stone-900 dark:border-stone-700 dark:bg-stone-900 dark:text-white"
+            aria-label="Ending ayah"
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-[11px] font-semibold text-stone-600 dark:text-stone-300">
+          {uiLanguage === 'bn' ? 'রেঞ্জ পুনরাবৃত্তি' : uiLanguage === 'ar' || uiLanguage === 'ur' ? 'تكرار النطاق' : 'Range loops'}
+          <select
+            value={repeatRangeCycles}
+            onChange={(event) => setRepeatRangeCycles(Number(event.target.value))}
+            className="h-9 rounded-lg border border-emerald-200 bg-white px-2 text-sm font-bold text-stone-900 dark:border-stone-700 dark:bg-stone-900 dark:text-white"
+          >
+            <option value={1}>1×</option>
+            <option value={2}>2×</option>
+            <option value={3}>3×</option>
+            <option value={5}>5×</option>
+            <option value={10}>10×</option>
+          </select>
+        </label>
+        <button
+          type="button"
+          onClick={handlePlayRepeatRange}
+          disabled={loading || ayahs.length === 0}
+          className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-emerald-700 px-3 text-xs font-bold text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Play className="h-3.5 w-3.5" />
+          {uiLanguage === 'bn' ? 'রেঞ্জ চালান' : uiLanguage === 'ar' || uiLanguage === 'ur' ? 'تشغيل النطاق' : 'Play range'}
+        </button>
+        {repeatRangeEnabled && (
+          <p className="w-full text-[11px] text-emerald-800 dark:text-emerald-300" aria-live="polite">
+            {uiLanguage === 'bn'
+              ? `আয়াত ${repeatRangeStart}–${repeatRangeEnd} · প্রতি আয়াত ${hifzRepeatCount} বার · রেঞ্জ ${completedRangeCycles}/${repeatRangeCycles} সম্পন্ন`
+              : `Ayahs ${repeatRangeStart}–${repeatRangeEnd} · ${hifzRepeatCount} repeats per ayah · ${completedRangeCycles}/${repeatRangeCycles} ranges completed`}
+          </p>
+        )}
+      </section>
 
       {/* Bismillah Header */}
       {surahId !== 9 && (
