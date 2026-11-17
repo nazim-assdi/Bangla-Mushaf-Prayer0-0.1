@@ -94,6 +94,18 @@ export const QURAN_LANGUAGES: LanguageMeta[] = [
 ];
 
 const multiLangCache: { [key: string]: QuranAyah[] } = {};
+const inFlightLoads = new Map<string, Promise<QuranAyah[]>>();
+const MAX_IN_MEMORY_CHAPTERS = 6;
+
+/** Refresh recency and keep the in-memory Quran cache small on low-RAM devices. */
+function rememberSurah(cacheKey: string, ayahs: QuranAyah[]): void {
+  delete multiLangCache[cacheKey];
+  multiLangCache[cacheKey] = ayahs;
+  while (Object.keys(multiLangCache).length > MAX_IN_MEMORY_CHAPTERS) {
+    const oldestKey = Object.keys(multiLangCache)[0];
+    delete multiLangCache[oldestKey];
+  }
+}
 
 export function clearOfflineLanguageCache(lang: QuranLanguage): void {
   Object.keys(multiLangCache).forEach((key) => {
@@ -105,18 +117,28 @@ export async function downloadFullQuranOffline(
   lang: QuranLanguage,
   onProgress?: (completed: number, total: number) => void
 ): Promise<void> {
-  const total = 114;
+  const total = SURAH_LIST.length;
+  const batchSize = 3;
   let completed = 0;
   onProgress?.(completed, total);
-  for (let surahId = 1; surahId <= total; surahId += 1) {
-    const expected = SURAH_LIST.find((surah) => surah.id === surahId)?.versesCount;
-    const cached = await getOfflineSurah(surahId, lang);
-    if (cached && expected && validateQuranSurah(cached, surahId, expected).valid) {
-      completed += 1;
-    } else {
-      await fetchVersesByLanguage(surahId, lang);
-      completed += 1;
-    }
+
+  // Resume safely and limit parallel requests for mobile devices and the public API.
+  for (let start = 0; start < total; start += batchSize) {
+    const batch = SURAH_LIST.slice(start, start + batchSize);
+    await Promise.all(batch.map(async (surah) => {
+      const cached = await getOfflineSurah(surah.id, lang).catch(() => null);
+      if (cached && validateQuranSurah(cached, surah.id, surah.versesCount).valid) return;
+
+      const ayahs = await fetchVersesByLanguage(surah.id, lang);
+      // A download is complete only after a verified copy is persisted in IndexedDB.
+      await saveOfflineSurah(surah.id, lang, ayahs);
+      const saved = await getOfflineSurah(surah.id, lang).catch(() => null);
+      if (!saved || !validateQuranSurah(saved, surah.id, surah.versesCount).valid) {
+        throw new Error(`সূরা ${surah.id}-এর অফলাইন কপি যাচাই করা যায়নি। আবার চেষ্টা করুন।`);
+      }
+    }));
+
+    completed += batch.length;
     onProgress?.(completed, total);
   }
 }
@@ -124,7 +146,7 @@ export async function downloadFullQuranOffline(
 /**
  * Fetch verses with translation in the specified language
  */
-export async function fetchVersesByLanguage(
+async function loadVersesByLanguage(
   surahId: number,
   lang: QuranLanguage,
   reciterId: string = 'alafasy'
@@ -132,13 +154,14 @@ export async function fetchVersesByLanguage(
   const cacheKey = `${surahId}_${lang}`;
   const expectedVerseCount = SURAH_LIST.find((surah) => surah.id === surahId)?.versesCount;
   if (multiLangCache[cacheKey] && expectedVerseCount && validateQuranSurah(multiLangCache[cacheKey], surahId, expectedVerseCount).valid) {
+    rememberSurah(cacheKey, multiLangCache[cacheKey]);
     return multiLangCache[cacheKey].map((ayah) => ({ ...ayah, audioUrl: getAyahAudioUrl(surahId, ayah.verseNumber, reciterId) }));
   }
 
   // IndexedDB has enough room for the complete Quran and is preferred over localStorage.
   const offlineItem = await getOfflineSurah(surahId, lang).catch(() => null);
   if (offlineItem && expectedVerseCount && validateQuranSurah(offlineItem, surahId, expectedVerseCount).valid) {
-    multiLangCache[cacheKey] = offlineItem;
+    rememberSurah(cacheKey, offlineItem);
     return offlineItem.map((ayah) => ({ ...ayah, audioUrl: getAyahAudioUrl(surahId, ayah.verseNumber, reciterId) }));
   }
 
@@ -231,8 +254,14 @@ export async function fetchVersesByLanguage(
       if (!integrity.valid) {
         throw new Error(`সূরা ${surahId}-এর কনটেন্ট যাচাই হয়নি (${integrity.actual}/${integrity.expected}; ${integrity.reason}).`);
       }
-      multiLangCache[cacheKey] = parsedAyahs;
-      await saveOfflineSurah(surahId, lang, parsedAyahs);
+      rememberSurah(cacheKey, parsedAyahs);
+      // Keep online reading available even when browser storage is full or disabled.
+      // Full-offline downloads separately require a successful persistent write.
+      try {
+        await saveOfflineSurah(surahId, lang, parsedAyahs);
+      } catch (storageError) {
+        console.warn(`Could not cache Surah ${surahId} offline:`, storageError);
+      }
       return parsedAyahs;
     }
   } catch (err) {
@@ -242,4 +271,35 @@ export async function fetchVersesByLanguage(
   // Never substitute partial/sample text for a complete Quran chapter.
   // The reader can now show a clear unavailable state instead of misleading content.
   throw new Error(`সূরা ${surahId} লোড করা যায়নি। ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।`);
+}
+
+
+/**
+ * Share concurrent chapter requests. Audio URLs are applied after the shared
+ * text load so simultaneous listeners can each use a different reciter.
+ */
+export async function fetchVersesByLanguage(
+  surahId: number,
+  lang: QuranLanguage,
+  reciterId: string = 'alafasy'
+): Promise<QuranAyah[]> {
+  const cacheKey = `${surahId}_${lang}`;
+  let pending = inFlightLoads.get(cacheKey);
+
+  if (!pending) {
+    pending = loadVersesByLanguage(surahId, lang, reciterId);
+    inFlightLoads.set(cacheKey, pending);
+  }
+
+  try {
+    const ayahs = await pending;
+    return ayahs.map((ayah) => ({
+      ...ayah,
+      audioUrl: getAyahAudioUrl(surahId, ayah.verseNumber, reciterId),
+    }));
+  } finally {
+    if (inFlightLoads.get(cacheKey) === pending) {
+      inFlightLoads.delete(cacheKey);
+    }
+  }
 }
