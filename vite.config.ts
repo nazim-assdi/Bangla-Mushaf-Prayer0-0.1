@@ -14,9 +14,9 @@ export default defineConfig(() => {
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icon.svg', 'pwa-192x192.png', 'pwa-512x512.png'],
         manifest: {
           id: '/',
-          name: 'আল-কুরআন আল-কারীম — বাংলা মুসহাফ ও নামাজ',
-          short_name: 'আল-ক���রআন',
-          description: 'বাংলা অনুবাদসহ কুরআন পাঠ, তিলাওয়াত, তাফসির, নামাজের সময়, কিবলা ও দৈনিক আযকার—অফলাইন সুবিধাসহ।',
+          name: 'Al Quran & Prayer',
+          short_name: 'Al Quran',
+          description: 'Read, reflect, and remember with Quran recitation, translations, tafsir, prayer times, and Qibla.',
           lang: 'bn',
           dir: 'ltr',
           categories: ['education', 'lifestyle'],
@@ -53,7 +53,7 @@ export default defineConfig(() => {
           ],
         },
         workbox: {
-          maximumFileSizeToCacheInBytes: 8 * 1024 * 1024, // 8MB to ensure full offline precaching
+          maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,json}'],
           runtimeCaching: [
             {
@@ -61,13 +61,8 @@ export default defineConfig(() => {
               handler: 'CacheFirst',
               options: {
                 cacheName: 'google-fonts-cache',
-                expiration: {
-                  maxEntries: 20,
-                  maxAgeSeconds: 60 * 60 * 24 * 365,
-                },
-                cacheableResponse: {
-                  statuses: [0, 200],
-                },
+                expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 },
+                cacheableResponse: { statuses: [0, 200] },
               },
             },
             {
@@ -75,13 +70,8 @@ export default defineConfig(() => {
               handler: 'CacheFirst',
               options: {
                 cacheName: 'gstatic-fonts-cache',
-                expiration: {
-                  maxEntries: 20,
-                  maxAgeSeconds: 60 * 60 * 24 * 365,
-                },
-                cacheableResponse: {
-                  statuses: [0, 200],
-                },
+                expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 },
+                cacheableResponse: { statuses: [0, 200] },
               },
             },
             {
@@ -89,13 +79,8 @@ export default defineConfig(() => {
               handler: 'StaleWhileRevalidate',
               options: {
                 cacheName: 'quran-api-cache',
-                expiration: {
-                  maxEntries: 150,
-                  maxAgeSeconds: 60 * 60 * 24 * 60, // 60 days
-                },
-                cacheableResponse: {
-                  statuses: [0, 200],
-                },
+                expiration: { maxEntries: 150, maxAgeSeconds: 60 * 60 * 24 * 60 },
+                cacheableResponse: { statuses: [0, 200] },
               },
             },
             {
@@ -103,29 +88,17 @@ export default defineConfig(() => {
               handler: 'CacheFirst',
               options: {
                 cacheName: 'quran-audio-cache',
-                expiration: {
-                  maxEntries: 250,
-                  maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
-                },
-                cacheableResponse: {
-                  statuses: [0, 200],
-                },
+                expiration: { maxEntries: 250, maxAgeSeconds: 60 * 60 * 24 * 30 },
+                cacheableResponse: { statuses: [0, 200] },
                 rangeRequests: true,
               },
             },
           ],
         },
-        devOptions: {
-          enabled: true,
-          type: 'module',
-        },
+        devOptions: { enabled: true, type: 'module' },
       }),
     ],
-    resolve: {
-      alias: {
-        '@': path.resolve(__dirname, '.'),
-      },
-    },
+    resolve: { alias: { '@': path.resolve(__dirname, '.') } },
     server: {
       hmr: process.env.DISABLE_HMR !== 'true',
       watch: process.env.DISABLE_HMR === 'true' ? null : {},

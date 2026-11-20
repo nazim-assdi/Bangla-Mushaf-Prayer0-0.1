@@ -1,6 +1,6 @@
 {
   "appId": "com.nazimassdi.banglamushaf",
-  "appName": "আল-কুরআন ও নামাজ",
+  "appName": "Al Quran & Prayer",
   "webDir": "dist",
   "bundledWebRuntime": false,
   "android": {
